@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acompañamiento - ProfeAle v16</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .header-band { background: linear-gradient(135deg, #157347 0%, #0b4129 100%); color: white; padding: 20px 0; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .container-app { max-width: 1000px; margin: 0 auto; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .selector-box { background-color: #e8f5e9; border: 2px solid #198754; padding: 20px; border-radius: 10px; margin-bottom: 30px; }
+        .form-select-lg { font-weight: bold; color: #0f5132; }
+        .resultado-container { display: none; margin-top: 15px; }
+        .oa-card { background: white; border-left: 5px solid #ccc; padding: 12px; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .oa-card.planificado { border-left-color: #0d6efd; }
+        .oa-card.realizado { border-left-color: #198754; background-color: #f1fff5; }
+        .oa-card.extra { border-left-color: #ffc107; background-color: #fff9e6; }
+        .criteria-box { border-left: 5px solid #198754; background: #fff; margin-bottom: 25px; padding: 20px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .criteria-title { font-weight: 700; color: #157347; font-size: 1.1em; }
+        .dev-footer { text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; color: #6c757d; font-size: 0.85rem; }
+        @media print { .no-print, .header-band { display: none !important; } .container-app { box-shadow: none; padding: 0; } .selector-box { border: 1px solid #ccc; background: none; } .criteria-box { break-inside: avoid; border: 1px solid #ccc; } textarea { border: none; resize: none; } }
+    </style>
+</head>
+<body>
+
+<div class="header-band no-print">
+    <div class="container d-flex align-items-center gap-3">
+        <div class="bg-white text-success rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 55px; height: 55px; font-size: 26px;">
+            <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div>
+            <h3 class="m-0 fw-bold">Acompañamiento al Aula</h3>
+            <p class="mb-0 opacity-75 small">Gestión Técnica Pedagógica</p>
+        </div>
+    </div>
+</div>
+
+<div class="container-app">
+    
+    <div class="selector-box no-print">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-8">
+                <label class="form-label fw-bold text-success"><i class="fas fa-search"></i> Seleccione el Curso a Evaluar:</label>
+                <select id="select-curso" class="form-select form-select-lg" onchange="cargarDatos()">
+                    <option value="">Cargando lista de cursos...</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold text-success">Mes de la Visita:</label>
+                <input type="date" id="fecha" class="form-control form-control-lg" onchange="cargarDatos()">
+            </div>
+        </div>
+
+        <div id="panel-resultados" class="resultado-container">
+            <hr>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="m-0 fw-bold text-secondary">Planificación Detectada para <span id="lbl-mes" class="text-primary">MES</span>:</h6>
+                <span class="badge bg-light text-dark border">
+                    <span class="text-success">■ Realizado</span> &nbsp; 
+                    <span class="text-primary">■ Planificado</span> &nbsp; 
+                    <span class="text-warning">■ Extra</span>
+                </span>
+            </div>
+            <div id="lista-oas"></div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6"><label class="fw-bold small">Docente:</label><input type="text" id="docente" class="form-control" readonly></div>
+        <div class="col-md-6"><label class="fw-bold small">N° de Visita:</label><input type="text" id="visita" class="form-control"></div>
+    </div>
+    <hr class="no-print">
+    <div id="container-criterios"></div>
+    <div class="criteria-box">
+        <div class="criteria-title"><i class="fas fa-handshake"></i> Acuerdos y Compromisos</div>
+        <textarea id="acuerdos" class="form-control obs-box" rows="4"></textarea>
+    </div>
+    <div class="row mt-5 pt-4 text-center signature-section" style="page-break-inside: avoid;">
+        <div class="col-6"><div class="border-top border-dark pt-2 w-75 mx-auto"><strong>Firma Docente</strong></div></div>
+        <div class="col-6"><div class="border-top border-dark pt-2 w-75 mx-auto"><strong>Alejandra Morales G.</strong><br><small>Unidad Técnico Pedagógica</small></div></div>
+    </div>
+    <div class="text-end mt-5 no-print">
+        <button class="btn btn-success shadow-lg px-4 py-2 rounded-pill fw-bold" onclick="guardarTodo()"><i class="fas fa-print me-2"></i> Guardar y Generar PDF</button>
+    </div>
+    <div class="dev-footer no-print">Escuela Agrícola Sagrados Corazones &bull; Desarrollado por <span class="text-success fw-bold">ProfeAle</span></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs", authDomain: "attendance-ai-s81lt.firebaseapp.com", projectId: "attendance-ai-s81lt", storageBucket: "attendance-ai-s81lt.firebasestorage.app", messagingSenderId: "935781953186", appId: "1:935781953186:web:6c8a7a93ffad180d33b1fb" };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let cursosGlobal = [];
+
+    const criterios = [
+        { t: "1. Planificación de la Clase", d: "Estructura (Inicio-Desarrollo-Cierre) y objetivo visible.", s: { "Logrado": "Estructura clara y objetivo presente.", "Medianamente Logrado": "Cierre abrupto. Sug: Gestionar mejor el tiempo.", "Por Mejorar": "Clase desestructurada. Sug: Escribir ruta de aprendizaje." } },
+        { t: "2. Gestión del Ambiente", d: "Clima de aula, normas y manejo conductual.", s: { "Logrado": "Clima propicio.", "Medianamente Logrado": "Interrupciones menores. Sug: Refuerzo positivo.", "Por Mejorar": "Desorden generalizado. Sug: Detener clase y normar." } },
+        { t: "3. Metodología y Estrategias", d: "Rol activo del estudiante y coherencia didáctica.", s: { "Logrado": "Estudiantes activos.", "Medianamente Logrado": "Clase expositiva. Sug: Actividad práctica.", "Por Mejorar": "Clase dictada. Sug: Trabajo colaborativo." } },
+        { t: "4. Interacción Pedagógica", d: "Calidad de preguntas y feedback.", s: { "Logrado": "Preguntas desafiantes.", "Medianamente Logrado": "Preguntas de memoria. Sug: Preguntar ¿Por qué?", "Por Mejorar": "Sin interacción." } },
+        { t: "5. Evaluación Formativa", d: "Monitoreo del aprendizaje.", s: { "Logrado": "Monitoreo constante.", "Medianamente Logrado": "Solo al final. Sug: Circular por puestos.", "Por Mejorar": "No verifica aprendizaje. Sug: Ticket de salida." } },
+        { t: "6. Atención a la Diversidad (DUA)", d: "Opciones múltiples para acceder al aprendizaje.", s: { "Logrado": "Recursos variados.", "Medianamente Logrado": "Solo texto. Sug: Apoyo visual.", "Por Mejorar": "Estandarización total." } }
+    ];
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        document.getElementById('fecha').valueAsDate = new Date();
+        renderCriterios();
+        await cargarListaCursos();
+    });
+
+    async function cargarListaCursos() {
+        const select = document.getElementById('select-curso');
+        try {
+            const snap = await getDocs(collection(db, "cursos"));
+            select.innerHTML = '<option value="">-- Seleccione un Curso --</option>';
+            cursosGlobal = [];
+            snap.forEach(doc => {
+                const data = doc.data();
+                cursosGlobal.push({ id: doc.id, ...data });
+                select.innerHTML += `<option value="${doc.id}">${data.nombre.toUpperCase()} (${data.nivel || ''})</option>`;
+            });
+        } catch (e) { console.error(e); select.innerHTML = '<option>Error de conexión</option>'; }
+    }
+
+    window.cargarDatos = () => {
+        const cursoId = document.getElementById('select-curso').value;
+        const fechaTxt = document.getElementById('fecha').value;
+        if (!cursoId || !fechaTxt) return;
+
+        const curso = cursosGlobal.find(c => c.id === cursoId);
+        if (curso && curso.docenteNombre) document.getElementById('docente').value = curso.docenteNombre;
+
+        const dateObj = new Date(fechaTxt + "T00:00:00");
+        const meses = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+        const mesActual = meses[dateObj.getMonth()];
+
+        document.getElementById('panel-resultados').style.display = 'block';
+        document.getElementById('lbl-mes').innerText = mesActual;
+        const lista = document.getElementById('lista-oas');
+        lista.innerHTML = "";
+
+        const oasMap = new Map();
+
+        if (curso.real) {
+            curso.real.forEach(r => {
+                if (r.meses && r.meses.includes(mesActual)) {
+                    const planInfo = (curso.plan || []).find(p => p.codigo === r.codigo);
+                    const desc = planInfo ? planInfo.desc : (r.desc || "Actividad registrada");
+                    const tipo = planInfo ? "realizado" : "extra";
+                    oasMap.set(r.codigo, { codigo: r.codigo, desc: desc, tipo: tipo });
+                }
+            });
+        }
+
+        if (curso.plan) {
+            curso.plan.forEach(p => {
+                if ((p.mes === mesActual || p.mes === "Anual")) {
+                    if (!oasMap.has(p.codigo)) {
+                        oasMap.set(p.codigo, { codigo: p.codigo, desc: p.desc, tipo: "planificado" });
+                    }
+                }
+            });
+        }
+
+        const itemsOrdenados = Array.from(oasMap.values());
+
+        if (itemsOrdenados.length > 0) {
+            itemsOrdenados.forEach(item => {
+                const icono = item.tipo === 'realizado' ? '✅' : (item.tipo === 'extra' ? '⭐' : '📅');
+                const badge = item.tipo === 'extra' ? '<span class="badge bg-warning text-dark">Extra</span>' : '';
+                
+                lista.innerHTML += `
+                <div class="oa-card ${item.tipo}">
+                    <div class="d-flex justify-content-between">
+                        <strong>${icono} ${item.codigo}</strong>
+                        ${badge}
+                    </div>
+                    <div class="small text-muted">${item.desc}</div>
+                </div>`;
+            });
+        } else {
+            lista.innerHTML = `<div class="alert alert-warning small"><i class="fas fa-exclamation-circle"></i> Sin registros para ${mesActual}. Mostrando Plan Anual completo:</div>`;
+            if (curso.plan) {
+                const planMap = new Map();
+                curso.plan.forEach(p => planMap.set(p.codigo, p));
+                planMap.forEach(p => {
+                    lista.innerHTML += `<div class="oa-card planificado"><small><strong>${p.codigo}:</strong> ${p.desc}</small></div>`;
+                });
+            }
+        }
+    };
+
+    function renderCriterios() {
+        const c = document.getElementById('container-criterios');
+        c.innerHTML = "";
+        criterios.forEach((cr, i) => {
+            c.innerHTML += `
+            <div class="criteria-box">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="criteria-title">${cr.t}</div>
+                    <select id="sel-${i}" class="form-select form-select-sm w-auto fw-bold" onchange="setSug(${i})">
+                        <option value="">- Evaluar -</option><option value="Logrado">Logrado</option><option value="Medianamente Logrado">Medianamente Logrado</option><option value="Por Mejorar">Por Mejorar</option>
+                    </select>
+                </div>
+                <p class="criteria-desc">${cr.d}</p>
+                <textarea id="obs-${i}" class="form-control obs-box" rows="2" placeholder="Observaciones..."></textarea>
+            </div>`;
+        });
+    }
+
+    window.setSug = (i) => {
+        const val = document.getElementById(`sel-${i}`).value;
+        if(val && criterios[i].s[val]) document.getElementById(`obs-${i}`).value = criterios[i].s[val];
+    };
+
+    window.guardarTodo = async () => {
+        const docente = document.getElementById('docente').value;
+        const cursoId = document.getElementById('select-curso').value;
+        if(!docente || !cursoId) return alert("Falta seleccionar curso o docente.");
+        const resultados = criterios.map((_, i) => document.getElementById(`sel-${i}`).value || "No observado");
+        try {
+            const idUnico = `${docente}_${Date.now()}`;
+            await setDoc(doc(db, "acompanamientos", idUnico), {
+                docente, cursoId, fecha: document.getElementById('fecha').value, resultados, timestamp: new Date()
+            });
+            alert("✅ Guardado correctamente.");
+            window.print();
+        } catch (e) { alert("Error al guardar: " + e.message); }
+    };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

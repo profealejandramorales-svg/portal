@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Control de Planificaciones — Maestro v12 (Rango de Fechas)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; background:#f3f4f6; }
+    .container-card { background:#fff; padding:1.25rem; border-radius:1rem; box-shadow:0 4px 6px rgba(0,0,0,0.08); }
+    .button-primary { background:#4f46e5; color:#fff; padding:0.75rem 1.25rem; border-radius:0.5rem; font-weight:600; transition: 0.2s; }
+    .button-primary:hover { background:#4338ca; }
+    .button-ghost { background:#e5e7eb; color:#111827; padding:0.75rem 1.25rem; border-radius:0.5rem; font-weight:600; transition: 0.2s; }
+    .button-ghost:hover { background:#d1d5db; }
+    .badge { padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.75rem; font-weight:700; text-transform: uppercase; }
+    .badge-completed { background:#d1fae5; color:#065f46; }
+    .badge-pending { background:#fef3c7; color:#92400e; }
+    .badge-delayed { background:#fee2e2; color:#991b1b; }
+    
+    @media print{
+      body *{ visibility:hidden; }
+      .printable, .printable *{ visibility:visible; }
+      .printable{ position:absolute; left:0; top:0; width:100%; }
+      .no-print{ display:none !important; }
+      body.voucher-print-mode *{ visibility:hidden !important; }
+      body.voucher-print-mode #voucher-container,
+      body.voucher-print-mode #voucher-container *{ visibility:visible !important; }
+      body.voucher-print-mode #voucher-container{ position:absolute; left:0; top:0; width:100%; height:auto; display:block; background: white; }
+    }
+  </style>
+</head>
+<body class="p-6 md:p-10">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <header class="flex items-center justify-between flex-wrap gap-4 mb-4 no-print">
+      <h1 class="text-3xl font-bold text-gray-800">Control de Planificaciones</h1>
+      <div class="flex items-center gap-2">
+        <span id="userIdDisplay" class="font-mono bg-teal-100 text-teal-800 px-3 py-1 rounded-md text-xs">Modo Híbrido (Rango Fechas)</span>
+        <button id="printListBtn" class="button-ghost">Imprimir Pantalla</button>
+      </div>
+    </header>
+  </div>
+
+  <div class="max-w-7xl mx-auto space-y-8 mt-2">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 no-print">
+      <div class="container-card">
+        <h2 class="text-lg font-semibold mb-3">1. Profesores</h2>
+        <div class="flex gap-2 mb-3">
+          <input id="profesorInput" class="flex-grow rounded-md border border-gray-300 p-2" placeholder="Nombre..."/>
+          <button id="addProfesorBtn" class="button-primary px-4">+</button>
+        </div>
+        <ul id="profesorList" class="space-y-2 text-sm max-h-40 overflow-y-auto"></ul>
+      </div>
+      <div class="container-card">
+        <h2 class="text-lg font-semibold mb-3">2. Cursos</h2>
+        <div class="flex gap-2 mb-3">
+          <input id="cursoInput" class="flex-grow rounded-md border border-gray-300 p-2" placeholder="Curso..."/>
+          <button id="addCursoBtn" class="button-primary px-4">+</button>
+        </div>
+        <ul id="cursoList" class="space-y-2 text-sm max-h-40 overflow-y-auto"></ul>
+      </div>
+      <div class="container-card">
+        <h2 class="text-lg font-semibold mb-3">3. Asignaturas</h2>
+        <div class="flex gap-2 mb-3">
+          <input id="asignaturaInput" class="flex-grow rounded-md border border-gray-300 p-2" placeholder="Asignatura..."/>
+          <button id="addAsignaturaBtn" class="button-primary px-4">+</button>
+        </div>
+        <ul id="asignaturaList" class="space-y-2 text-sm max-h-40 overflow-y-auto"></ul>
+      </div>
+    </div>
+
+    <div class="container-card no-print border-l-4 border-indigo-500">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Ingreso de Planificación</h2>
+      <form id="planificacionForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div><label class="block text-sm font-medium text-gray-700">Título / Unidad</label><input id="titulo" class="mt-1 w-full rounded-md border border-gray-300 p-2"/></div>
+        <div><label class="block text-sm font-medium text-gray-700">Profesor</label><select id="profesor" class="mt-1 w-full rounded-md border border-gray-300 p-2"></select></div>
+        <div><label class="block text-sm font-medium text-gray-700">Curso</label><select id="curso" class="mt-1 w-full rounded-md border border-gray-300 p-2"></select></div>
+        <div><label class="block text-sm font-medium text-gray-700">Asignatura</label><select id="asignaturaForm" class="mt-1 w-full rounded-md border border-gray-300 p-2"></select></div>
+        <div><label class="block text-sm font-medium text-gray-700">Fecha Plazo (Esperada)</label><input type="date" id="fechaEntrega" class="mt-1 w-full rounded-md border border-gray-300 p-2"/></div>
+        <div><label class="block text-sm font-medium text-gray-700">Fecha Entrega Real</label><input type="date" id="fechaReal" class="mt-1 w-full rounded-md border border-gray-300 p-2"/></div>
+        <div class="lg:col-span-2 flex justify-end items-end gap-3">
+          <button type="reset" class="button-ghost">Limpiar</button>
+          <button type="submit" class="button-primary">Guardar Registro</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="container-card no-print bg-indigo-50">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Generación de Voucher / Filtros</h2>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div><label class="block text-sm font-medium text-gray-700">Profesor</label><select id="filterProfesor" class="mt-1 w-full rounded-md border-gray-300 p-2"></select></div>
+        <div><label class="block text-sm font-medium text-gray-700">Curso</label><select id="filterCurso" class="mt-1 w-full rounded-md border-gray-300 p-2"></select></div>
+        <div><label class="block text-sm font-medium text-gray-700">Desde</label><input type="date" id="dateStart" class="mt-1 w-full rounded-md border-gray-300 p-2"/></div>
+        <div><label class="block text-sm font-medium text-gray-700">Hasta (Corte)</label><input type="date" id="dateEnd" class="mt-1 w-full rounded-md border-gray-300 p-2"/></div>
+        
+        <div class="md:col-span-4 flex justify-end items-center pt-4 border-t border-indigo-200 mt-2">
+          <button id="generateVoucherBtn" class="button-primary bg-green-600 hover:bg-green-700" disabled>
+            <i class="fa-solid fa-print"></i> Generar Reporte por Periodo
+          </button>
+        </div>
+      </div>
+      <p class="text-xs text-gray-500 mt-2">* Seleccione Profesor y el Rango de Fechas para generar el reporte específico.</p>
+    </div>
+
+    <div class="container-card printable">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Panel de Control (Vista General)</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-blue-50 rounded-lg p-4 border border-blue-100"><p class="text-sm text-blue-600 font-bold">Total Visualizado</p><p id="totalCount" class="text-3xl font-bold text-gray-900">0</p></div>
+        <div class="bg-red-50 rounded-lg p-4 border border-red-100"><p class="text-sm text-red-600 font-bold">Atrasadas</p><p id="delayedCount" class="text-3xl font-bold text-red-600">0</p></div>
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200"><p class="text-sm text-gray-600 font-bold">Suma Días Atraso</p><p id="totalDaysDelayed" class="text-3xl font-bold text-gray-800">0</p></div>
+        <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
+          <p class="text-sm text-amber-700 font-bold">Acumulado Docente</p>
+          <p id="cumulativeByTeacherUpToDate" class="text-3xl font-bold text-amber-800">—</p>
+          <p class="text-[10px] text-amber-600 leading-tight mt-1">(Histórico hasta fecha "Hasta")</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div class="h-64"><canvas id="chartStatus"></canvas></div>
+        <div class="h-64"><canvas id="chartDelays"></canvas></div>
+      </div>
+
+      <h2 class="text-xl font-bold text-gray-800 mb-4">Detalle de Registros</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead class="bg-gray-100 text-gray-600 font-bold uppercase text-xs">
+            <tr>
+              <th class="p-3">Título</th><th class="p-3">Profesor</th><th class="p-3">Asignatura</th><th class="p-3">Curso</th><th class="p-3">Plazo</th><th class="p-3">Entrega</th><th class="p-3">Días</th><th class="p-3">Estado</th>
+            </tr>
+          </thead>
+          <tbody id="planificacionesList" class="divide-y divide-gray-200"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="voucher-container" class="p-10 bg-white hidden print-voucher"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const $ = (id)=>document.getElementById(id);
+    
+    // Configuración
+    const cfg = {apiKey:"AIzaSyDJnJlpsqR76z_lBnTNEULYcGoQGIi23VU",authDomain:"planificaciones-18b94.firebaseapp.com",projectId:"planificaciones-18b94",storageBucket:"planificaciones-18b94.appspot.com",messagingSenderId:"268119843295",appId:"1:268119843295:web:bb2bdbcb0affe4ecf3646a"};
+    
+    // Rutas Híbridas
+    const ROOT_PATH = "";
+    const ARTIFACTS_PATH = "artifacts/planificaciones-18b94/users/planificaciones-18b94";
+
+    const app=initializeApp(cfg); 
+    const db=getFirestore(app);
+
+    // Variables Globales
+    let planificacionesData=[];
+    let entities = { profesores: new Set(), cursos: new Set(), asignaturas: new Set() };
+    let chartStatus=null, chartDelays=null;
+
+    // --- FUNCIÓN DE FECHAS ---
+    function toDate(v) {
+        if (!v) return null;
+        if (v instanceof Date) return v;
+        if (v.seconds) return new Date(v.seconds * 1000);
+        if (typeof v === 'string') {
+            const d = new Date(v);
+            if (v.length === 10 && v.includes('-')) {
+                const parts = v.split('-');
+                return new Date(parts[0], parts[1]-1, parts[2]);
+            }
+            return isNaN(d) ? null : d;
+        }
+        return null;
+    }
+
+    // --- CARGA DOBLE ---
+    function loadDualCollection(colName, callback) {
+        let data1 = [], data2 = [];
+        let loaded1 = false, loaded2 = false;
+        const mergeAndNotify = () => { if(loaded1 && loaded2) callback([...data1, ...data2]); };
+
+        onSnapshot(query(collection(db, colName), orderBy('createdAt','desc')), snap => {
+            data1 = []; snap.forEach(d => data1.push({id:d.id, ...d.data(), origin:'root'}));
+            loaded1 = true; mergeAndNotify();
+        });
+
+        onSnapshot(query(collection(db, `${ARTIFACTS_PATH}/${colName}`), orderBy('createdAt','desc')), snap => {
+            data2 = []; snap.forEach(d => data2.push({id:d.id, ...d.data(), origin:'artifacts'}));
+            loaded2 = true; mergeAndNotify();
+        });
+    }
+
+    // --- INICIALIZACIÓN ---
+    loadDualCollection('planificaciones', (mergedData) => {
+        planificacionesData = mergedData;
+        mergedData.forEach(p => {
+            if(p.profesor) entities.profesores.add(p.profesor);
+            if(p.curso) entities.cursos.add(p.curso);
+            if(p.asignatura) entities.asignaturas.add(p.asignatura);
+        });
+        updateSelectors();
+        renderDashboard();
+    });
+
+    ['profesores', 'cursos', 'asignaturas'].forEach(type => {
+        loadDualCollection(type, (merged) => {
+            merged.forEach(item => entities[type].add(item.nombre));
+            updateSelectors();
+        });
+    });
+
+    function updateSelectors() {
+        const fill = (id, set) => {
+            const el = $(id);
+            const current = el.value;
+            el.innerHTML = '<option value="">Seleccionar...</option>';
+            Array.from(set).sort().forEach(val => {
+                const opt = document.createElement('option');
+                opt.value = val;
+                opt.textContent = val;
+                el.appendChild(opt);
+            });
+            if(current) el.value = current;
+        };
+        fill('profesor', entities.profesores);
+        fill('curso', entities.cursos);
+        fill('asignaturaForm', entities.asignaturas);
+        fill('filterProfesor', entities.profesores);
+        fill('filterCurso', entities.cursos);
+        
+        const renderList = (id, set) => {
+            const el = $(id); el.innerHTML = '';
+            Array.from(set).sort().forEach(val => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-200';
+                li.textContent = val;
+                el.appendChild(li);
+            });
+        };
+        renderList('profesorList', entities.profesores);
+        renderList('cursoList', entities.cursos);
+        renderList('asignaturaList', entities.asignaturas);
+    }
+
+    // --- GUARDADO ---
+    const saveEntity = async (col, val) => {
+        if(!val) return;
+        await addDoc(collection(db, `${ARTIFACTS_PATH}/${col}`), { nombre: val, createdAt: serverTimestamp() });
+    };
+    $('addProfesorBtn').onclick = () => { saveEntity('profesores', $('profesorInput').value); $('profesorInput').value=''; };
+    $('addCursoBtn').onclick = () => { saveEntity('cursos', $('cursoInput').value); $('cursoInput').value=''; };
+    $('addAsignaturaBtn').onclick = () => { saveEntity('asignaturas', $('asignaturaInput').value); $('asignaturaInput').value=''; };
+
+    $('planificacionForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const payload = {
+            titulo: $('titulo').value.trim(),
+            profesor: $('profesor').value,
+            curso: $('curso').value,
+            asignatura: $('asignaturaForm').value,
+            fechaEntrega: $('fechaEntrega').value || null,
+            fechaReal: $('fechaReal').value || null,
+            createdAt: serverTimestamp()
+        };
+        await addDoc(collection(db, `${ARTIFACTS_PATH}/planificaciones`), payload);
+        alert("✅ Guardado correctamente");
+        $('planificacionForm').reset();
+    });
+
+    // --- LÓGICA ---
+    function daysDelay(e, a){ 
+        const E=toDate(e), A=toDate(a); if(!E||!A) return 0; 
+        E.setHours(0,0,0,0); A.setHours(0,0,0,0); 
+        const d=Math.ceil((A-E)/86400000); return d>0?d:0; 
+    }
+    function status(e,a){ if(!a) return 'pending'; return daysDelay(e,a)>0?'delayed':'completed'; }
+    function fmt(d){ const x=toDate(d); return x ? x.toLocaleDateString('es-CL') : '---'; }
+    function ym(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+
+    function renderDashboard(){
+        const fProf = $('filterProfesor').value;
+        const fCur = $('filterCurso').value;
+        const startStr = $('dateStart').value;
+        const endStr = $('dateEnd').value;
+
+        // FILTRO PRINCIPAL (Afecta lista y gráficos en pantalla)
+        // Si hay fechas, filtramos por ellas. Si no, mostramos todo.
+        const filtered = planificacionesData.filter(p => {
+            let ok = true;
+            if (fProf && p.profesor !== fProf) ok = false;
+            if (fCur && p.curso !== fCur) ok = false;
+            
+            const pDate = toDate(p.fechaEntrega);
+            if (pDate && startStr && pDate < new Date(startStr)) ok = false;
+            if (pDate && endStr && pDate > new Date(endStr)) ok = false;
+            
+            return ok;
+        });
+
+        const tbody = $('planificacionesList'); tbody.innerHTML='';
+        let total=0, comp=0, delay=0, sumDelay=0;
+
+        filtered.forEach(p => {
+            const st = status(p.fechaEntrega, p.fechaReal);
+            const dd = daysDelay(p.fechaEntrega, p.fechaReal);
+            
+            total++;
+            if(st === 'completed') comp++;
+            if(st === 'delayed') { delay++; sumDelay += dd; }
+
+            const tr = document.createElement('tr');
+            tr.className = 'border-b hover:bg-gray-50';
+            tr.innerHTML = `
+                <td class="p-3 font-medium">${p.titulo||'-'}</td>
+                <td class="p-3">${p.profesor||'-'}</td>
+                <td class="p-3">${p.asignatura||'-'}</td>
+                <td class="p-3">${p.curso||'-'}</td>
+                <td class="p-3">${fmt(p.fechaEntrega)}</td>
+                <td class="p-3">${fmt(p.fechaReal)}</td>
+                <td class="p-3 ${dd>0?'text-red-600 font-bold':''}">${p.fechaReal ? dd : '-'}</td>
+                <td class="p-3"><span class="badge ${st==='completed'?'badge-completed':(st==='delayed'?'badge-delayed':'badge-pending')}">${st==='completed'?'A Tiempo':(st==='delayed'?'Atrasada':'Pendiente')}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        $('totalCount').innerText = total;
+        $('delayedCount').innerText = delay;
+        $('totalDaysDelayed').innerText = sumDelay;
+
+        // CÁLCULO DE ACUMULADO HISTÓRICO (Siempre hasta la fecha "Hasta" o hoy)
+        if(fProf) {
+            const cutoff = endStr ? new Date(endStr) : new Date(); // Si no hay fecha fin, usar hoy
+            const history = planificacionesData.filter(p => p.profesor === fProf && toDate(p.fechaEntrega) && toDate(p.fechaEntrega) <= cutoff);
+            
+            const maxPorMes = {};
+            history.forEach(p => {
+                const d = daysDelay(p.fechaEntrega, p.fechaReal);
+                if(d > 0) {
+                    const key = ym(toDate(p.fechaEntrega));
+                    maxPorMes[key] = Math.max(maxPorMes[key]||0, d);
+                }
+            });
+            const cumul = Object.values(maxPorMes).reduce((a,b)=>a+b,0);
+            $('cumulativeByTeacherUpToDate').innerText = cumul;
+            $('generateVoucherBtn').disabled = !endStr; // Solo habilita voucher si hay fecha fin
+        } else {
+            $('cumulativeByTeacherUpToDate').innerText = "—";
+            $('generateVoucherBtn').disabled = true;
+        }
+
+        renderCharts(filtered);
+    }
+
+    function renderCharts(data){
+        if(chartStatus) chartStatus.destroy();
+        if(chartDelays) chartDelays.destroy();
+
+        const year = new Date().getFullYear();
+        const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        const stats = months.map(() => ({ok:0, late:0, days:0}));
+
+        data.forEach(p => {
+            const d = toDate(p.fechaEntrega);
+            if(d && d.getFullYear() === year) {
+                const m = d.getMonth();
+                const st = status(p.fechaEntrega, p.fechaReal);
+                if(st === 'completed') stats[m].ok++;
+                if(st === 'delayed') {
+                    stats[m].late++;
+                    stats[m].days += daysDelay(p.fechaEntrega, p.fechaReal);
+                }
+            }
+        });
+
+        chartStatus = new Chart($('chartStatus'), {
+            type: 'bar',
+            data: { labels: months, datasets: [{ label: 'A Tiempo', data: stats.map(s=>s.ok), backgroundColor: '#34d399' }, { label: 'Atrasadas', data: stats.map(s=>s.late), backgroundColor: '#f87171' }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
+        });
+
+        chartDelays = new Chart($('chartDelays'), {
+            type: 'line',
+            data: { labels: months, datasets: [{ label: 'Días Acumulados (En Selección)', data: stats.map(s=>s.days), borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.2)', fill: true, tension: 0.3 }] },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    // --- VOUCHER GENERATION (RANGO DE FECHAS) ---
+    $('generateVoucherBtn').onclick = () => {
+        const prof = $('filterProfesor').value;
+        const startStr = $('dateStart').value;
+        const endStr = $('dateEnd').value;
+        
+        if(!prof || !endStr) return;
+
+        const start = startStr ? new Date(startStr) : new Date('2020-01-01'); // Inicio "infinito" si no selecciona
+        const end = new Date(endStr);
+        const periodoTxt = `${startStr ? fmt(start) : 'Inicio'} al ${fmt(end)}`;
+        const hoy = new Date().toLocaleDateString('es-CL');
+
+        // 1. Datos del Rango (Lista visible en el voucher)
+        const periodData = planificacionesData.filter(p => {
+            const d = toDate(p.fechaEntrega);
+            return d && d >= start && d <= end && p.profesor === prof;
+        });
+        
+        // Ordenar cronológicamente
+        periodData.sort((a,b) => toDate(a.fechaEntrega) - toDate(b.fechaEntrega));
+
+        let sumPeriodDelay = 0;
+        let maxPeriodDelay = 0;
+
+        const rowsHTML = periodData.map(p => {
+            const d = daysDelay(p.fechaEntrega, p.fechaReal);
+            if(d > 0) { sumPeriodDelay += d; maxPeriodDelay = Math.max(maxPeriodDelay, d); }
+            const st = status(p.fechaEntrega, p.fechaReal);
+            return `<tr class="border-b text-xs">
+                <td class="p-2">${p.titulo||'-'}</td>
+                <td class="p-2">${p.curso||'-'}</td>
+                <td class="p-2">${p.asignatura||'-'}</td>
+                <td class="p-2">${fmt(p.fechaEntrega)}</td>
+                <td class="p-2">${fmt(p.fechaReal)}</td>
+                <td class="p-2 font-bold ${d>0?'text-red-600':''}">${d>0?d:'-'}</td>
+                <td class="p-2"><span class="badge ${st==='completed'?'badge-completed':(st==='delayed'?'badge-delayed':'badge-pending')}">${st==='completed'?'OK':(st==='delayed'?'ATRASO':'PEND')}</span></td>
+            </tr>`;
+        }).join('');
+
+        // 2. Acumulado Histórico (Hasta Fecha Fin)
+        const cumul = $('cumulativeByTeacherUpToDate').innerText;
+
+        $('voucher-container').innerHTML = `
+            <div class="space-y-6 text-sm font-sans text-gray-800">
+                <div class="text-center border-b pb-4">
+                    <h1 class="text-2xl font-bold uppercase text-indigo-900">Informe de Cumplimiento</h1>
+                    <p class="text-gray-500">Periodo: <span class="font-bold text-black">${periodoTxt}</span> &bull; Emisión: ${hoy}</p>
+                </div>
+
+                <div class="bg-indigo-50 p-4 rounded-lg flex justify-between items-center">
+                    <div><p class="text-xs text-indigo-500 uppercase font-bold">Docente</p><p class="text-xl font-bold">${prof}</p></div>
+                    <div class="text-right"><p class="text-xs text-indigo-500 uppercase font-bold">Planificaciones en Periodo</p><p class="text-lg">${periodData.length}</p></div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div class="p-3 bg-gray-50 rounded border">
+                        <p class="text-xs text-gray-500 uppercase">Suma Atrasos (Periodo)</p>
+                        <p class="text-2xl font-bold text-gray-800">${sumPeriodDelay}</p>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded border">
+                        <p class="text-xs text-gray-500 uppercase">Máx Atraso (Periodo)</p>
+                        <p class="text-2xl font-bold text-blue-600">${maxPeriodDelay}</p>
+                    </div>
+                    <div class="p-3 bg-amber-50 rounded border border-amber-200">
+                        <p class="text-xs text-amber-700 font-bold uppercase">Acumulado Histórico Total</p>
+                        <p class="text-3xl font-black text-amber-600">${cumul}</p>
+                        <p class="text-[9px] text-amber-700">(Suma máx mensuales hasta ${fmt(end)})</p>
+                    </div>
+                </div>
+
+                <h3 class="font-bold text-gray-700 mt-6 border-b pb-1">Detalle del Periodo Seleccionado</h3>
+                <table class="w-full text-left mt-2">
+                    <thead class="bg-gray-100 uppercase text-xs">
+                        <tr><th class="p-2">Actividad</th><th class="p-2">Curso</th><th class="p-2">Asig</th><th class="p-2">Plazo</th><th class="p-2">Entrega</th><th class="p-2">Días</th><th class="p-2">Est</th></tr>
+                    </thead>
+                    <tbody>${rowsHTML || '<tr><td colspan="7" class="p-4 text-center text-gray-400">Sin registros en este rango de fechas</td></tr>'}</tbody>
+                </table>
+
+                <div class="flex justify-between mt-16 text-center text-xs break-inside-avoid">
+                    <div class="w-1/3 border-t border-black pt-2"><p class="font-bold">${prof}</p><p>Docente</p></div>
+                    <div class="w-1/3 border-t border-black pt-2"><p class="font-bold">ALEJANDRA MORALES G.</p><p>Jefa UTP</p></div>
+                </div>
+            </div>`;
+        
+        $('voucher-container').classList.remove('hidden');
+        document.body.classList.add('voucher-print-mode');
+        setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('voucher-print-mode'); $('voucher-container').classList.add('hidden'); }, 500); }, 500);
+    };
+
+    ['filterProfesor', 'filterCurso', 'dateStart', 'dateEnd'].forEach(id => $(id).addEventListener('change', renderDashboard));
+    $('printListBtn').onclick = () => window.print();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Control de Inventario con Firebase</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 24px;
+    }
+    h1 {
+      text-align: center;
+      margin-top: 0;
+    }
+    .card {
+      max-width: 1000px;
+      margin: 0 auto 16px;
+      background: #fff;
+      padding: 16px 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    label {
+      font-size: 14px;
+    }
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      margin-bottom: 6px;
+    }
+    button {
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      font-size: 13px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 4px 6px;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    .btn {
+      padding: 6px 10px;
+      border-radius: 5px;
+      border: none;
+      font-size: 14px;
+      background: #007bff;
+      color: #fff;
+      margin-right: 6px;
+      margin-bottom: 4px;
+    }
+    .btn-success {
+      background: #28a745; /* Color verde para el nuevo botón */
+      color: #fff;
+    }
+    .btn-danger {
+      background: #dc3545;
+      color: #fff;
+    }
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 6px;
+      margin-bottom: 10px;
+    }
+    .totales {
+      margin-bottom: 12px;
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .table-wrapper {
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>📦 App de Control de Inventario</h1>
+
+  <div class="card">
+    <p style="margin:0;font-weight:bold;margin-bottom:8px;">
+      Importar inventario masivo (CSV exportado desde Excel)
+    </p>
+    <input type="file" id="fileInput" accept=".csv" />
+    <small style="display:block;margin-top:8px;color:#555;">
+      Usa columnas como:
+      <strong>id, UNIDAD, descripcion, cantidad, PROCEDENCIA, estado, ubicaci¢n, categoria</strong>.
+      (Desde Excel, guarda como CSV).
+    </small>
+    <div id="importStatus" style="margin-top:8px;font-size:12px;"></div>
+  </div>
+
+  <div class="card">
+    <form id="itemForm">
+      <label>
+        Descripción:
+        <input type="text" id="descripcion" required />
+      </label>
+
+      <label>
+        Ubicación / Unidad:
+        <input type="text" id="ubicacion" required />
+      </label>
+
+      <label>
+        Cantidad en inventario:
+        <input type="number" id="cantidadForm" min="0" value="1" />
+      </label>
+
+      <label>
+        Estado:
+        <select id="estado">
+          <option>Usado</option>
+          <option>Nuevo</option>
+          <option>En reparación</option>
+        </select>
+      </label>
+
+      <label>
+        Subvención / Procedencia:
+        <input type="text" id="subvencion" />
+      </label>
+
+      <label>
+        Categoría:
+        <input type="text" id="categoria" />
+      </label>
+
+      <label style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+        <span>Marcar para baja (referencial):</span>
+        <input type="checkbox" id="darDeBaja" />
+      </label>
+
+      <button type="submit" class="btn" style="margin-top:10px;">Agregar</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div style="margin-bottom:10px;">
+      <button id="btnPrintQR" class="btn">🖨️ QR (Resumen por fila)</button>
+      
+      <button id="btnPrintIndividual" class="btn btn-success">🖨️ QR Individuales (x Cantidad)</button>
+
+      <button id="btnPrintUnidad" class="btn">📝 Listado por unidad</button>
+      <button id="btnPrintEstado" class="btn">📝 Listado por estado</button>
+      <button id="btnPrintCategoria" class="btn">📝 Listado por categoría</button>
+    </div>
+
+    <div class="filters-row">
+      <label>
+        Procedencia:
+        <select id="filtroProcedencia">
+          <option value="todos">Todos</option>
+          <option value="sep">SEP</option>
+          <option value="donacion">Donación</option>
+          <option value="subvencion_general">Subvención general</option>
+          <option value="proyecto">Proyecto</option>
+        </select>
+      </label>
+
+      <label>
+        Estado:
+        <select id="filtroEstado">
+          <option value="todos">Todos</option>
+          <option value="usado">Usado / Regular</option>
+          <option value="nuevo">Nuevo</option>
+          <option value="reparacion">En reparación</option>
+          <option value="baja">Baja (marcado para baja)</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="totales" id="totalesBox">
+      Totales:
+    </div>
+
+    <div class="table-wrapper">
+      <table id="itemsTable">
+        <thead>
+          <tr>
+            <th>Descripción</th>
+            <th>Ubicación</th>
+            <th>Estado</th>
+            <th>Subvención</th>
+            <th>Categoría</th>
+            <th>Cant. total</th>
+            <th>Cant. baja</th>
+            <th>Cant. real</th>
+            <th>Baja</th>
+            <th>Eliminar</th>
+            <th>QR</th>
+          </tr>
+        </thead>
+        <tbody id="itemsTbody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    // Firebase v9 (modular) por CDN
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      setDoc,
+      doc,
+      deleteDoc,
+      updateDoc,
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // ---------- Config Firebase proporcionada ----------
+    const firebaseConfig = {
+      apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs",
+      authDomain: "attendance-ai-s81lt.firebaseapp.com",
+      projectId: "attendance-ai-s81lt",
+      storageBucket: "attendance-ai-s81lt.firebasestorage.app",
+      messagingSenderId: "935781953186",
+      appId: "1:935781953186:web:6c8a7a93ffad180d33b1fb"
+    };
+
+    const firebaseApp = initializeApp(firebaseConfig);
+    const db = getFirestore(firebaseApp);
+    const ITEMS_COLLECTION = "inventarioItems";
+    const STORAGE_KEY = "inventario_items_v1";
+    const ESTADOS = ["Usado", "Nuevo", "En reparación"];
+
+    const itemDocRef = (id) => doc(db, ITEMS_COLLECTION, String(id));
+
+    // ---------- Utilidades texto/número ----------
+    const stripAccents = (s) =>
+      s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    const norm = (s) => stripAccents(String(s)).trim().toLowerCase();
+
+    const mapHeader = (header) => {
+      const n = norm(header);
+      if (["descripcion", "descripción", "detalle", "equipo", "nombre"].some((k) => n.includes(k))) {
+        return "descripcion";
+      }
+      if (
+        ["ubicacion", "ubicación", "lugar", "bodega", "posicion", "posición", "unidad"].some((k) =>
+          n.includes(k)
+        ) ||
+        n.includes("ubicaci")
+      ) {
+        return "ubicacion";
+      }
+      if (["estado", "condicion", "condición"].some((k) => n.includes(k))) {
+        return "estado";
+      }
+      if (
+        ["subvencion", "subvención", "fondo", "programa", "donacion", "donación", "procedencia"].some((k) =>
+          n.includes(k)
+        )
+      ) {
+        return "subvencion";
+      }
+      if (["categoria", "categoría", "rubro", "tipo", "clase"].some((k) => n.includes(k))) {
+        return "categoria";
+      }
+      if (["baja", "dar_de_baja", "dar de baja", "debaja"].some((k) => n.includes(k))) {
+        return "darDeBaja";
+      }
+      if (["cantidad", "cantidad total", "stock", "cant"].some((k) => n.includes(k))) {
+        return "cantidad";
+      }
+      return null;
+    };
+
+    const parseBool = (v) => {
+      if (typeof v === "boolean") return v;
+      const s = norm(String(v));
+      return ["si", "sí", "true", "1", "x", "yes"].includes(s);
+    };
+
+    const parseNumber = (v, fallback = 0) => {
+      if (v === null || typeof v === "undefined") return fallback;
+      const n = Number(typeof v === "string" ? v.replace(",", ".") : v);
+      return Number.isFinite(n) ? n : fallback;
+    };
+
+    const escapeHtml = (s) =>
+      String(s).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[c] ?? c));
+
+    // ---------- Modelo en memoria ----------
+    let items = [];
+    let filtroProcedencia = "todos";
+    let filtroEstado = "todos";
+
+    // ---------- Persistencia local ----------
+    const loadItemsFromStorage = () => {
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed
+          .map((it) => {
+            if (!it || typeof it !== "object") return null;
+            if (!it.descripcion || !it.ubicacion) return null;
+            const cantidadTotal = parseNumber(it.cantidadTotal, 0);
+            const cantidadBaja = parseNumber(it.cantidadBaja, 0);
+            const cantidadReal = parseNumber(it.cantidadReal, cantidadTotal - cantidadBaja);
+            const estadoTexto = it.estado ?? "Usado";
+            const estadoEncontrado = ESTADOS.find((e) => norm(e) === norm(estadoTexto));
+            const estado = estadoEncontrado || "Usado";
+            return {
+              id: typeof it.id === "number" ? it.id : Date.now() + Math.random(),
+              descripcion: String(it.descripcion),
+              ubicacion: String(it.ubicacion),
+              estado,
+              subvencion: String(it.subvencion ?? ""),
+              categoria: String(it.categoria ?? ""),
+              darDeBaja: Boolean(it.darDeBaja),
+              cantidadTotal: cantidadTotal < 0 ? 0 : cantidadTotal,
+              cantidadBaja: cantidadBaja < 0 ? 0 : cantidadBaja,
+              cantidadReal: cantidadReal < 0 ? 0 : cantidadReal,
+            };
+          })
+          .filter((it) => it !== null);
+      } catch {
+        return [];
+      }
+    };
+
+    const saveItemsToStorage = () => {
+      try {
+        const plain = items.map((it) => ({
+          id: it.id,
+          descripcion: it.descripcion,
+          ubicacion: it.ubicacion,
+          estado: it.estado,
+          subvencion: it.subvencion,
+          categoria: it.categoria,
+          darDeBaja: it.darDeBaja,
+          cantidadTotal: it.cantidadTotal,
+          cantidadBaja: it.cantidadBaja,
+          cantidadReal: it.cantidadReal,
+        }));
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(plain));
+      } catch {
+        // ignorar
+      }
+    };
+
+    // ---------- Firestore ----------
+    const loadItemsFromFirestore = async () => {
+      try {
+        const snap = await getDocs(collection(db, ITEMS_COLLECTION));
+        const result = [];
+        snap.forEach((docSnap) => {
+          const data = docSnap.data();
+          const descripcion = String(data.descripcion ?? "").trim();
+          const ubicacion = String(data.ubicacion ?? "").trim();
+          if (!descripcion || !ubicacion) return;
+
+          const cantidadTotal = parseNumber(data.cantidadTotal, 0);
+          const cantidadBaja = parseNumber(data.cantidadBaja, 0);
+          const cantidadReal = parseNumber(data.cantidadReal, cantidadTotal - cantidadBaja);
+          const estadoTexto = data.estado ?? "Usado";
+          const estadoEncontrado = ESTADOS.find((e) => norm(e) === norm(estadoTexto));
+          const estado = estadoEncontrado || "Usado";
+          const idFromData =
+            typeof data.id === "number"
+              ? data.id
+              : Number(docSnap.id) || Date.now() + Math.random();
+
+          result.push({
+            id: idFromData,
+            descripcion,
+            ubicacion,
+            estado,
+            subvencion: String(data.subvencion ?? ""),
+            categoria: String(data.categoria ?? ""),
+            darDeBaja: Boolean(data.darDeBaja),
+            cantidadTotal: cantidadTotal < 0 ? 0 : cantidadTotal,
+            cantidadBaja: cantidadBaja < 0 ? 0 : cantidadBaja,
+            cantidadReal: cantidadReal < 0 ? 0 : cantidadReal,
+          });
+        });
+        return result;
+      } catch (e) {
+        console.error("Error leyendo Firestore", e);
+        return [];
+      }
+    };
+
+    const saveItemToFirestore = async (item) => {
+      try {
+        await setDoc(itemDocRef(item.id), {
+          id: item.id,
+          descripcion: item.descripcion,
+          ubicacion: item.ubicacion,
+          estado: item.estado,
+          subvencion: item.subvencion,
+          categoria: item.categoria,
+          darDeBaja: item.darDeBaja,
+          cantidadTotal: item.cantidadTotal,
+          cantidadBaja: item.cantidadBaja,
+          cantidadReal: item.cantidadReal,
+        });
+      } catch (e) {
+        console.error("Error guardando ítem en Firestore", e);
+      }
+    };
+
+    const updateItemInFirestore = async (id, fields) => {
+      try {
+        await updateDoc(itemDocRef(id), fields);
+      } catch (e) {
+        console.error("Error actualizando ítem en Firestore", e);
+      }
+    };
+
+    const deleteItemFromFirestore = async (id) => {
+      try {
+        await deleteDoc(itemDocRef(id));
+      } catch (e) {
+        console.error("Error eliminando ítem en Firestore", e);
+      }
+    };
+
+    // ---------- Conversión CSV -> items ----------
+    const rowsToItems = (rows) => {
+      const newItems = [];
+      rows.forEach((row) => {
+        const descripcion = (row.descripcion ?? "").toString().trim();
+        const ubicacion = (row.ubicacion ?? "").toString().trim();
+        if (!descripcion || !ubicacion) return;
+
+        const estadoTexto = (row.estado ?? "Usado").toString().trim();
+        let estado = "Usado";
+        const estadoEncontrado = ESTADOS.find((e) => norm(e) === norm(estadoTexto));
+        if (estadoEncontrado) estado = estadoEncontrado;
+
+        const subvencion = (row.subvencion ?? "").toString().trim();
+        const categoria = (row.categoria ?? "").toString().trim();
+        const bajaValor = typeof row.darDeBaja !== "undefined" ? row.darDeBaja : row.baja;
+        const darDeBaja = bajaValor ? parseBool(bajaValor) : false;
+
+        let cantidadTotal = parseNumber(row.cantidad, 1);
+        if (!Number.isFinite(cantidadTotal) || cantidadTotal < 0) cantidadTotal = 1;
+        const cantidadBaja = 0;
+        const cantidadReal = cantidadTotal;
+
+        newItems.push({
+          id: Date.now() + Math.random(),
+          descripcion,
+          ubicacion,
+          estado,
+          subvencion,
+          categoria,
+          darDeBaja,
+          cantidadTotal,
+          cantidadBaja,
+          cantidadReal,
+        });
+      });
+      return newItems;
+    };
+
+    const importCSV = (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Error leyendo CSV"));
+        reader.onload = () => {
+          try {
+            const text = String(reader.result ?? "");
+            const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+            if (lines.length < 2) {
+              resolve([]);
+              return;
+            }
+
+            const sep = lines[0].includes(";") && !lines[0].includes(",") ? ";" : ",";
+            const headers = lines[0].split(sep);
+            const headerIndex = {};
+            headers.forEach((h, idx) => {
+              const key = mapHeader(h);
+              if (key) headerIndex[key] = idx;
+            });
+
+            const rows = [];
+            for (let i = 1; i < lines.length; i++) {
+              const cols = lines[i].split(sep);
+              const row = {};
+              Object.keys(headerIndex).forEach((k) => {
+                const idx = headerIndex[k];
+                if (typeof idx === "number") {
+                  row[k] = cols[idx];
+                }
+              });
+              rows.push(row);
+            }
+
+            const newItems = rowsToItems(rows);
+            resolve(newItems);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.readAsText(file);
+      });
+    };
+
+    // ---------- Render ----------
+    const itemsTbody = document.getElementById("itemsTbody");
+    const totalesBox = document.getElementById("totalesBox");
+
+    const renderTotales = () => {
+      const totalCantidad = items.reduce((sum, it) => sum + it.cantidadTotal, 0);
+      const totalBaja = items.reduce((sum, it) => sum + it.cantidadBaja, 0);
+      const totalReal = items.reduce((sum, it) => sum + it.cantidadReal, 0);
+      totalesBox.textContent =
+        `Totales: Cantidad en inventario: ${totalCantidad} · ` +
+        `Cantidad a dar de baja: ${totalBaja} · Cantidad real: ${totalReal}`;
+    };
+
+    const renderTable = () => {
+      const rowsHtml = items.map((item) => {
+        const qrData =
+          `Producto: ${item.descripcion}\n` +
+          `Cantidad real: ${item.cantidadReal}\n` +
+          `Ubicación: ${item.ubicacion}\n` +
+          `Procedencia: ${item.subvencion || "-"}`;
+        const qrUrl =
+          "https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=" +
+          encodeURIComponent(qrData);
+        return `
+          <tr data-id="${item.id}">
+            <td>${escapeHtml(item.descripcion)}</td>
+            <td>${escapeHtml(item.ubicacion)}</td>
+            <td>${escapeHtml(item.estado)}</td>
+            <td>${escapeHtml(item.subvencion)}</td>
+            <td>${escapeHtml(item.categoria)}</td>
+            <td style="text-align:right;">
+              <input type="number" class="input-cantidad-total" min="0" value="${item.cantidadTotal}" style="width:70px;" />
+            </td>
+            <td style="text-align:right;">
+              <input type="number" class="input-cantidad-baja" min="0" value="${item.cantidadBaja}" style="width:70px;" />
+            </td>
+            <td style="text-align:right;">${item.cantidadReal}</td>
+            <td>${item.darDeBaja ? "Sí" : "No"}</td>
+            <td style="text-align:center;">
+              <button type="button" class="btn btn-danger btn-eliminar" style="padding:4px 8px;">🗑</button>
+            </td>
+            <td style="text-align:center;">
+              <img src="${qrUrl}" alt="QR" style="width:80px;height:80px;" />
+            </td>
+          </tr>
+        `;
+      }).join("");
+      itemsTbody.innerHTML = rowsHtml;
+      renderTotales();
+    };
+
+    // ---------- Eventos tabla (delegación) ----------
+    itemsTbody.addEventListener("input", (e) => {
+      const tr = e.target.closest("tr");
+      if (!tr) return;
+      const id = Number(tr.getAttribute("data-id"));
+      const item = items.find((it) => it.id === id);
+      if (!item) return;
+
+      if (e.target.classList.contains("input-cantidad-total")) {
+        let val = parseNumber(e.target.value, 0);
+        if (val < 0) val = 0;
+        let nuevaBaja = item.cantidadBaja;
+        if (nuevaBaja > val) nuevaBaja = val;
+        const cantidadReal = val - nuevaBaja;
+        item.cantidadTotal = val;
+        item.cantidadBaja = nuevaBaja;
+        item.cantidadReal = cantidadReal;
+        tr.querySelectorAll("td")[7].textContent = String(cantidadReal);
+        saveItemsToStorage();
+        void updateItemInFirestore(id, {
+          cantidadTotal: val,
+          cantidadBaja: nuevaBaja,
+          cantidadReal,
+        });
+        renderTotales();
+      }
+
+      if (e.target.classList.contains("input-cantidad-baja")) {
+        let val = parseNumber(e.target.value, 0);
+        if (val < 0) val = 0;
+        if (val > item.cantidadTotal) val = item.cantidadTotal;
+        const cantidadReal = item.cantidadTotal - val;
+        item.cantidadBaja = val;
+        item.cantidadReal = cantidadReal;
+        tr.querySelectorAll("td")[7].textContent = String(cantidadReal);
+        saveItemsToStorage();
+        void updateItemInFirestore(id, {
+          cantidadBaja: val,
+          cantidadReal,
+        });
+        renderTotales();
+      }
+    });
+
+    itemsTbody.addEventListener("click", (e) => {
+      if (e.target.classList.contains("btn-eliminar") || e.target.closest(".btn-eliminar")) {
+        const tr = e.target.closest("tr");
+        if (!tr) return;
+        const id = Number(tr.getAttribute("data-id"));
+        if (!confirm("¿Eliminar este ítem?")) return; // pequeña confirmación de seguridad
+        items = items.filter((it) => it.id !== id);
+        saveItemsToStorage();
+        void deleteItemFromFirestore(id);
+        renderTable();
+      }
+    });
+
+    // ---------- Impresión de QR (Resumen 1 por fila) ----------
+    const handlePrintQR = () => {
+      if (!items.length) return;
+      const w = window.open("", "_blank");
+      if (!w) return;
+
+      const labelsHtml = items.map((item) => {
+        const qrData =
+          `Producto: ${item.descripcion}\n` +
+          `Cantidad real: ${item.cantidadReal}\n` +
+          `Ubicación: ${item.ubicacion}\n` +
+          `Procedencia: ${item.subvencion || "-"}`;
+        const value = encodeURIComponent(qrData);
+        return `
+          <div class="label">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${value}" alt="QR" />
+            <div class="meta">
+              <strong>${escapeHtml(item.descripcion)}</strong><br />
+              <span><strong>Cantidad real:</strong> ${item.cantidadReal}</span><br />
+              <span><strong>Ubicación:</strong> ${escapeHtml(item.ubicacion)}</span><br />
+              <span><strong>Procedencia:</strong> ${escapeHtml(item.subvencion || "-")}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Etiquetas QR (Resumen)</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 10mm; }
+    h1 { font-size: 16px; text-align: center; margin: 0 0 8mm; }
+    .sheet {
+      display: grid;
+      grid-template-columns: repeat(3, 70mm);
+      grid-auto-rows: 70mm;
+      justify-content: center;
+      gap: 0;
+    }
+    .label {
+      width: 70mm;
+      height: 70mm;
+      padding: 4mm;
+      border: 1px dashed #999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .label img { width: 40mm; height: 40mm; margin-bottom: 2mm; }
+    .meta { font-size: 10px; line-height: 1.2; }
+    @media print {
+      body { margin: 0; padding: 5mm; }
+      .label { border: none; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Etiquetas QR Resumen (1 por fila)</h1>
+  <div class="sheet">
+    ${labelsHtml}
+  </div>
+</body>
+</html>`;
+
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+      setTimeout(() => w.print(), 500);
+    };
+
+    // ---------- NUEVA FUNCIÓN: Impresión de QR Individuales (x Cantidad) ----------
+    const handlePrintIndividual = () => {
+        if (!items.length) return;
+
+        // Calcular cuántas etiquetas saldrán en total para avisar si son muchas
+        const totalLabels = items.reduce((sum, item) => sum + (item.cantidadReal > 0 ? item.cantidadReal : 0), 0);
+        
+        if (totalLabels === 0) {
+            alert("No hay items con cantidad real > 0 para imprimir.");
+            return;
+        }
+
+        if (totalLabels > 300) {
+            if (!confirm(`Se generarán ${totalLabels} etiquetas en total. ¿Deseas continuar?`)) return;
+        }
+
+        const w = window.open("", "_blank");
+        if (!w) return;
+
+        // Generar HTML repitiendo etiqueta según cantidadReal
+        const labelsHtml = items.map((item) => {
+            const qty = item.cantidadReal || 0;
+            if (qty <= 0) return "";
+
+            let accumulator = "";
+            for (let i = 0; i < qty; i++) {
+                // Info para el QR
+                const qrData =
+                  `Producto: ${item.descripcion}\n` +
+                  `ID: ${item.id}-${i+1}\n` +
+                  `Ubicación: ${item.ubicacion}`;
+                const value = encodeURIComponent(qrData);
+
+                // HTML de cada etiqueta individual
+                accumulator += `
+                  <div class="label">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${value}" alt="QR" />
+                    <div class="meta">
+                      <strong>${escapeHtml(item.descripcion)}</strong><br />
+                      <span>Copia ${i + 1} de ${qty}</span><br />
+                      <span>Ubic: ${escapeHtml(item.ubicacion)}</span>
+                    </div>
+                  </div>
+                `;
+            }
+            return accumulator;
+        }).join("");
+
+        const html = `<!DOCTYPE html>
+            <html lang="es">
+            <head>
+            <meta charset="UTF-8" />
+            <title>Etiquetas QR Individuales</title>
+            <style>
+                * { box-sizing: border-box; }
+                body { font-family: Arial, sans-serif; margin: 0; padding: 10mm; }
+                h1 { font-size: 16px; text-align: center; margin: 0 0 8mm; }
+                .sheet {
+                display: grid;
+                grid-template-columns: repeat(3, 70mm);
+                grid-auto-rows: 70mm;
+                justify-content: center;
+                gap: 0;
+                }
+                .label {
+                width: 70mm;
+                height: 70mm;
+                padding: 4mm;
+                border: 1px dashed #999;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                page-break-inside: avoid; /* Evitar partir etiquetas */
+                }
+                .label img { width: 35mm; height: 35mm; margin-bottom: 2mm; }
+                .meta { font-size: 10px; line-height: 1.2; }
+                @media print {
+                body { margin: 0; padding: 5mm; }
+                .label { border: none; }
+                }
+            </style>
+            </head>
+            <body>
+            <h1>Etiquetas Individuales (${totalLabels} total)</h1>
+            <div class="sheet">
+                ${labelsHtml}
+            </div>
+            </body>
+            </html>`;
+
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
+        w.focus();
+        // Delay para cargar imágenes QR antes de imprimir
+        setTimeout(() => w.print(), 800);
+    };
+
+    // ---------- Impresión de listados ----------
+    const handlePrintList = (tipo) => {
+      if (!items.length) return;
+
+      const filtrados = items.filter((item) => {
+        if (item.cantidadTotal === 0 && item.cantidadReal === 0 && item.cantidadBaja === 0) {
+          return false;
+        }
+
+        let okProc = true;
+        let okEstado = true;
+
+        const proc = norm(item.subvencion || "");
+        const est = norm(item.estado || "");
+
+        if (filtroProcedencia === "sep") {
+          okProc = proc.includes("sep");
+        } else if (filtroProcedencia === "donacion") {
+          okProc = proc.includes("donacion") || proc.includes("donación");
+        } else if (filtroProcedencia === "subvencion_general") {
+          okProc = proc.includes("subvencion general") || proc.includes("subvención general");
+        } else if (filtroProcedencia === "proyecto") {
+          okProc = proc.includes("proyecto");
+        }
+
+        if (filtroEstado === "usado") {
+          okEstado = est.includes("usado") || est.includes("regular");
+        } else if (filtroEstado === "nuevo") {
+          okEstado = est.includes("nuevo");
+        } else if (filtroEstado === "reparacion") {
+          okEstado = est.includes("reparacion");
+        } else if (filtroEstado === "baja") {
+          okEstado = !!item.darDeBaja;
+        }
+
+        return okProc && okEstado;
+      });
+
+      if (!filtrados.length) {
+        alert("No hay ítems que coincidan con los filtros seleccionados.");
+        return;
+      }
+
+      const groups = {};
+      filtrados.forEach((item) => {
+        let key;
+        if (tipo === "unidad") {
+          key = item.ubicacion || "Sin unidad";
+        } else if (tipo === "estado") {
+          key = item.estado || "Sin estado";
+        } else {
+          key = item.categoria || "Sin categoría";
+        }
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(item);
+      });
+
+      const groupTitle =
+        tipo === "unidad" ? "Unidad / Ubicación" : tipo === "estado" ? "Estado" : "Categoría";
+
+      const keys = Object.keys(groups).sort((a, b) =>
+        a.localeCompare(b, "es", { sensitivity: "base" })
+      );
+
+      const sections = keys.map((key) => {
+        const rows = groups[key].map((item) => `
+          <tr>
+            <td>${escapeHtml(item.descripcion)}</td>
+            <td>${escapeHtml(item.ubicacion)}</td>
+            <td>${escapeHtml(item.estado)}</td>
+            <td>${escapeHtml(item.subvencion)}</td>
+            <td>${escapeHtml(item.categoria)}</td>
+            <td style="text-align:right;">${item.cantidadTotal}</td>
+            <td style="text-align:right;">${item.cantidadBaja}</td>
+            <td style="text-align:right;">${item.cantidadReal}</td>
+            <td>${item.darDeBaja ? "Sí" : "No"}</td>
+          </tr>
+        `).join("");
+
+        return `
+          <section class="grupo">
+            <h2>${escapeHtml(groupTitle)}: ${escapeHtml(key)} (${groups[key].length})</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Descripción</th>
+                  <th>Ubicación</th>
+                  <th>Estado</th>
+                  <th>Subvención</th>
+                  <th>Categoría</th>
+                  <th>Cant. total</th>
+                  <th>Cant. baja</th>
+                  <th>Cant. real</th>
+                  <th>Baja</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+          </section>
+        `;
+      }).join("");
+
+      const w = window.open("", "_blank");
+      if (!w) return;
+
+      const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Listado por ${escapeHtml(groupTitle)}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 10mm; }
+    h1 { font-size: 18px; text-align: center; margin: 0 0 10px; }
+    h2 { font-size: 14px; margin: 12px 0 4px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    th, td { border: 1px solid #ccc; padding: 4px 6px; font-size: 11px; }
+    th { background: #f0f0f0; }
+    .grupo { page-break-inside: avoid; margin-bottom: 12px; }
+    @media print {
+      body { margin: 0; padding: 8mm; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Listado agrupado por ${escapeHtml(groupTitle)}</h1>
+  ${sections}
+</body>
+</html>`;
+
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+      w.print();
+    };
+
+    // ---------- Inicialización y eventos de UI ----------
+    const init = async () => {
+      // Cargar primero desde Firestore, si no hay, desde localStorage
+      let remote = await loadItemsFromFirestore();
+      if (remote && remote.length) {
+        items = remote;
+      } else {
+        items = loadItemsFromStorage();
+      }
+      renderTable();
+    };
+
+    document.getElementById("itemForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const desc = document.getElementById("descripcion").value.trim();
+      const ubi = document.getElementById("ubicacion").value.trim();
+      const estadoSel = document.getElementById("estado").value;
+      const subv = document.getElementById("subvencion").value.trim();
+      const cat = document.getElementById("categoria").value.trim();
+      const darBaja = document.getElementById("darDeBaja").checked;
+      let cant = parseNumber(document.getElementById("cantidadForm").value, 1);
+      if (cant <= 0) cant = 1;
+      if (!desc || !ubi) return;
+
+      const nuevo = {
+        id: Date.now(),
+        descripcion: desc,
+        ubicacion: ubi,
+        estado: ESTADOS.includes(estadoSel) ? estadoSel : "Usado",
+        subvencion: subv,
+        categoria: cat,
+        darDeBaja: darBaja,
+        cantidadTotal: cant,
+        cantidadBaja: 0,
+        cantidadReal: cant,
+      };
+      items.push(nuevo);
+      saveItemsToStorage();
+      void saveItemToFirestore(nuevo);
+      renderTable();
+
+      // limpiar formulario
+      document.getElementById("descripcion").value = "";
+      document.getElementById("ubicacion").value = "";
+      document.getElementById("estado").value = "Usado";
+      document.getElementById("subvencion").value = "";
+      document.getElementById("categoria").value = "";
+      document.getElementById("darDeBaja").checked = false;
+      document.getElementById("cantidadForm").value = "1";
+    });
+
+    document.getElementById("fileInput").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const statusBox = document.getElementById("importStatus");
+      statusBox.textContent = "Importando archivo...";
+      importCSV(file)
+        .then((newItems) => {
+          if (newItems.length) {
+            items = items.concat(newItems);
+            saveItemsToStorage();
+            newItems.forEach((it) => void saveItemToFirestore(it));
+            renderTable();
+            statusBox.textContent = `Se importaron ${newItems.length} filas.`;
+          } else {
+            statusBox.textContent = "No se encontraron filas válidas en el archivo.";
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          statusBox.textContent = "Error al importar: " + err.message;
+        })
+        .finally(() => {
+          e.target.value = "";
+        });
+    });
+
+    document.getElementById("filtroProcedencia").addEventListener("change", (e) => {
+      filtroProcedencia = e.target.value;
+    });
+    document.getElementById("filtroEstado").addEventListener("change", (e) => {
+      filtroEstado = e.target.value;
+    });
+
+    document.getElementById("btnPrintQR").addEventListener("click", handlePrintQR);
+    
+    // --- NUEVO LISTENER PARA EL BOTÓN VERDE ---
+    document.getElementById("btnPrintIndividual").addEventListener("click", handlePrintIndividual);
+
+    document.getElementById("btnPrintUnidad").addEventListener("click", () => handlePrintList("unidad"));
+    document.getElementById("btnPrintEstado").addEventListener("click", () => handlePrintList("estado"));
+    document.getElementById("btnPrintCategoria").addEventListener("click", () => handlePrintList("categoria"));
+
+    // Arranque
+    init();
+  </script>
+</body>
+</html>
