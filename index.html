@@ -3,262 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Intranet Escolar - Escuela Agrícola SC</title>
-    
+    <title>Portal Maestro - Administración General 2026</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --primary-color: #157347; /* Verde Institucional */
-            --secondary-color: #0b4129;
-            --bg-color: #f0f4f3;
+            --bg-color: #eef2f7;
+            --card-hover: #ffffff;
+            /* Colores por Módulo */
+            --mod-admin: #212529;   /* Negro - Estratégico */
+            --mod-utp: #0d6efd;     /* Azul - Técnico Pedagógico */
+            --mod-insp: #6610f2;    /* Morado - Convivencia */
+            --mod-orient: #d63384;  /* Rosa - Orientación/PIE */
+            --mod-aula: #198754;    /* Verde - Docencia */
         }
-        
         body { background-color: var(--bg-color); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
         
-        /* Hero Header */
-        .hero {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            padding: 3.5rem 1rem;
-            text-align: center;
-            border-bottom-left-radius: 40px;
-            border-bottom-right-radius: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            margin-bottom: 3rem;
-            position: relative;
-            overflow: hidden;
+        /* HEADER */
+        .main-header {
+            background: linear-gradient(90deg, #1a1a1a 0%, #343a40 100%);
+            color: white; padding: 1rem 0; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
+        .school-logo { height: 60px; margin-right: 15px; border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; padding: 2px; }
         
-        /* Tarjetas de Apps */
-        .app-card {
-            background: white;
-            border: none;
-            border-radius: 20px;
-            padding: 30px 20px;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            text-decoration: none;
-            color: #495057;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            text-align: center;
-            position: relative;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        }
-        
-        .app-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 30px rgba(21, 115, 71, 0.15);
-        }
-
-        .icon-wrapper {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            margin-bottom: 1.2rem;
-            transition: 0.3s;
-        }
-
-        /* Colores por Categoría */
-        .cat-docente .icon-wrapper { background-color: #e8f5e9; color: #198754; }
-        .cat-utp .icon-wrapper { background-color: #e0f2f1; color: #00897b; }
-        .cat-admin .icon-wrapper { background-color: #fff3cd; color: #d39e00; }
-        .cat-pie .icon-wrapper { background-color: #f3e5f5; color: #8e24aa; }
-        .cat-alumno .icon-wrapper { background-color: #e3f2fd; color: #0d6efd; }
-
-        .app-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; color: #212529; }
-        .app-desc { font-size: 0.85rem; color: #6c757d; line-height: 1.4; }
-        
-        .section-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #e9ecef;
-        }
-        .section-title {
-            font-size: 1.1rem;
-            font-weight: 800;
-            text-transform: uppercase;
+        /* RELOJ DIGITAL */
+        .clock-widget {
+            font-variant-numeric: tabular-nums;
+            font-size: 1.2rem; /* Tamaño mediano */
+            font-weight: 700;
+            color: #ffffff;
             letter-spacing: 1px;
-            color: #495057;
-            margin: 0;
         }
-        .section-icon { margin-right: 10px; color: var(--primary-color); }
+        .user-name {
+            font-size: 1.3rem; /* Nombre más grande */
+            font-weight: 800;
+            color: white;
+        }
 
-        .footer { margin-top: auto; padding: 30px; text-align: center; color: #adb5bd; font-size: 0.8rem; background: #fff; }
-        
-        @media (max-width: 576px) {
-            .app-card { padding: 20px 15px; }
-            .icon-wrapper { width: 55px; height: 55px; font-size: 1.4rem; }
+        /* SECCIONES */
+        .module-title {
+            font-size: 0.9rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #dee2e6;
+            display: flex; align-items: center; color: #6c757d;
         }
+        
+        /* TARJETAS */
+        .app-card {
+            background: white; border: none; border-radius: 8px; 
+            transition: all 0.2s ease-in-out; text-decoration: none; color: inherit; 
+            height: 100%; display: block; overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative;
+        }
+        .app-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        
+        .card-body-custom { padding: 1rem; display: flex; align-items: center; gap: 12px; }
+        
+        .app-icon {
+            width: 45px; height: 45px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; flex-shrink: 0; transition: 0.3s;
+        }
+        
+        .app-info h5 { font-weight: 700; font-size: 0.9rem; margin-bottom: 2px; color: #343a40; }
+        .app-info p { font-size: 0.7rem; color: #6c757d; margin: 0; line-height: 1.2; }
+
+        /* BORDES Y COLORES DINÁMICOS */
+        /* Admin */
+        .border-admin:hover { border-top: 3px solid var(--mod-admin); }
+        .icon-admin { background-color: #e2e3e5; color: var(--mod-admin); }
+        /* UTP */
+        .border-utp:hover { border-top: 3px solid var(--mod-utp); }
+        .icon-utp { background-color: #cfe2ff; color: var(--mod-utp); }
+        /* Inspectoría */
+        .border-insp:hover { border-top: 3px solid var(--mod-insp); }
+        .icon-insp { background-color: #e0cffc; color: var(--mod-insp); }
+        /* Orientación */
+        .border-orient:hover { border-top: 3px solid var(--mod-orient); }
+        .icon-orient { background-color: #f7d6e6; color: var(--mod-orient); }
+        /* Aula */
+        .border-aula:hover { border-top: 3px solid var(--mod-aula); }
+        .icon-aula { background-color: #d1e7dd; color: var(--mod-aula); }
+
+        .footer { text-align: center; padding: 2rem; color: #adb5bd; font-size: 0.75rem; margin-top: auto;}
     </style>
 </head>
 <body>
 
-    <div class="hero">
-        <div class="container">
-            <h1 class="fw-bold mb-2 display-5"><i class="fa-solid fa-school me-3"></i>Portal Académico</h1>
-            <p class="mb-0 opacity-90 fs-5 fw-light">Escuela Agrícola Sagrados Corazones</p>
+    <header class="main-header">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <img src="logo.jpg" alt="SS.CC." class="school-logo">
+                <div>
+                    <h1 class="h5 fw-bold mb-0">Portal Maestro</h1>
+                    <span class="badge bg-danger rounded-pill">Acceso Total</span>
+                </div>
+            </div>
+            <div class="text-end d-none d-md-block text-white-50">
+                <div class="user-name">ProfeAle</div>
+                <div id="live-clock" class="clock-widget my-1">--:--:--</div>
+                <div id="date-display" class="small opacity-75"></div>
+            </div>
         </div>
+    </header>
+
+    <div class="container pb-5">
+
+        <div class="row mb-4">
+            <div class="col-12"><div class="module-title"><i class="fa-solid fa-briefcase me-2"></i>Administración & RR.HH.</div></div>
+            
+            <div class="col-md-6 col-lg-3 mb-3">
+                <a href="carga.html" class="app-card border-admin">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-admin"><i class="fa-solid fa-users-gear"></i></div>
+                        <div class="app-info"><h5>Dotación Docente</h5><p>Cargas, Contratos y PIE.</p></div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <a href="horario3.html" class="app-card border-admin">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-admin"><i class="fa-solid fa-calendar-days"></i></div>
+                        <div class="app-info"><h5>Planificador General</h5><p>Generador de horarios.</p></div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <a href="permisos.html" class="app-card border-admin">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-admin"><i class="fa-solid fa-user-lock"></i></div>
+                        <div class="app-info"><h5>Control Permisos</h5><p>Administrativos y licencias.</p></div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <a href="inventario.html" class="app-card border-admin">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-admin"><i class="fa-solid fa-boxes-stacked"></i></div>
+                        <div class="app-info"><h5>Inventario</h5><p>Control de activos y QR.</p></div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12"><div class="module-title" style="color: var(--mod-utp)"><i class="fa-solid fa-graduation-cap me-2"></i>Unidad Técnica (UTP)</div></div>
+            
+            <div class="col-md-6 col-lg-3 mb-3">
+                <a href="coberturas.html" class="app-card border-utp">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-utp"><i class="fa-solid fa-chart-pie"></i></div>
+                        <div class="app-info"><h5>Cobertura Curricular</h5><p>CurriculaCheck Master.</p></div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <a href="control_plan.html" class="app-card border-utp">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-utp"><i class="fa-solid fa-clipboard-check"></i></div>
+                        <div class="app-info"><h5>Control Planes</h5><p>Revisión planificaciones.</p></div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <a href="acompanamiento.html" class="app-card border-utp">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-utp"><i class="fa-solid fa-chalkboard-user"></i></div>
+                        <div class="app-info"><h5>Acompañamiento</h5><p>Observación de aula.</p></div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <a href="horario_profe.html" class="app-card border-utp">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-utp"><i class="fa-solid fa-clock"></i></div>
+                        <div class="app-info"><h5>Horario Individual</h5><p>Vista docente detallada.</p></div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12"><div class="module-title" style="color: var(--mod-insp)"><i class="fa-solid fa-gavel me-2"></i>Convivencia Escolar</div></div>
+            
+            <div class="col-md-6 col-lg-4 mb-3">
+                <a href="suspensiones.html" class="app-card border-insp">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-insp"><i class="fa-solid fa-file-shield"></i></div>
+                        <div class="app-info"><h5>Suspensiones</h5><p>Faltas graves y RICE.</p></div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-4 mb-3">
+                <a href="atrasos.html" class="app-card border-insp">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-insp"><i class="fa-solid fa-user-clock"></i></div>
+                        <div class="app-info"><h5>Control Atrasos</h5><p>Tickets de ingreso.</p></div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-4 mb-3">
+                <a href="salida_alumnos.html" class="app-card border-insp">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-insp"><i class="fa-solid fa-door-open"></i></div>
+                        <div class="app-info"><h5>Control Salidas</h5><p>Retiros y apoderados.</p></div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12"><div class="module-title" style="color: var(--mod-orient)"><i class="fa-solid fa-hands-holding-child me-2"></i>Orientación & PIE</div></div>
+            
+            <div class="col-md-6 col-lg-4 mb-3">
+                <a href="pie.html" class="app-card border-orient">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-orient"><i class="fa-solid fa-puzzle-piece"></i></div>
+                        <div class="app-info"><h5>Gestor PIE</h5><p>PACI, FUR y NEE.</p></div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-4 mb-3">
+                <a href="entrevistas.html" class="app-card border-orient">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-orient"><i class="fa-solid fa-comments"></i></div>
+                        <div class="app-info"><h5>Entrevistas</h5><p>Atención apoderados.</p></div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-4 mb-3">
+                <a href="repitencia.html" class="app-card border-orient">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-orient"><i class="fa-solid fa-file-contract"></i></div>
+                        <div class="app-info"><h5>Decreto 67</h5><p>Actas y repitencia.</p></div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12"><div class="module-title" style="color: var(--mod-aula)"><i class="fa-solid fa-book-open me-2"></i>Docencia</div></div>
+            
+            <div class="col-md-6 col-lg-3 mb-3">
+                <a href="bitacora.html" class="app-card border-aula">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-aula"><i class="fa-solid fa-pen-to-square"></i></div>
+                        <div class="app-info"><h5>Bitácora</h5><p>Registro de clases.</p></div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <a href="calculadora_notas.html" class="app-card border-aula">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-aula"><i class="fa-solid fa-calculator"></i></div>
+                        <div class="app-info"><h5>Notas</h5><p>Calculadora.</p></div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <a href="salva.html" class="app-card border-aula">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-aula"><i class="fa-solid fa-life-ring"></i></div>
+                        <div class="app-info"><h5>Salva Semestre</h5><p>Proyección.</p></div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-3">
+                <a href="nem.html" class="app-card border-aula">
+                    <div class="card-body-custom">
+                        <div class="app-icon icon-aula"><i class="fa-solid fa-ranking-star"></i></div>
+                        <div class="app-info"><h5>NEM</h5><p>Ranking.</p></div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
     </div>
 
-    <div class="container mb-5">
-        
-        <div class="section-header">
-            <i class="fa-solid fa-chalkboard-user section-icon fs-4"></i>
-            <h2 class="section-title">Docentes y Aula</h2>
-        </div>
-        <div class="row g-4 mb-5">
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="bitacora.html" class="app-card cat-docente">
-                    <div class="icon-wrapper"><i class="fa-solid fa-book-open"></i></div>
-                    <div class="app-title">Bitácora Digital</div>
-                    <div class="app-desc">Planificación y registro de cobertura curricular (OA).</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="asistencia.html" class="app-card cat-docente">
-                    <div class="icon-wrapper"><i class="fa-solid fa-clipboard-user"></i></div>
-                    <div class="app-title">Asistencia y Notas</div>
-                    <div class="app-desc">Control diario de clase, calificaciones y observaciones.</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="calculadora_notas.html" class="app-card cat-docente">
-                    <div class="icon-wrapper"><i class="fa-solid fa-calculator"></i></div>
-                    <div class="app-title">Calculadora Pro</div>
-                    <div class="app-desc">Escala de notas, Rúbricas y Promedios Ponderados.</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="repitencia.html" class="app-card cat-docente">
-                    <div class="icon-wrapper"><i class="fa-solid fa-file-contract"></i></div>
-                    <div class="app-title">Gestor Decreto 67</div>
-                    <div class="app-desc">Actas de evaluación, repitencia y tutorías.</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="permisos.html" class="app-card cat-docente">
-                    <div class="icon-wrapper"><i class="fa-solid fa-business-time"></i></div>
-                    <div class="app-title">Permisos Personal</div>
-                    <div class="app-desc">Solicitud y control de permisos administrativos.</div>
-                </a>
-            </div>
-        </div>
+    <footer class="footer">
+        <p class="mb-0">Sistema de Gestión Integrado • Escuela Agrícola Sagrados Corazones</p>
+        <p class="mb-0 fw-bold">Desarrollado por ProfeAle &copy; 2026</p>
+    </footer>
 
-        <div class="section-header">
-            <i class="fa-solid fa-chart-line section-icon fs-4"></i>
-            <h2 class="section-title">Gestión UTP</h2>
-        </div>
-        <div class="row g-4 mb-5">
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="acompanamiento.html" class="app-card cat-utp">
-                    <div class="icon-wrapper"><i class="fa-solid fa-glasses"></i></div>
-                    <div class="app-title">Acompañamiento</div>
-                    <div class="app-desc">Pautas de observación de clases y retroalimentación.</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="coberturas.html" class="app-card cat-utp">
-                    <div class="icon-wrapper"><i class="fa-solid fa-chart-pie"></i></div>
-                    <div class="app-title">Dashboard Cobertura</div>
-                    <div class="app-desc">Monitoreo global de avance curricular por curso.</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="control_plan.html" class="app-card cat-utp">
-                    <div class="icon-wrapper"><i class="fa-solid fa-calendar-check"></i></div>
-                    <div class="app-title">Control Planificación</div>
-                    <div class="app-desc">Seguimiento de entregas y fechas de planificaciones.</div>
-                </a>
-            </div>
-        </div>
-
-        <div class="section-header">
-            <i class="fa-solid fa-building-columns section-icon fs-4"></i>
-            <h2 class="section-title">Administración y Apoyo</h2>
-        </div>
-        <div class="row g-4 mb-5">
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="pie.html" class="app-card cat-pie">
-                    <div class="icon-wrapper"><i class="fa-solid fa-hands-holding-child"></i></div>
-                    <div class="app-title">Gestión PIE</div>
-                    <div class="app-desc">Registro colaborativo y seguimiento estudiantes NEE.</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="certificados.html" class="app-card cat-admin">
-                    <div class="icon-wrapper"><i class="fa-solid fa-certificate"></i></div>
-                    <div class="app-title">Generador Docs</div>
-                    <div class="app-desc">Certificados de alumno regular y matrícula.</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="atrasos.html" class="app-card cat-admin">
-                    <div class="icon-wrapper"><i class="fa-solid fa-clock-rotate-left"></i></div>
-                    <div class="app-title">Control Atrasos</div>
-                    <div class="app-desc">Registro de impuntualidad y tickets de ingreso.</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="salida_alumnos.html" class="app-card cat-admin">
-                    <div class="icon-wrapper"><i class="fa-solid fa-door-open"></i></div>
-                    <div class="app-title">Permisos Salida</div>
-                    <div class="app-desc">Generación de pases de salida para estudiantes.</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="suspensiones.html" class="app-card cat-admin">
-                    <div class="icon-wrapper"><i class="fa-solid fa-ban"></i></div>
-                    <div class="app-title">Suspensiones</div>
-                    <div class="app-desc">Emisión de comprobantes de suspensión de clases.</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="inventario.html" class="app-card cat-admin">
-                    <div class="icon-wrapper"><i class="fa-solid fa-boxes-stacked"></i></div>
-                    <div class="app-title">Inventario</div>
-                    <div class="app-desc">Control de recursos y activos fijos.</div>
-                </a>
-            </div>
-        </div>
-
-        <div class="section-header">
-            <i class="fa-solid fa-user-graduate section-icon fs-4"></i>
-            <h2 class="section-title">Estudiantes</h2>
-        </div>
-        <div class="row g-4">
-            <div class="col-12 col-md-4 col-lg-3">
-                <a href="salva.html" class="app-card cat-alumno">
-                    <div class="icon-wrapper"><i class="fa-solid fa-calculator"></i></div>
-                    <div class="app-title">Salva el Semestre</div>
-                    <div class="app-desc">Calculadora de notas y proyección de promedios.</div>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-3">
-                <a href="nem.html" class="app-card cat-alumno">
-                    <div class="icon-wrapper"><i class="fa-solid fa-ranking-star"></i></div>
-                    <div class="app-title">Calculadora NEM</div>
-                    <div class="app-desc">Estimación de puntaje ranking y NEM.</div>
-                </a>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="footer">
-        <p class="mb-1">Sistema de Gestión Curricular Integrado</p>
-        <p class="mb-0 small text-secondary">Desarrollado por <span class="fw-bold text-success">ProfeAle</span> &copy; 2025</p>
-    </div>
-
+    <script>
+        // Función para actualizar el reloj y la fecha
+        function updateHeaderInfo() {
+            const now = new Date();
+            // Reloj Digital
+            document.getElementById('live-clock').textContent = now.toLocaleTimeString('es-CL');
+            // Fecha
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('date-display').textContent = now.toLocaleDateString('es-ES', dateOptions);
+        }
+        // Actualizar cada segundo
+        setInterval(updateHeaderInfo, 1000);
+        updateHeaderInfo(); // Primera llamada inmediata
+    </script>
 </body>
 </html>

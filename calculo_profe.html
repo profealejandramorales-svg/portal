@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor Carga Docente (ProfeAle)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #f1f5f9; }
+        .tab-btn.active { border-bottom: 3px solid #2563eb; color: #1e40af; font-weight: bold; background: #eff6ff; }
+        .tab-btn { color: #64748b; font-weight: 600; }
+        /* Ajustes de Impresión */
+        @media print {
+            .no-print { display: none !important; }
+            .print-area { display: block !important; position: static; box-shadow: none !important; border: none !important; }
+            body { background: white; }
+            input { border: none !important; background: transparent !important; padding: 0 !important; font-weight: bold; text-align: right; }
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="max-w-6xl mx-auto min-h-screen flex flex-col">
+        
+        <header class="bg-slate-900 text-white p-6 no-print">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold">Gestor de Carga Docente</h1>
+                    <p class="text-slate-400 text-sm">Validación Legal + Desglose de Funciones</p>
+                </div>
+                <div class="text-right hidden md:block">
+                    <div class="inline-block bg-slate-800 px-3 py-1 rounded border border-slate-700 text-xs">
+                        <span class="text-yellow-400 font-bold">Nota:</span>
+                        <span>1 Bloque (45m) = 0.75 Hrs Crono</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <nav class="bg-white border-b border-slate-200 sticky top-0 z-20 no-print shadow-sm">
+            <div class="flex">
+                <button onclick="switchTab('calculadora')" id="btn-calculadora" class="tab-btn active flex-1 py-4 text-center transition hover:bg-slate-50">
+                    <i class="fa-solid fa-calculator mr-2"></i>Calculadora
+                </button>
+                <button onclick="switchTab('anexo')" id="btn-anexo" class="tab-btn flex-1 py-4 text-center transition hover:bg-slate-50">
+                    <i class="fa-solid fa-file-contract mr-2"></i>Anexo Contrato
+                </button>
+                <button onclick="switchTab('tabla')" id="btn-tabla" class="tab-btn flex-1 py-4 text-center transition hover:bg-slate-50 text-blue-700">
+                    <i class="fa-solid fa-table-list mr-2"></i>Tabla Maestra
+                </button>
+            </div>
+        </nav>
+
+        <div class="flex-grow p-4 md:p-8">
+
+            <div id="view-calculadora" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <div class="lg:col-span-4 space-y-6">
+                    <div class="bg-white p-5 rounded-xl shadow-md border border-slate-200">
+                        <h2 class="font-bold text-lg text-slate-800 mb-4 border-b pb-2">1. Configuración</h2>
+                        
+                        <div class="mb-6">
+                            <label class="block text-xs font-bold text-slate-500 uppercase">Horas Contrato (Crono)</label>
+                            <input type="number" id="in_contrato" value="42" oninput="calcular()" class="w-full text-3xl font-bold p-2 border rounded text-blue-900 border-blue-300 focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-4">
+                            <label class="block text-xs font-bold text-blue-800 uppercase mb-2 border-b border-blue-200 pb-1">A. Carga Lectiva (Tope 65%)</label>
+                            
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-sm font-semibold">Clases (Bloques 45m)</span>
+                                <input type="number" id="in_bloques" value="33" oninput="calcular()" class="w-20 text-right font-bold p-1 border rounded border-blue-300">
+                            </div>
+
+                            <div class="flex justify-between items-center">
+                                <div class="leading-tight">
+                                    <span class="text-sm font-semibold text-orange-800 block">PIE (Dec. 170)</span>
+                                    <span class="text-[10px] text-orange-600 italic">Lectivo según Cartilla 2</span>
+                                </div>
+                                <input type="number" id="in_pie" value="3" oninput="calcular()" class="w-20 text-right font-bold p-1 border rounded border-orange-300 bg-orange-50 text-orange-900">
+                            </div>
+                        </div>
+
+                        <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+                            <label class="block text-xs font-bold text-green-800 uppercase mb-2 border-b border-green-200 pb-1">B. Asignaciones No Lectivas</label>
+                            <p class="text-[10px] text-slate-500 mb-3">Ingresa horas cronológicas asignadas:</p>
+                            
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm">Jefatura de Curso</span>
+                                    <input type="number" id="in_jefatura" value="0" oninput="calcular()" class="w-20 text-right font-bold p-1 border rounded border-green-300">
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm">Talleres / Reflexión</span>
+                                    <input type="number" id="in_talleres" value="0" oninput="calcular()" class="w-20 text-right font-bold p-1 border rounded border-green-300">
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm">Atención Apoderados</span>
+                                    <input type="number" id="in_atencion" value="0" oninput="calcular()" class="w-20 text-right font-bold p-1 border rounded border-green-300">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-8 space-y-6">
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                        <h2 class="font-bold text-lg text-slate-800 mb-4">2. Análisis de Cumplimiento</h2>
+
+                        <div class="relative h-10 bg-gray-100 rounded-full mb-1 flex overflow-hidden">
+                            <div id="bar-clases" class="bg-blue-600 h-full flex items-center justify-center text-white text-[10px] font-bold" style="width: 0%">Clases</div>
+                            <div id="bar-pie" class="bg-orange-500 h-full flex items-center justify-center text-white text-[10px] font-bold border-l border-white/20" style="width: 0%">PIE</div>
+                            <div class="flex-grow bg-green-100 h-full flex items-center justify-center text-green-800 text-[10px] font-bold">No Lectivo</div>
+                            
+                            <div class="absolute top-0 bottom-0 border-r-4 border-red-500 z-10 opacity-60" style="left: 65%"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase mb-6">
+                            <span>0%</span>
+                            <span class="text-red-500">Límite Legal (65%)</span>
+                            <span>100%</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            <div class="border rounded-lg overflow-hidden">
+                                <div class="bg-blue-50 p-2 font-bold text-xs text-blue-900 uppercase border-b border-blue-100">Detalle Lectivo</div>
+                                <table class="w-full text-sm">
+                                    <tr>
+                                        <td class="p-2 text-slate-600">Clases (conv. 0.75)</td>
+                                        <td class="p-2 text-right font-bold"><span id="res-clases">0.00</span> h</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 text-slate-600">PIE (Dec. 170)</td>
+                                        <td class="p-2 text-right font-bold"><span id="res-pie">0.00</span> h</td>
+                                    </tr>
+                                    <tr class="bg-slate-50 border-t">
+                                        <td class="p-2 font-bold text-slate-800">Total Lectivo</td>
+                                        <td class="p-2 text-right font-bold text-blue-700 text-lg"><span id="res-total-lec">0.00</span> h</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 text-red-600 text-xs font-bold">Máximo Permitido</td>
+                                        <td class="p-2 text-right text-red-600 text-xs font-bold"><span id="res-tope">0.00</span> h</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <div class="border rounded-lg overflow-hidden">
+                                <div class="bg-green-50 p-2 font-bold text-xs text-green-900 uppercase border-b border-green-100">Uso del Tiempo No Lectivo</div>
+                                <table class="w-full text-sm">
+                                    <tr>
+                                        <td class="p-2 font-bold text-slate-700">Bolsa Disponible</td>
+                                        <td class="p-2 text-right font-bold text-green-700"><span id="res-nolec-total">0.00</span> h</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 text-slate-500 text-xs pl-4">(-) Jefatura</td>
+                                        <td class="p-2 text-right text-slate-500 text-xs">-<span id="res-jefatura">0</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 text-slate-500 text-xs pl-4">(-) Talleres/Reflexión</td>
+                                        <td class="p-2 text-right text-slate-500 text-xs">-<span id="res-talleres">0</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 text-slate-500 text-xs pl-4">(-) At. Apoderados</td>
+                                        <td class="p-2 text-right text-slate-500 text-xs">-<span id="res-atencion">0</span></td>
+                                    </tr>
+                                    <tr class="bg-yellow-50 border-t border-yellow-200">
+                                        <td class="p-2 font-bold text-yellow-900">Saldo Libre</td>
+                                        <td class="p-2 text-right font-extrabold text-yellow-900 text-lg"><span id="res-saldo">0.00</span> h</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="alert-box" class="mt-4 p-3 rounded text-center text-sm font-bold border"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-anexo" class="hidden max-w-4xl mx-auto">
+                <div class="bg-white p-10 rounded-xl shadow border border-slate-200 print-area">
+                    <h2 class="text-xl font-bold uppercase text-center border-b-2 border-black pb-4 mb-6">Anexo: Distribución Horaria</h2>
+                    
+                    <p class="text-justify mb-4">
+                        Se detalla la carga horaria semanal para un contrato de <strong><span class="v-contrato">00</span> horas cronológicas</strong>, en cumplimiento de la normativa vigente:
+                    </p>
+
+                    <table class="w-full border-collapse border border-slate-400 text-sm mb-4">
+                        <tr class="bg-slate-100">
+                            <th class="border border-slate-400 p-2 text-left w-1/4">TIPO</th>
+                            <th class="border border-slate-400 p-2 text-left">DETALLE DE LA FUNCIÓN</th>
+                            <th class="border border-slate-400 p-2 text-right w-32">HORAS</th>
+                        </tr>
+                        
+                        <tr>
+                            <td class="border border-slate-400 p-2 font-bold align-top" rowspan="2">A. LECTIVAS</td>
+                            <td class="border border-slate-400 p-2">
+                                <strong>Docencia de Aula:</strong> <span class="v-bloques">00</span> bloques pedagógicos de 45 min.
+                            </td>
+                            <td class="border border-slate-400 p-2 text-right"><span class="v-clases">00.00</span></td>
+                        </tr>
+                        <tr>
+                            <td class="border border-slate-400 p-2">
+                                <strong>Trabajo Colaborativo PIE (Dec. 170):</strong> Planificación y evaluación NEE.
+                            </td>
+                            <td class="border border-slate-400 p-2 text-right"><span class="v-pie">00.00</span></td>
+                        </tr>
+                        <tr class="bg-gray-100 font-bold">
+                            <td class="border border-slate-400 p-2 text-right" colspan="2">SUBTOTAL LECTIVO (A)</td>
+                            <td class="border border-slate-400 p-2 text-right"><span class="v-total-lec">00.00</span></td>
+                        </tr>
+
+                        <tr>
+                            <td class="border border-slate-400 p-2 font-bold align-top" rowspan="4">B. NO LECTIVAS</td>
+                            <td class="border border-slate-400 p-2">Jefatura de Curso</td>
+                            <td class="border border-slate-400 p-2 text-right"><span class="v-jefatura">0.00</span></td>
+                        </tr>
+                        <tr>
+                            <td class="border border-slate-400 p-2">Talleres / Reflexión Pedagógica</td>
+                            <td class="border border-slate-400 p-2 text-right"><span class="v-talleres">0.00</span></td>
+                        </tr>
+                        <tr>
+                            <td class="border border-slate-400 p-2">Atención de Apoderados / Entrevistas</td>
+                            <td class="border border-slate-400 p-2 text-right"><span class="v-atencion">0.00</span></td>
+                        </tr>
+                        <tr>
+                            <td class="border border-slate-400 p-2 text-slate-600 italic">
+                                Saldo de Libre Disposición (Recreos, Planificación General)
+                            </td>
+                            <td class="border border-slate-400 p-2 text-right font-bold text-slate-600"><span class="v-saldo">0.00</span></td>
+                        </tr>
+                        <tr class="bg-gray-100 font-bold">
+                            <td class="border border-slate-400 p-2 text-right" colspan="2">SUBTOTAL NO LECTIVO (B)</td>
+                            <td class="border border-slate-400 p-2 text-right"><span class="v-total-nolec">00.00</span></td>
+                        </tr>
+                        
+                        <tr class="bg-slate-800 text-white font-bold text-lg">
+                            <td class="border border-slate-400 p-2 text-right" colspan="2">TOTAL CONTRATO (A+B)</td>
+                            <td class="border border-slate-400 p-2 text-right"><span class="v-contrato">00.00</span></td>
+                        </tr>
+                    </table>
+
+                    <div class="mt-12 flex justify-between px-10">
+                        <div class="border-t border-black pt-2 w-40 text-center font-bold text-xs">FIRMA DOCENTE</div>
+                        <div class="border-t border-black pt-2 w-40 text-center font-bold text-xs">FIRMA EMPLEADOR</div>
+                    </div>
+                </div>
+                <div class="text-center mt-4 no-print">
+                    <button onclick="window.print()" class="bg-slate-800 text-white px-6 py-2 rounded font-bold hover:bg-black"><i class="fa-solid fa-print mr-2"></i>Imprimir</button>
+                </div>
+            </div>
+
+            <div id="view-tabla" class="hidden">
+                <div class="bg-white rounded-xl shadow p-6 border border-slate-200">
+                    <h2 class="font-bold text-lg text-slate-800 mb-4">Tabla Maestra de Referencia (65/35)</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-center">
+                            <thead class="bg-slate-800 text-white uppercase text-xs">
+                                <tr>
+                                    <th class="p-3">Contrato</th>
+                                    <th class="p-3 bg-blue-900">Máx Lectivo (65%)</th>
+                                    <th class="p-3 bg-blue-800">Equiv. Bloques</th>
+                                    <th class="p-3 bg-green-900">Mín No Lectivo (35%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-body" class="divide-y divide-slate-200 text-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="mt-auto p-4 text-center text-slate-400 text-sm bg-white border-t border-slate-200 no-print">
+            <p>Desarrollado por <span class="font-bold text-slate-600">ProfeAle</span></p>
+        </footer>
+
+    </div>
+
+    <script>
+        function calcular() {
+            // Entradas
+            const contrato = parseFloat(document.getElementById('in_contrato').value) || 0;
+            const bloques = parseFloat(document.getElementById('in_bloques').value) || 0;
+            const pie = parseFloat(document.getElementById('in_pie').value) || 0;
+            
+            // Entradas No Lectivas
+            const jefatura = parseFloat(document.getElementById('in_jefatura').value) || 0;
+            const talleres = parseFloat(document.getElementById('in_talleres').value) || 0;
+            const atencion = parseFloat(document.getElementById('in_atencion').value) || 0;
+
+            // Cálculos Lectivos
+            const clasesCrono = bloques * 0.75;
+            const totalLectivo = clasesCrono + pie; 
+            const topeLegal = contrato * 0.65;
+            
+            // Cálculos No Lectivos
+            const totalNoLectivo = contrato - totalLectivo;
+            const asignadoNoLectivo = jefatura + talleres + atencion;
+            const saldoLibre = totalNoLectivo - asignadoNoLectivo;
+
+            // Renderizar Textos
+            document.getElementById('res-clases').innerText = clasesCrono.toFixed(2);
+            document.getElementById('res-pie').innerText = pie.toFixed(2);
+            document.getElementById('res-total-lec').innerText = totalLectivo.toFixed(2);
+            document.getElementById('res-tope').innerText = topeLegal.toFixed(2);
+
+            document.getElementById('res-nolec-total').innerText = totalNoLectivo.toFixed(2);
+            document.getElementById('res-jefatura').innerText = jefatura.toFixed(2);
+            document.getElementById('res-talleres').innerText = talleres.toFixed(2);
+            document.getElementById('res-atencion').innerText = atencion.toFixed(2);
+            document.getElementById('res-saldo').innerText = saldoLibre.toFixed(2);
+
+            // Gráfico
+            const pctClases = (clasesCrono / contrato) * 100;
+            const pctPie = (pie / contrato) * 100;
+            document.getElementById('bar-clases').style.width = pctClases + "%";
+            document.getElementById('bar-pie').style.width = pctPie + "%";
+
+            // Alerta
+            const alertBox = document.getElementById('alert-box');
+            const diffLec = topeLegal - totalLectivo;
+            
+            if (diffLec < 0) {
+                alertBox.className = "mt-4 p-3 rounded text-center text-sm font-bold bg-red-100 text-red-900 border border-red-300";
+                alertBox.innerHTML = `⚠️ ERROR LEGAL: Exceso de horas lectivas (${Math.abs(diffLec).toFixed(2)} h).`;
+            } else if (saldoLibre < 0) {
+                alertBox.className = "mt-4 p-3 rounded text-center text-sm font-bold bg-yellow-100 text-yellow-900 border border-yellow-300";
+                alertBox.innerHTML = `⚠️ ERROR DE GESTIÓN: Faltan horas de contrato para cubrir todas las tareas no lectivas (${Math.abs(saldoLibre).toFixed(2)} h).`;
+            } else {
+                alertBox.className = "mt-4 p-3 rounded text-center text-sm font-bold bg-green-100 text-green-900 border border-green-300";
+                alertBox.innerHTML = `✅ CARGA CORRECTA: Quedan ${saldoLibre.toFixed(2)} h libres para recreos y planificación.`;
+            }
+
+            // Actualizar Anexo
+            const fields = {
+                'v-contrato': contrato, 'v-bloques': bloques, 'v-clases': clasesCrono, 
+                'v-pie': pie, 'v-total-lec': totalLectivo, 'v-jefatura': jefatura, 
+                'v-talleres': talleres, 'v-atencion': atencion, 'v-saldo': saldoLibre, 
+                'v-total-nolec': totalNoLectivo
+            };
+            for(const [cls, val] of Object.entries(fields)) {
+                document.querySelectorAll('.'+cls).forEach(e => e.innerText = typeof val === 'number' ? val.toFixed(2) : val);
+            }
+            
+            renderTabla(contrato);
+        }
+
+        function renderTabla(curr) {
+            const tbody = document.getElementById('tabla-body');
+            tbody.innerHTML = "";
+            for (let h = 44; h >= 20; h--) {
+                const maxLec = h * 0.65;
+                const minNol = h * 0.35;
+                const active = Math.floor(curr) === h ? "bg-blue-50 font-bold border-l-4 border-blue-600" : "hover:bg-slate-50";
+                tbody.innerHTML += `<tr class="${active}"><td class="p-2">${h}</td><td class="p-2 text-blue-700">${maxLec.toFixed(2)}</td><td class="p-2 text-slate-500">${(maxLec/0.75).toFixed(1)}</td><td class="p-2 text-green-700">${minNol.toFixed(2)}</td></tr>`;
+            }
+        }
+
+        function switchTab(id) {
+            ['calculadora','anexo','tabla'].forEach(t => {
+                document.getElementById('view-'+t).classList.add('hidden');
+                document.getElementById('btn-'+t).classList.remove('active');
+            });
+            document.getElementById('view-'+id).classList.remove('hidden');
+            document.getElementById('btn-'+id).classList.add('active');
+        }
+
+        window.onload = calcular;
+    </script>
+</body>
+</html>
