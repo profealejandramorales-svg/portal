@@ -16,96 +16,50 @@
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .input-form { width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.95rem; }
         
-        /* OCULTAR ÁREAS DE IMPRESIÓN EN PANTALLA */
         #print-container { display: none; }
 
-        /* ========================================= */
-        /* ESTILOS DE IMPRESIÓN (MODO PAPEL)         */
-        /* ========================================= */
+        /* ESTILOS DE IMPRESIÓN */
         @media print {
-            /* OCULTAR LA APP */
             #app-container, header, .swal2-container { display: none !important; }
-            
-            /* MOSTRAR SOLO EL DOCUMENTO */
             #print-container { display: block !important; position: absolute; top: 0; left: 0; width: 100%; background: white; }
-            
-            /* NOTA: La orientación (@page) se inyecta dinámicamente con JS */
-
-            /* ESTILO BASE DOCUMENTOS */
             .doc-box { font-family: 'Arial', sans-serif; color: #000; width: 100%; margin: 0 auto; }
-            
-            /* ENCABEZADO */
             .doc-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
             .doc-logo { height: 50px; }
             .doc-meta { text-align: right; }
             .doc-title { font-size: 14pt; font-weight: bold; margin: 0; text-transform: uppercase; }
             .doc-subtitle { font-size: 9pt; margin-top: 5px; }
-
-            /* GRILLA DE DATOS INDIVIDUAL (VOUCHER) */
             .doc-info { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; padding: 10px; border: 1px solid #ddd; background-color: #fafafa; -webkit-print-color-adjust: exact; }
             .info-row { font-size: 10pt; }
             .info-label { font-weight: bold; font-size: 8pt; text-transform: uppercase; color: #555; display: block; }
             .info-val { font-weight: bold; font-size: 11pt; }
-
-            /* TEXTO LEGAL (SOLO ANEXO) */
             .doc-legal { text-align: justify; font-size: 10pt; line-height: 1.3; margin-bottom: 20px; }
-
-            /* TABLA LIMPIA (General) */
             .clean-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 20px; }
-            
-            .clean-table th { 
-                text-align: left; 
-                padding: 6px 4px; 
-                border-top: 2px solid #000; 
-                border-bottom: 1px solid #000; 
-                font-weight: bold; 
-                text-transform: uppercase; 
-                font-size: 8pt;
-                background-color: #eee !important;
-                -webkit-print-color-adjust: exact;
-            }
-            
-            .clean-table td { 
-                padding: 4px 4px; 
-                border-bottom: 1px solid #ccc; 
-                vertical-align: middle;
-            }
-
+            .clean-table th { text-align: left; padding: 6px 4px; border-top: 2px solid #000; border-bottom: 1px solid #000; font-weight: bold; text-transform: uppercase; font-size: 8pt; background-color: #eee !important; -webkit-print-color-adjust: exact; }
+            .clean-table td { padding: 4px 4px; border-bottom: 1px solid #ccc; vertical-align: middle; }
             .clean-table tr:last-child td { border-bottom: 2px solid #000; } 
-
-            /* PLANILLA RESUMEN ESPECÍFICA */
+            .text-right { text-align: right; }
+            .text-center { text-align: center; }
+            .detail-text { font-size: 8pt; color: #444; font-style: italic; display: block; margin-top: 1px; }
+            .row-total td { font-size: 10pt; font-weight: bold; background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
+            .signatures { display: flex; justify-content: space-between; margin-top: 40px; page-break-inside: avoid; }
+            .sign-box { width: 40%; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-weight: bold; font-size: 10pt; }
+            .doc-footer { text-align: center; margin-top: 10px; font-size: 7pt; color: #aaa; }
             .summary-table th { font-size: 7pt; text-align: center; }
             .summary-table td { font-size: 8pt; text-align: center; }
             .summary-table td.text-left { text-align: left; }
-            .summary-table .row-total td { background-color: #333 !important; color: #fff !important; font-weight: bold; -webkit-print-color-adjust: exact; }
-
-            /* ALINEACIONES */
-            .text-right { text-align: right; }
-            .text-center { text-align: center; }
-            
-            /* ESTILOS FILAS */
-            .detail-text { font-size: 8pt; color: #444; font-style: italic; display: block; margin-top: 1px; }
-            .row-total td { font-size: 10pt; font-weight: bold; background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
-
-            /* FIRMAS */
-            .signatures { display: flex; justify-content: space-between; margin-top: 40px; page-break-inside: avoid; }
-            .sign-box { width: 40%; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-weight: bold; font-size: 10pt; }
-            
-            .doc-footer { text-align: center; margin-top: 10px; font-size: 7pt; color: #aaa; }
         }
     </style>
 </head>
 <body>
 
     <div id="app-container">
-        
         <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
             <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center gap-4">
                     <div class="h-10 w-10 bg-white rounded flex items-center justify-center text-slate-900 font-bold">D26</div>
                     <div>
                         <h1 class="text-xl font-bold">Gestión Dotación 2026</h1>
-                        <p class="text-slate-400 text-xs">Desarrollado por ProfeAle</p>
+                        <p class="text-slate-400 text-xs">Cuadratura Exacta</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -130,7 +84,7 @@
                         <div><label class="text-xs font-bold text-gray-500">NOMBRE</label><input type="text" id="prof-nombre" class="input-form font-bold uppercase"></div>
                         <div class="grid grid-cols-2 gap-2">
                             <div><label class="text-xs font-bold text-gray-500">RUT</label><input type="text" id="prof-rut" class="input-form uppercase"></div>
-                            <div><label class="text-xs font-bold text-blue-600">CONTRATO</label><input type="number" id="prof-contrato" class="input-form font-bold text-blue-700 text-center" value="44"></div>
+                            <div><label class="text-xs font-bold text-blue-600">CONTRATO</label><input type="number" id="prof-contrato" oninput="updateStats()" class="input-form font-bold text-blue-700 text-center" value="44"></div>
                         </div>
                         <div><label class="text-xs font-bold text-gray-500">FUNCIÓN</label><input type="text" id="prof-asignatura" class="input-form uppercase"></div>
                     </div>
@@ -159,7 +113,28 @@
                 <div class="bg-white p-6 rounded-lg shadow border border-gray-200 lg:col-span-2 flex flex-col">
                     <h3 class="font-bold text-gray-700 mb-4">Ítems Asignados</h3>
                     <div id="items-list" class="text-xs space-y-1 w-full max-h-[300px] overflow-y-auto bg-slate-50 p-2 rounded border mb-4"><div class="text-center text-gray-400 italic">Sin datos...</div></div>
-                    <div id="quick-stats" class="grid grid-cols-4 gap-2 text-center text-xs font-bold text-gray-600"></div>
+                    
+                    <div id="balance-panel" class="p-3 rounded border text-sm flex flex-col gap-2">
+                        <div class="flex justify-between items-center border-b pb-2">
+                            <span class="text-gray-600 font-bold">Cuadratura Horaria</span>
+                            <span id="balance-status" class="text-xs px-2 py-1 rounded font-bold uppercase">-</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-[10px] text-gray-500 uppercase font-bold">Ocupado</div>
+                                <div id="stat-ocupado" class="font-bold text-lg text-slate-700">0.0</div>
+                            </div>
+                            <div class="flex flex-col justify-center">
+                                <div class="text-[10px] text-gray-500 uppercase font-bold">Disponible</div>
+                                <div id="stat-disponible" class="font-bold text-lg text-green-600">0.0</div>
+                            </div>
+                            <div>
+                                <div class="text-[10px] text-gray-500 uppercase font-bold">Total Contrato</div>
+                                <div id="stat-contrato" class="font-bold text-lg text-blue-800">0.0</div>
+                            </div>
+                        </div>
+                        <div class="text-center text-xs text-gray-400 italic mt-1 border-t pt-2" id="stat-detalle"></div>
+                    </div>
                 </div>
             </div>
 
@@ -179,10 +154,13 @@
                     </table>
                 </div>
             </div>
-
+            
             <div id="tab-pie" class="hidden">
-                <div class="bg-white p-6 rounded-lg shadow border border-gray-200 mb-4">
-                    <h3 class="font-bold text-gray-700">Control de Cobertura PIE (3 Horas por Curso)</h3>
+                 <div class="bg-white p-6 rounded-lg shadow border border-gray-200 mb-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-700">Control de Cobertura PIE (3 Horas por Curso)</h3>
+                        <button onclick="printPie()" class="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded text-sm font-bold shadow"><i class="fas fa-print mr-2"></i> IMPRIMIR REPORTE</button>
+                    </div>
                     <div id="pie-dashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4"></div>
                 </div>
             </div>
@@ -190,21 +168,21 @@
             <div id="tab-resumen" class="hidden bg-white p-6 rounded-lg shadow border border-gray-200">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-gray-700">Planilla Resumen General</h3>
-                    <button onclick="printResumen()" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded text-sm font-bold shadow"><i class="fas fa-print mr-2"></i> IMPRIMIR PLANILLA</button>
+                    <button onclick="printResumen()" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded text-sm font-bold shadow"><i class="fas fa-print mr-2"></i> IMPRIMIR</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs border-collapse border border-gray-300">
                         <thead class="bg-slate-800 text-white">
                             <tr>
                                 <th class="p-2 border border-slate-600">Docente</th>
-                                <th class="p-2 border border-slate-600">Asignatura</th>
                                 <th class="p-2 border border-slate-600 w-32">Cursos</th>
-                                <th class="p-2 border border-slate-600 text-center bg-blue-900">Hrs Aula</th>
-                                <th class="p-2 border border-slate-600 text-center bg-purple-900">Hrs PIE</th>
-                                <th class="p-2 border border-slate-600 text-center">Hrs Jef</th>
-                                <th class="p-2 border border-slate-600 text-center">Tal/Otros</th>
-                                <th class="p-2 border border-slate-600 text-center font-bold bg-slate-700">Total Uso</th>
-                                <th class="p-2 border border-slate-600 text-center font-bold bg-slate-900">Contrato</th>
+                                <th class="p-2 border border-slate-600 text-center bg-blue-600 text-white">Hrs Ped</th>
+                                <th class="p-2 border border-slate-600 text-center bg-blue-700">Hrs Aula (Cr)</th>
+                                <th class="p-2 border border-slate-600 text-center bg-gray-200">Tbl: Rec</th>
+                                <th class="p-2 border border-slate-600 text-center bg-gray-200">Tbl: Plan</th>
+                                <th class="p-2 border border-slate-600 text-center">Otros</th>
+                                <th class="p-2 border border-slate-600 text-center font-bold bg-green-100 text-green-800">Disponible</th>
+                                <th class="p-2 border border-slate-600 text-center font-bold bg-slate-900">Total Contrato</th>
                             </tr>
                         </thead>
                         <tbody id="resumen-body"></tbody>
@@ -212,17 +190,21 @@
                     </table>
                 </div>
             </div>
-
         </div>
     </div>
 
     <div id="print-container"></div>
 
     <script>
-        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = { apiKey: "AIzaSyBnSMVCH0yyYUWk5z54kTIPTrWkyoeWs-I", authDomain: "suspenciones-40d0c.firebaseapp.com", projectId: "suspenciones-40d0c", storageBucket: "suspenciones-40d0c.firebasestorage.app", messagingSenderId: "853418739042", appId: "1:853418739042:web:d051befb99cd2acdd4583b", measurementId: "G-L00J7XN6Y1" };
-
         let db, TEACHERS = [], CURRENT_ITEMS = [], EDITING_ID = null;
+
+        const TABLA_CONVERSION = {
+            1: { recreo: 0.07, planif: 0.17 },
+            2: { recreo: 0.13, planif: 0.33 },
+            24: { recreo: 1.6, planif: 4.0 }, 
+            38: { recreo: 2.5, planif: 6.33 }
+        };
 
         window.onload = function() {
             try {
@@ -231,223 +213,89 @@
                 document.getElementById('status-db').innerText = "Conectado ✅";
                 document.getElementById('status-db').className = "text-xs bg-green-500 text-white px-2 py-1 rounded font-bold";
                 loadTeachers();
+                updateStats(); 
             } catch (e) { console.error(e); }
         };
 
-        // --- CÁLCULOS ---
         function calculateMath(items, contrato) {
-            let lectivasCrono = 0, lectivasBloques = 0, pieCrono = 0, jefaturaCrono = 0, tallerCrono = 0, otrosCrono = 0, recreos = 0;
-            let detAula = [], detPie = [], detJef = [], detTal = [];
+            let lectivasCrono = 0, lectivasBloquesCount = 0;
+            let pieCrono = 0, jefaturaCrono = 0, tallerCrono = 0, otrosCrono = 0;
+            let detAula = [], detPie = [];
 
             items.forEach(i => {
-                let valorCrono = i.crono;
+                let valorCrono = i.crono; 
                 if (i.tipo === 'AULA' || i.tipo === 'CONSEJO') {
-                    lectivasCrono += valorCrono;
-                    if(i.unidad === 'BLOQUES') lectivasBloques += i.valor; else lectivasBloques += (valorCrono * 60 / 45);
+                    lectivasCrono += valorCrono; 
+                    if(i.unidad === 'BLOQUES') lectivasBloquesCount += i.valor; 
+                    else lectivasBloquesCount += (valorCrono * 60 / 45); 
                     detAula.push(`${i.curso}`);
-                } else if (i.tipo === 'PIE') { pieCrono += valorCrono; detPie.push(`${i.curso}`); }
-                else if (i.tipo === 'JEF_CRONO') { jefaturaCrono += valorCrono; detJef.push(`${i.curso}`); }
-                else if (i.tipo === 'TAL') { tallerCrono += valorCrono; detTal.push(`${i.curso}`); }
-                else { otrosCrono += valorCrono; }
-                recreos += i.recreo;
+                } 
+                else if (i.tipo === 'PIE') { pieCrono += i.crono; detPie.push(`${i.curso}`); }
+                else if (i.tipo === 'JEF_CRONO') { jefaturaCrono += i.crono; }
+                else if (i.tipo === 'TAL') { tallerCrono += i.crono; }
+                else { otrosCrono += i.crono; }
             });
 
-            const ocupado = lectivasCrono + pieCrono + jefaturaCrono + tallerCrono + otrosCrono + recreos;
-            const planificacion = contrato - ocupado;
+            const bloquesEnteros = Math.round(lectivasBloquesCount);
+            let datosTabla = TABLA_CONVERSION[bloquesEnteros];
+            if (!datosTabla) {
+                if(bloquesEnteros === 0) datosTabla = { recreo: 0, planif: 0 };
+                else datosTabla = { recreo: (bloquesEnteros * 4) / 60, planif: bloquesEnteros * (4/24) };
+            }
 
-            return {
-                lectivasCrono, lectivasBloques, pieCrono, jefaturaCrono, tallerCrono, otrosCrono, recreos, planificacion,
-                totalLegal: contrato, totalOcupado: ocupado,
-                detAula: [...new Set(detAula)].join(', '), // Unique courses
-                detPie: detPie.join(', ')
-            };
+            const recreos = datosTabla.recreo;
+            const planificacion = datosTabla.planif;
+            const totalOcupado = lectivasCrono + recreos + planificacion + pieCrono + jefaturaCrono + tallerCrono + otrosCrono;
+            const remanente = contrato - totalOcupado;
+
+            return { lectivasCrono, lectivasBloquesCount, recreos, planificacion, pieCrono, jefaturaCrono, tallerCrono, otrosCrono, totalOcupado, remanente, detAula: [...new Set(detAula)].join(', '), detPie: detPie.join(', ') };
         }
 
-        // --- MANEJO DINÁMICO DE ORIENTACIÓN ---
         function setPrintOrientation(mode) {
-            // Elimina estilo anterior si existe
             const oldStyle = document.getElementById('dynamic-print-style');
             if(oldStyle) oldStyle.remove();
-
-            // Crea nuevo estilo para inyectar @page
             const style = document.createElement('style');
             style.id = 'dynamic-print-style';
-            // Landscape = Horizontal, Portrait = Vertical
             const css = `@media print { @page { size: letter ${mode}; margin: ${mode === 'landscape' ? '0.5cm' : '1.5cm'}; } }`;
             style.appendChild(document.createTextNode(css));
             document.head.appendChild(style);
         }
 
-        // --- GENERADOR DE DOCUMENTOS (VOUCHER/ANEXO) ---
         function generateDocHTML(type, t) {
             const c = calculateMath(t.items, parseFloat(t.contrato));
             const isAnexo = type === 'ANEXO';
             const title = isAnexo ? 'ANEXO DE CONTRATO' : 'CONSOLIDADO CARGA HORARIA';
             
-            let rows = `<tr><td><strong>1. Horas Lectivas (Aula)</strong><span class="detail-text">${c.detAula || '-'}</span></td><td class="text-center">${isAnexo ? '' : `${c.lectivasBloques.toFixed(1)} B`}</td><td class="text-right"><strong>${c.lectivasCrono.toFixed(2)}</strong></td></tr>`;
+            let rows = `<tr><td><strong>1. Horas Lectivas (Aula)</strong><span class="detail-text">${c.detAula || '-'}</span></td><td class="text-center">${c.lectivasBloquesCount.toFixed(1)} B</td><td class="text-right"><strong>${c.lectivasCrono.toFixed(2)}</strong></td></tr>`;
             if(c.pieCrono > 0) rows += `<tr><td><strong>2. PIE</strong></td><td class="text-center"></td><td class="text-right">${c.pieCrono.toFixed(2)}</td></tr>`;
             if(c.jefaturaCrono > 0) rows += `<tr><td><strong>3. Jefatura</strong></td><td class="text-center"></td><td class="text-right">${c.jefaturaCrono.toFixed(2)}</td></tr>`;
             if((c.tallerCrono + c.otrosCrono) > 0) rows += `<tr><td><strong>4. Talleres/Otros</strong></td><td class="text-center"></td><td class="text-right">${(c.tallerCrono + c.otrosCrono).toFixed(2)}</td></tr>`;
-            rows += `<tr><td><strong>5. Recreos</strong></td><td></td><td class="text-right">${c.recreos.toFixed(2)}</td></tr>`;
-            rows += `<tr><td><strong>6. Planif. y Eval.</strong></td><td></td><td class="text-right">${c.planificacion.toFixed(2)}</td></tr>`;
-            rows += `<tr class="row-total"><td colspan="2" class="text-right">TOTAL:</td><td class="text-right">${c.totalLegal.toFixed(2)}</td></tr>`;
+            rows += `<tr><td><strong>5. Recreos (Tabla)</strong></td><td></td><td class="text-right">${c.recreos.toFixed(2)}</td></tr>`;
+            rows += `<tr><td><strong>6. Planif. y Eval. (Tabla)</strong></td><td></td><td class="text-right">${c.planificacion.toFixed(2)}</td></tr>`;
+            
+            if(c.remanente > 0.05) {
+                rows += `<tr style="background-color:#f0fdf4;"><td class="text-green-800 italic font-bold">Dif. / Horas Disponibles</td><td></td><td class="text-right font-bold text-green-800">${c.remanente.toFixed(2)}</td></tr>`;
+            } else if(c.remanente < -0.05) {
+                rows += `<tr style="background-color:#fef2f2;"><td class="text-red-800 italic font-bold">Sobre Carga (Exceso)</td><td></td><td class="text-right font-bold text-red-800">${c.remanente.toFixed(2)}</td></tr>`;
+            }
 
-            return `
-                <div class="doc-box">
-                    <div class="doc-header">
-                        <img src="logo.jpg" class="doc-logo" alt="Logo">
-                        <div class="doc-meta"><h1 class="doc-title">${title}</h1><div class="doc-subtitle">Año 2026</div></div>
-                    </div>
-                    ${isAnexo ? `<div class="doc-legal">Detalle carga horaria docente <strong>${t.nombre}</strong>, RUT <strong>${t.rut}</strong>.</div>` : ''}
-                    <div class="doc-info">
-                        <div class="info-row"><span class="info-label">Docente</span><span class="info-val">${t.nombre}</span></div>
-                        <div class="info-row"><span class="info-label">RUT</span><span class="info-val">${t.rut}</span></div>
-                        <div class="info-row"><span class="info-label">Función</span><span class="info-val">${t.asignatura}</span></div>
-                        <div class="info-row"><span class="info-label">Contrato</span><span class="info-val">${t.contrato} Horas</span></div>
-                    </div>
-                    <table class="clean-table"><thead><tr><th>ÍTEM</th><th class="text-center">INSUMO</th><th class="text-right">HRS CRONO</th></tr></thead><tbody>${rows}</tbody></table>
-                    <div class="signatures"><div class="sign-box">Firma Docente</div>${isAnexo ? '<div class="sign-box">Firma Dirección</div>' : ''}</div>
-                </div>
-            `;
+            const finalShow = c.remanente >= 0 ? t.contrato : c.totalOcupado.toFixed(2);
+            rows += `<tr class="row-total"><td colspan="2" class="text-right">TOTAL CONTRATO:</td><td class="text-right">${parseFloat(finalShow).toFixed(2)}</td></tr>`;
+
+            return `<div class="doc-box"><div class="doc-header"><img src="logo.jpg" class="doc-logo" alt="Logo"><div class="doc-meta"><h1 class="doc-title">${title}</h1><div class="doc-subtitle">Año 2026</div></div></div>${isAnexo ? `<div class="doc-legal">Detalle carga horaria docente <strong>${t.nombre}</strong>, RUT <strong>${t.rut}</strong>.</div>` : ''}<div class="doc-info"><div class="info-row"><span class="info-label">Docente</span><span class="info-val">${t.nombre}</span></div><div class="info-row"><span class="info-label">RUT</span><span class="info-val">${t.rut}</span></div><div class="info-row"><span class="info-label">Función</span><span class="info-val">${t.asignatura}</span></div><div class="info-row"><span class="info-label">Contrato</span><span class="info-val">${t.contrato} Horas</span></div></div><table class="clean-table"><thead><tr><th>ÍTEM</th><th class="text-center">INSUMO</th><th class="text-right">HRS CRONO</th></tr></thead><tbody>${rows}</tbody></table><div class="signatures"><div class="sign-box">Firma Docente</div>${isAnexo ? '<div class="sign-box">Firma Dirección</div>' : ''}</div></div>`;
         }
 
         function printDoc(id, type) {
-            setPrintOrientation('portrait'); // Forzar Vertical para documentos individuales
+            setPrintOrientation('portrait');
             const t = TEACHERS.find(x => x.id === id);
             document.getElementById('print-container').innerHTML = generateDocHTML(type, t);
             window.print();
         }
 
-        // --- GENERADOR DE PLANILLA RESUMEN ---
-        function renderResumenTable() {
-            let totalAula = 0, totalPie = 0, totalJef = 0, totalOtr = 0, totalUso = 0, totalContrato = 0;
+        // --- NUEVA FUNCIÓN IMPRIMIR PIE ---
+        function printPie() {
+            setPrintOrientation('portrait'); // Reporte vertical
             
-            const rows = TEACHERS.map(t => {
-                const c = calculateMath(t.items, parseFloat(t.contrato));
-                
-                // Sumas globales
-                totalAula += c.lectivasCrono;
-                totalPie += c.pieCrono;
-                totalJef += c.jefaturaCrono;
-                totalOtr += (c.tallerCrono + c.otrosCrono);
-                const usoReal = c.lectivasCrono + c.pieCrono + c.jefaturaCrono + c.tallerCrono + c.otrosCrono + c.recreos + c.planificacion;
-                totalUso += usoReal;
-                totalContrato += parseFloat(t.contrato);
-
-                const talOtr = c.tallerCrono + c.otrosCrono;
-
-                return `
-                    <tr class="hover:bg-gray-50 border-b border-gray-200">
-                        <td class="p-2 font-bold text-slate-700 truncate">${t.nombre}</td>
-                        <td class="p-2 truncate text-gray-500">${t.asignatura}</td>
-                        <td class="p-2 text-[10px] text-gray-400 leading-tight">${c.detAula}</td>
-                        <td class="p-2 text-center bg-blue-50 text-blue-800 font-bold">${c.lectivasCrono > 0 ? c.lectivasCrono.toFixed(1) : '-'}</td>
-                        <td class="p-2 text-center bg-purple-50 text-purple-800 font-bold">${c.pieCrono > 0 ? c.pieCrono.toFixed(1) : '-'}</td>
-                        <td class="p-2 text-center text-gray-600">${c.jefaturaCrono > 0 ? c.jefaturaCrono.toFixed(1) : '-'}</td>
-                        <td class="p-2 text-center text-gray-600">${talOtr > 0 ? talOtr.toFixed(1) : '-'}</td>
-                        <td class="p-2 text-center font-bold bg-slate-100">${usoReal.toFixed(1)}</td>
-                        <td class="p-2 text-center font-bold bg-slate-200 border-l border-slate-300">${t.contrato}</td>
-                    </tr>
-                `;
-            }).join('');
-
-            const footer = `
-                <tr>
-                    <td colspan="3" class="p-2 text-right uppercase">Totales Colegio:</td>
-                    <td class="p-2 text-center bg-blue-100 text-blue-900">${totalAula.toFixed(1)}</td>
-                    <td class="p-2 text-center bg-purple-100 text-purple-900">${totalPie.toFixed(1)}</td>
-                    <td class="p-2 text-center">${totalJef.toFixed(1)}</td>
-                    <td class="p-2 text-center">${totalOtr.toFixed(1)}</td>
-                    <td class="p-2 text-center bg-slate-200">${totalUso.toFixed(1)}</td>
-                    <td class="p-2 text-center bg-slate-800 text-white">${totalContrato.toFixed(1)}</td>
-                </tr>
-            `;
-
-            document.getElementById('resumen-body').innerHTML = rows;
-            document.getElementById('resumen-footer').innerHTML = footer;
-        }
-
-        function printResumen() {
-            setPrintOrientation('landscape'); // Forzar Horizontal para la planilla grande
-            
-            const content = document.getElementById('resumen-body').innerHTML;
-            const footer = document.getElementById('resumen-footer').innerHTML;
-            
-            const html = `
-                <div class="doc-box" style="width:100%">
-                    <div class="doc-header">
-                        <div style="display:flex; align-items:center;">
-                            <div style="font-size:20px; font-weight:bold; margin-right:10px;">D26</div>
-                            <div>
-                                <h1 class="doc-title">PLANILLA GENERAL DE DOTACIÓN</h1>
-                                <div class="doc-subtitle">Resumen Ejecutivo 2026</div>
-                            </div>
-                        </div>
-                        <div>${new Date().toLocaleDateString()}</div>
-                    </div>
-                    <table class="clean-table summary-table" style="width:100%">
-                        <thead>
-                            <tr style="background:#ddd;">
-                                <th class="text-left" style="width:20%">DOCENTE</th>
-                                <th class="text-left" style="width:15%">ASIGNATURA</th>
-                                <th class="text-left" style="width:15%">CURSOS</th>
-                                <th>AULA</th>
-                                <th>PIE</th>
-                                <th>JEF</th>
-                                <th>OTROS</th>
-                                <th>TOTAL</th>
-                                <th>CONTRATO</th>
-                            </tr>
-                        </thead>
-                        <tbody>${content}</tbody>
-                        <tfoot style="background:#333; color:white;">${footer}</tfoot>
-                    </table>
-                    <div class="doc-footer">Desarrollado por ProfeAle</div>
-                </div>
-            `;
-            document.getElementById('print-container').innerHTML = html;
-            window.print();
-        }
-
-        // --- CRUD BÁSICO ---
-        function addItem() {
-            const val = parseFloat(document.getElementById('item-valor').value);
-            if (!val || val <= 0) return;
-            const unidad = document.getElementById('item-unidad').value;
-            const tipo = document.getElementById('item-tipo').value;
-            let crono = (unidad === 'BLOQUES') ? (val * 45)/60 : val;
-            let recreo = (tipo === 'AULA' || tipo === 'CONSEJO') ? (val * 5)/60 : 0; 
-            if (tipo === 'AULA' && unidad !== 'BLOQUES') recreo = val * 0.15;
-
-            CURRENT_ITEMS.push({ id: Date.now(), curso: document.getElementById('item-curso').value.toUpperCase() || 'GEN', tipo, valor: val, unidad, crono, recreo });
-            renderItems(); updateStats(); document.getElementById('item-valor').value = ''; document.getElementById('item-curso').focus();
-        }
-
-        function renderItems() { document.getElementById('items-list').innerHTML = CURRENT_ITEMS.map(i => `<div class="flex justify-between border-b p-1 bg-white"><span>${i.curso} ${i.tipo}</span><span>${i.valor} ${i.unidad}</span><button onclick="removeItem(${i.id})" class="text-red-500">x</button></div>`).join(''); }
-        function updateStats() { const c = calculateMath(CURRENT_ITEMS, parseFloat(document.getElementById('prof-contrato').value)||44); document.getElementById('quick-stats').innerHTML = `<div>Lect:${c.lectivasCrono.toFixed(1)}</div><div>Planif:${c.planificacion.toFixed(1)}</div><div>Recr:${c.recreos.toFixed(1)}</div><div class="font-bold">Tot:${c.totalLegal}</div>`; }
-        function removeItem(id) { CURRENT_ITEMS = CURRENT_ITEMS.filter(x => x.id !== id); renderItems(); updateStats(); }
-        
-        async function saveTeacher() {
-            const data = { nombre: document.getElementById('prof-nombre').value.toUpperCase(), rut: document.getElementById('prof-rut').value, contrato: document.getElementById('prof-contrato').value, asignatura: document.getElementById('prof-asignatura').value.toUpperCase(), items: CURRENT_ITEMS };
-            if(!data.nombre) return Swal.fire('Error','Falta nombre','error');
-            if(EDITING_ID) await db.collection("dotacion_2026").doc(EDITING_ID).update(data); else await db.collection("dotacion_2026").add(data);
-            resetForm(); loadTeachers(); Swal.fire('Guardado','','success');
-        }
-
-        async function loadTeachers() {
-            TEACHERS = [];
-            const snap = await db.collection("dotacion_2026").get();
-            snap.forEach(d => TEACHERS.push({id:d.id, ...d.data()}));
-            TEACHERS.sort((a,b) => a.nombre.localeCompare(b.nombre));
-            renderNomina(); renderPieDashboard(); renderResumenTable();
-        }
-
-        function renderNomina() {
-            document.getElementById('nomina-body').innerHTML = TEACHERS.map(t => `<tr class="table-row"><td class="p-2 font-bold text-slate-700">${t.nombre}</td><td class="text-center">${t.contrato}</td><td class="text-center p-2"><button onclick="printDoc('${t.id}', 'VOUCHER')" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs mr-1 shadow">🧾 CONSOLIDADO</button><button onclick="printDoc('${t.id}', 'ANEXO')" class="bg-slate-600 hover:bg-slate-700 text-white px-2 py-1 rounded text-xs mr-1 shadow">📄 ANEXO</button><button onclick="editTeacher('${t.id}')" class="text-orange-500 mx-1"><i class="fas fa-edit"></i></button><button onclick="deleteTeacher('${t.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></td></tr>`).join('');
-            document.getElementById('count-teachers').innerText = TEACHERS.length;
-        }
-
-        function renderPieDashboard() {
             const courses = {};
             TEACHERS.forEach(t => {
                 if(t.items) t.items.forEach(item => {
@@ -455,10 +303,84 @@
                         const cursoName = item.curso ? item.curso.trim().toUpperCase() : 'S/C';
                         if(!courses[cursoName]) courses[cursoName] = { total: 0, details: [] };
                         courses[cursoName].total += item.crono;
-                        courses[cursoName].details.push({ docente: t.nombre, asignatura: t.asignatura, horas: item.crono });
+                        courses[cursoName].details.push({ docente: t.nombre, horas: item.crono });
                     }
                 });
             });
+            const sortedKeys = Object.keys(courses).sort();
+            
+            let rows = sortedKeys.map(key => {
+                const data = courses[key];
+                const diff = 3.0 - data.total;
+                let status = diff > 0.1 ? "<span style='color:red; font-weight:bold'>FALTA</span>" : (diff < -0.1 ? "<span style='color:purple; font-weight:bold'>EXCESO</span>" : "<span style='color:green; font-weight:bold'>OK</span>");
+                const detailsStr = data.details.map(d => `${d.docente} (${d.horas.toFixed(1)})`).join(', ');
+
+                return `<tr>
+                    <td style="font-size:11pt; padding:5px;"><strong>${key}</strong></td>
+                    <td class="text-center" style="font-size:11pt;">${data.total.toFixed(2)} / 3.00</td>
+                    <td class="text-center" style="font-size:10pt;">${status}</td>
+                    <td style="font-size:9pt; color:#444;">${detailsStr}</td>
+                </tr>`;
+            }).join('');
+
+            const html = `
+                <div class="doc-box">
+                    <div class="doc-header">
+                        <div style="display:flex; align-items:center;">
+                            <div style="font-size:20px; font-weight:bold; margin-right:10px;">D26</div>
+                            <div>
+                                <h1 class="doc-title">REPORTE DE COBERTURA PIE</h1>
+                                <div class="doc-subtitle">Meta: 3 Horas Cronológicas por Curso</div>
+                            </div>
+                        </div>
+                        <div>${new Date().toLocaleDateString()}</div>
+                    </div>
+                    <table class="clean-table" style="margin-top:20px;">
+                        <thead>
+                            <tr style="background:#eee;">
+                                <th style="width:15%">CURSO</th>
+                                <th class="text-center" style="width:20%">COBERTURA</th>
+                                <th class="text-center" style="width:15%">ESTADO</th>
+                                <th>DOCENTES ASIGNADOS</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                    <div class="doc-footer">Generado automáticamente - Sistema Dotación 2026</div>
+                </div>
+            `;
+            document.getElementById('print-container').innerHTML = html;
+            window.print();
+        }
+
+        function renderResumenTable() {
+            let totalPed = 0, totalAula = 0, totalDisp = 0, totalContrato = 0;
+            const rows = TEACHERS.map(t => {
+                const c = calculateMath(t.items, parseFloat(t.contrato));
+                totalPed += c.lectivasBloquesCount; totalAula += c.lectivasCrono;
+                if(c.remanente > 0) totalDisp += c.remanente;
+                totalContrato += parseFloat(t.contrato);
+                const otros = c.jefaturaCrono + c.tallerCrono + c.otrosCrono + c.pieCrono;
+                const disponibleDisplay = c.remanente > 0 ? c.remanente.toFixed(2) : '0.00';
+                const bgDisp = c.remanente >= 0 ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800 font-bold';
+
+                return `<tr class="hover:bg-gray-50 border-b border-gray-200"><td class="p-2 font-bold text-slate-700 truncate">${t.nombre}</td><td class="p-2 text-[10px] text-gray-400 leading-tight">${c.detAula}</td><td class="p-2 text-center bg-blue-50 text-blue-900 font-bold border-l border-blue-100">${c.lectivasBloquesCount.toFixed(1)}</td><td class="p-2 text-center bg-blue-100 text-blue-800 font-bold">${c.lectivasCrono.toFixed(2)}</td><td class="p-2 text-center bg-gray-100 text-gray-600">${c.recreos.toFixed(2)}</td><td class="p-2 text-center bg-gray-100 text-gray-600">${c.planificacion.toFixed(2)}</td><td class="p-2 text-center text-gray-600">${otros > 0 ? otros.toFixed(2) : '-'}</td><td class="p-2 text-center ${bgDisp}">${disponibleDisplay}</td><td class="p-2 text-center font-bold bg-slate-900 text-white border-l border-slate-300">${t.contrato}</td></tr>`;
+            }).join('');
+            const footer = `<tr><td colspan="2" class="p-2 text-right uppercase">Totales Colegio:</td><td class="p-2 text-center bg-blue-200 text-blue-900 border-l border-blue-300">${totalPed.toFixed(1)}</td><td class="p-2 text-center bg-blue-300 text-blue-900">${totalAula.toFixed(2)}</td><td colspan="3" class="p-2 text-center bg-gray-200">-</td><td class="p-2 text-center bg-green-200 text-green-900">${totalDisp.toFixed(2)}</td><td class="p-2 text-center bg-slate-800 text-white">${totalContrato.toFixed(2)}</td></tr>`;
+            document.getElementById('resumen-body').innerHTML = rows; document.getElementById('resumen-footer').innerHTML = footer;
+        }
+
+        function printResumen() {
+            setPrintOrientation('landscape');
+            const content = document.getElementById('resumen-body').innerHTML;
+            const footer = document.getElementById('resumen-footer').innerHTML;
+            const html = `<div class="doc-box" style="width:100%"><div class="doc-header"><div style="display:flex; align-items:center;"><div style="font-size:20px; font-weight:bold; margin-right:10px;">D26</div><div><h1 class="doc-title">PLANILLA GENERAL DE DOTACIÓN</h1><div class="doc-subtitle">Resumen Ejecutivo 2026</div></div></div><div>${new Date().toLocaleDateString()}</div></div><table class="clean-table summary-table" style="width:100%"><thead><tr style="background:#ddd;"><th class="text-left" style="width:20%">DOCENTE</th><th class="text-left" style="width:20%">CURSOS</th><th>HRS PED</th><th>AULA (CR)</th><th>REC</th><th>PLAN</th><th>OTROS</th><th>DISPONIBLE</th><th>TOTAL CONTRATO</th></tr></thead><tbody>${content}</tbody><tfoot style="background:#333; color:white;">${footer}</tfoot></table><div class="doc-footer">Desarrollado por ProfeAle</div></div>`;
+            document.getElementById('print-container').innerHTML = html; window.print();
+        }
+
+        function renderPieDashboard() {
+            const courses = {};
+            TEACHERS.forEach(t => { if(t.items) t.items.forEach(item => { if(item.tipo === 'PIE') { const cursoName = item.curso ? item.curso.trim().toUpperCase() : 'S/C'; if(!courses[cursoName]) courses[cursoName] = { total: 0, details: [] }; courses[cursoName].total += item.crono; courses[cursoName].details.push({ docente: t.nombre, asignatura: t.asignatura, horas: item.crono }); } }); });
             const sortedKeys = Object.keys(courses).sort();
             document.getElementById('pie-dashboard').innerHTML = sortedKeys.length === 0 ? `<div class="col-span-full text-center py-10 text-gray-400 italic">No hay horas PIE asignadas aún.</div>` : sortedKeys.map(key => {
                 const data = courses[key];
@@ -468,27 +390,18 @@
             }).join('');
         }
 
+        function addItem() { const val = parseFloat(document.getElementById('item-valor').value); if (!val || val <= 0) return; const unidad = document.getElementById('item-unidad').value; const tipo = document.getElementById('item-tipo').value; let crono = (unidad === 'BLOQUES') ? (val * 45)/60 : val; CURRENT_ITEMS.push({ id: Date.now(), curso: document.getElementById('item-curso').value.toUpperCase() || 'GEN', tipo, valor: val, unidad, crono }); renderItems(); updateStats(); document.getElementById('item-valor').value = ''; document.getElementById('item-curso').focus(); }
+        function renderItems() { document.getElementById('items-list').innerHTML = CURRENT_ITEMS.map(i => `<div class="flex justify-between border-b p-1 bg-white"><span>${i.curso} ${i.tipo}</span><span>${i.valor} ${i.unidad}</span><button onclick="removeItem(${i.id})" class="text-red-500">x</button></div>`).join(''); }
+        function updateStats() { const contratoVal = parseFloat(document.getElementById('prof-contrato').value) || 0; const c = calculateMath(CURRENT_ITEMS, contratoVal); document.getElementById('stat-ocupado').innerText = c.totalOcupado.toFixed(2); document.getElementById('stat-contrato').innerText = contratoVal.toFixed(1); const dispDiv = document.getElementById('stat-disponible'); dispDiv.innerText = c.remanente.toFixed(2); dispDiv.className = c.remanente >= 0 ? "font-bold text-lg text-green-600" : "font-bold text-lg text-red-600"; const statusDiv = document.getElementById('balance-status'); const panel = document.getElementById('balance-panel'); const detail = document.getElementById('stat-detalle'); panel.className = "p-3 rounded border text-sm flex flex-col gap-2 transition-colors duration-300"; statusDiv.className = "text-xs px-2 py-1 rounded font-bold uppercase text-white"; if (Math.abs(c.remanente) < 0.05) { panel.classList.add('bg-green-50', 'border-green-200'); statusDiv.classList.add('bg-green-600'); statusDiv.innerText = "CUADRADO"; detail.innerHTML = `Distribución Exacta`; } else if (c.remanente > 0) { panel.classList.add('bg-blue-50', 'border-blue-200'); statusDiv.classList.add('bg-blue-600'); statusDiv.innerText = "CON HOLGURA"; detail.innerHTML = `Quedan <strong>${c.remanente.toFixed(2)}</strong> hrs libres`; } else { panel.classList.add('bg-red-50', 'border-red-200'); statusDiv.classList.add('bg-red-600'); statusDiv.innerText = "SOBRE CARGA"; detail.innerHTML = `Exceso de <strong>${Math.abs(c.remanente).toFixed(2)}</strong> hrs`; } }
+        function removeItem(id) { CURRENT_ITEMS = CURRENT_ITEMS.filter(x => x.id !== id); renderItems(); updateStats(); }
+        async function saveTeacher() { const data = { nombre: document.getElementById('prof-nombre').value.toUpperCase(), rut: document.getElementById('prof-rut').value, contrato: document.getElementById('prof-contrato').value, asignatura: document.getElementById('prof-asignatura').value.toUpperCase(), items: CURRENT_ITEMS }; if(!data.nombre) return Swal.fire('Error','Falta nombre','error'); if(EDITING_ID) await db.collection("dotacion_2026").doc(EDITING_ID).update(data); else await db.collection("dotacion_2026").add(data); resetForm(); loadTeachers(); Swal.fire('Guardado','','success'); }
+        async function loadTeachers() { TEACHERS = []; const snap = await db.collection("dotacion_2026").get(); snap.forEach(d => TEACHERS.push({id:d.id, ...d.data()})); TEACHERS.sort((a,b) => a.nombre.localeCompare(b.nombre)); renderNomina(); renderPieDashboard(); renderResumenTable(); }
+        function renderNomina() { document.getElementById('nomina-body').innerHTML = TEACHERS.map(t => `<tr class="table-row"><td class="p-2 font-bold text-slate-700">${t.nombre}</td><td class="text-center">${t.contrato}</td><td class="text-center p-2"><button onclick="printDoc('${t.id}', 'VOUCHER')" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs mr-1 shadow">🧾 CONSOLIDADO</button><button onclick="printDoc('${t.id}', 'ANEXO')" class="bg-slate-600 hover:bg-slate-700 text-white px-2 py-1 rounded text-xs mr-1 shadow">📄 ANEXO</button><button onclick="editTeacher('${t.id}')" class="text-orange-500 mx-1"><i class="fas fa-edit"></i></button><button onclick="deleteTeacher('${t.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></td></tr>`).join(''); document.getElementById('count-teachers').innerText = TEACHERS.length; }
         async function deleteTeacher(id) { if(confirm('¿Eliminar?')) { await db.collection("dotacion_2026").doc(id).delete(); loadTeachers(); } }
         function editTeacher(id) { const t = TEACHERS.find(x => x.id === id); document.getElementById('prof-nombre').value = t.nombre; document.getElementById('prof-rut').value = t.rut; document.getElementById('prof-contrato').value = t.contrato; document.getElementById('prof-asignatura').value = t.asignatura; CURRENT_ITEMS = t.items; EDITING_ID = id; renderItems(); updateStats(); showTab('carga'); }
         function resetForm() { document.getElementById('prof-nombre').value = ''; document.getElementById('prof-rut').value = ''; CURRENT_ITEMS = []; EDITING_ID = null; renderItems(); updateStats(); }
         function fullReset() { if(confirm("¿RESET?")) { localStorage.clear(); location.reload(); } }
-        
-        function showTab(id) { 
-            ['carga','nomina','pie','resumen'].forEach(tab => document.getElementById('tab-'+tab).classList.add('hidden'));
-            ['btn-carga','btn-nomina','btn-pie','btn-resumen'].forEach(btn => {
-                document.getElementById(btn).className = "flex-1 py-3 px-4 font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition whitespace-nowrap";
-                document.getElementById(btn).style.borderBottom = "none";
-            });
-
-            document.getElementById('tab-'+id).classList.remove('hidden');
-            const activeBtn = document.getElementById('btn-'+id);
-            activeBtn.classList.remove('text-gray-500');
-            
-            if(id==='carga') { activeBtn.classList.add('text-blue-800','bg-blue-50','border-blue-600'); activeBtn.style.borderBottomWidth = "4px"; }
-            else if(id==='nomina') { activeBtn.classList.add('text-blue-800','bg-blue-50','border-blue-600'); activeBtn.style.borderBottomWidth = "4px"; }
-            else if(id==='pie') { activeBtn.classList.add('text-purple-800','bg-purple-50','border-purple-600'); activeBtn.style.borderBottomWidth = "4px"; }
-            else if(id==='resumen') { activeBtn.classList.add('text-green-800','bg-green-50','border-green-600'); activeBtn.style.borderBottomWidth = "4px"; }
-        }
+        function showTab(id) { ['carga','nomina','pie','resumen'].forEach(tab => document.getElementById('tab-'+tab).classList.add('hidden')); ['btn-carga','btn-nomina','btn-pie','btn-resumen'].forEach(btn => { document.getElementById(btn).className = "flex-1 py-3 px-4 font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition whitespace-nowrap"; document.getElementById(btn).style.borderBottom = "none"; }); document.getElementById('tab-'+id).classList.remove('hidden'); const activeBtn = document.getElementById('btn-'+id); activeBtn.classList.remove('text-gray-500'); if(id==='carga'||id==='nomina') { activeBtn.classList.add('text-blue-800','bg-blue-50','border-blue-600'); activeBtn.style.borderBottomWidth = "4px"; } else if(id==='pie') { activeBtn.classList.add('text-purple-800','bg-purple-50','border-purple-600'); activeBtn.style.borderBottomWidth = "4px"; } else if(id==='resumen') { activeBtn.classList.add('text-green-800','bg-green-50','border-green-600'); activeBtn.style.borderBottomWidth = "4px"; } }
     </script>
 </body>
 </html>
