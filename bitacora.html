@@ -68,7 +68,7 @@
 <div class="header-band no-print">
     <div class="container d-flex align-items-center justify-content-center gap-3">
         <div class="bg-white p-1 rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 65px; height: 65px;">
-            <i class="bi bi-journal-bookmark-fill text-success fs-2"></i> 
+            <img src="logo.jpg" alt="Logo Escuela" class="rounded-circle" style="width: 100%; height: 100%; object-fit: contain;">
         </div>
         <div class="text-start">
             <h3 class="m-0 fw-bold">Bitácora Curricular Digital</h3>
@@ -165,7 +165,7 @@
     <table class="membrete-table">
         <tr>
             <td style="width: 100px; text-align: center;">
-                <img src="https://cdn-icons-png.flaticon.com/512/2830/2830198.png" id="pdf-logo-img" style="max-width: 80px; max-height: 80px;">
+                <img src="logo.jpg" id="pdf-logo-img" style="max-width: 80px; max-height: 80px;">
             </td>
             <td style="padding-left: 20px; vertical-align: middle;">
                 <h2 style="color: #000; margin: 0; font-size: 16px; text-transform: uppercase;">Informe de Cobertura Curricular</h2>
@@ -220,9 +220,34 @@
     let cursoActual = null, docenteNombre = "Docente";
 
     onSnapshot(collection(db, "cursos"), (s) => {
-        const sel = document.getElementById('selectCurso'); const prev = sel.value; sel.innerHTML = '<option value="">-- Seleccione Asignatura --</option>';
-        s.docs.forEach(d => { const dt = d.data(); sel.innerHTML += `<option value="${d.id}">${dt.nombre} (${dt.nivel})</option>`; });
-        document.getElementById('loadingOverlay').style.display='none'; if(prev && cursoActual && prev===cursoActual.id) sel.value = prev;
+        const sel = document.getElementById('selectCurso'); 
+        const prev = sel.value; 
+        sel.innerHTML = '<option value="">-- Seleccione Asignatura --</option>';
+
+        // 1. Convertir datos a lista temporal para manipular
+        let listaCursos = [];
+        s.docs.forEach(d => {
+            listaCursos.push({ id: d.id, ...d.data() });
+        });
+
+        // 2. Ordenar Alfabéticamente por nombre
+        listaCursos.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+        // 3. Renderizar opciones con estilo condicional
+        listaCursos.forEach(dt => {
+            // Verifica si existe array plan y tiene elementos
+            const tienePlan = dt.plan && dt.plan.length > 0;
+            
+            // Estilo: Verde + Negrita si tiene datos
+            const estilo = tienePlan ? 'color: #198754; font-weight: bold;' : '';
+            // Icono visual (Ticket) para asegurar visibilidad
+            const icono = tienePlan ? '✓ ' : ''; 
+
+            sel.innerHTML += `<option value="${dt.id}" style="${estilo}">${icono}${dt.nombre} (${dt.nivel})</option>`;
+        });
+
+        document.getElementById('loadingOverlay').style.display='none'; 
+        if(prev && cursoActual && prev===cursoActual.id) sel.value = prev;
     });
 
     window.cargarDatosCurso = async () => {
