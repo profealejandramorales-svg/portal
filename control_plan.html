@@ -3,47 +3,100 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Control de Planificaciones — Maestro v12 (Rango de Fechas)</title>
+  <title>Control de Planificaciones — Maestro v13 (Estable)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; background:#f3f4f6; }
+    body { font-family: 'Inter', sans-serif; background:#f3f4f6; min-height: 100vh; }
+    
+    /* UI Element Styles */
     .container-card { background:#fff; padding:1.25rem; border-radius:1rem; box-shadow:0 4px 6px rgba(0,0,0,0.08); }
-    .button-primary { background:#4f46e5; color:#fff; padding:0.75rem 1.25rem; border-radius:0.5rem; font-weight:600; transition: 0.2s; }
+    .button-primary { background:#4f46e5; color:#fff; padding:0.75rem 1.25rem; border-radius:0.5rem; font-weight:600; transition: 0.2s; cursor: pointer; }
     .button-primary:hover { background:#4338ca; }
-    .button-ghost { background:#e5e7eb; color:#111827; padding:0.75rem 1.25rem; border-radius:0.5rem; font-weight:600; transition: 0.2s; }
+    .button-ghost { background:#e5e7eb; color:#111827; padding:0.75rem 1.25rem; border-radius:0.5rem; font-weight:600; transition: 0.2s; cursor: pointer; }
     .button-ghost:hover { background:#d1d5db; }
     .badge { padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.75rem; font-weight:700; text-transform: uppercase; }
     .badge-completed { background:#d1fae5; color:#065f46; }
     .badge-pending { background:#fef3c7; color:#92400e; }
     .badge-delayed { background:#fee2e2; color:#991b1b; }
     
-    @media print{
-      body *{ visibility:hidden; }
-      .printable, .printable *{ visibility:visible; }
-      .printable{ position:absolute; left:0; top:0; width:100%; }
-      .no-print{ display:none !important; }
-      body.voucher-print-mode *{ visibility:hidden !important; }
-      body.voucher-print-mode #voucher-container,
-      body.voucher-print-mode #voucher-container *{ visibility:visible !important; }
-      body.voucher-print-mode #voucher-container{ position:absolute; left:0; top:0; width:100%; height:auto; display:block; background: white; }
+    /* --- SISTEMA DE IMPRESIÓN ROBUSTO --- */
+    @media print {
+      @page { margin: 0.5cm; size: landscape; }
+      
+      body { 
+        background: white; 
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important; 
+      }
+
+      /* REGLA MAESTRA: Ocultar todo por defecto al imprimir */
+      body > * { display: none !important; }
+
+      /* MODO 1: IMPRIMIR REPORTE (Pantalla Principal) */
+      body:not(.voucher-print-mode) .printable { 
+        display: block !important; 
+        position: absolute;
+        top: 0; left: 0; width: 100%;
+      }
+      body:not(.voucher-print-mode) .printable * { visibility: visible !important; display: block; }
+      
+      /* Restaurar layout interno del reporte */
+      body:not(.voucher-print-mode) .printable .grid { display: grid !important; }
+      body:not(.voucher-print-mode) .printable .flex { display: flex !important; }
+      body:not(.voucher-print-mode) .printable table { display: table !important; }
+      body:not(.voucher-print-mode) .printable tbody { display: table-row-group !important; }
+      body:not(.voucher-print-mode) .printable tr { display: table-row !important; }
+      body:not(.voucher-print-mode) .printable td, 
+      body:not(.voucher-print-mode) .printable th { display: table-cell !important; }
+
+      /* MODO 2: IMPRIMIR VOUCHER */
+      body.voucher-print-mode #voucher-container { 
+        display: block !important; 
+        position: absolute; 
+        left: 0; top: 0; width: 100%; 
+        background: white;
+        z-index: 9999;
+      }
+      body.voucher-print-mode #voucher-container * { visibility: visible !important; }
+      body.voucher-print-mode #voucher-container .flex { display: flex !important; }
+      body.voucher-print-mode #voucher-container .grid { display: grid !important; }
+
+      /* Ocultar siempre elementos de interfaz */
+      .no-print, header button, input, select, .button-primary, .button-ghost { display: none !important; }
+      
+      /* Ajustes visuales Reporte */
+      .container-card { box-shadow: none !important; border: 1px solid #ccc; break-inside: avoid; margin-bottom: 20px; }
+      #reportHeader { display: flex !important; margin-bottom: 20px; border-bottom: 2px solid #4f46e5; padding-bottom: 15px; width: 100%; }
+      .chart-container { height: 280px !important; width: 100% !important; page-break-inside: avoid; }
     }
+
+    #reportHeader { display: none; } /* Oculto en pantalla */
+    .hidden { display: none; } /* Utilidad simple */
   </style>
 </head>
 <body class="p-6 md:p-10">
-  <div class="max-w-7xl mx-auto space-y-6">
-    <header class="flex items-center justify-between flex-wrap gap-4 mb-4 no-print">
-      <h1 class="text-3xl font-bold text-gray-800">Control de Planificaciones</h1>
+  
+  <div class="max-w-7xl mx-auto mb-6 no-print">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div class="flex items-center gap-3">
+        <img src="logo.jpg" class="h-12 w-auto object-contain rounded-full shadow-sm bg-white p-1">
+        <h1 class="text-3xl font-bold text-gray-800">Control de Planificaciones</h1>
+      </div>
       <div class="flex items-center gap-2">
-        <span id="userIdDisplay" class="font-mono bg-teal-100 text-teal-800 px-3 py-1 rounded-md text-xs">Modo Híbrido (Rango Fechas)</span>
-        <button id="printListBtn" class="button-ghost">Imprimir Pantalla</button>
+        <span class="font-mono bg-teal-100 text-teal-800 px-3 py-1 rounded-md text-xs">Versión Estable v13</span>
+        <button id="printListBtn" class="button-primary bg-indigo-600 hover:bg-indigo-700 shadow-md">
+            <i class="fa-solid fa-print mr-2"></i>Imprimir Reporte
+        </button>
       </div>
     </header>
   </div>
 
-  <div class="max-w-7xl mx-auto space-y-8 mt-2">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 no-print">
+  <div class="max-w-7xl mx-auto space-y-8 mb-8 no-print">
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="container-card">
         <h2 class="text-lg font-semibold mb-3">1. Profesores</h2>
         <div class="flex gap-2 mb-3">
@@ -70,7 +123,7 @@
       </div>
     </div>
 
-    <div class="container-card no-print border-l-4 border-indigo-500">
+    <div class="container-card border-l-4 border-indigo-500">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Ingreso de Planificación</h2>
       <form id="planificacionForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div><label class="block text-sm font-medium text-gray-700">Título / Unidad</label><input id="titulo" class="mt-1 w-full rounded-md border border-gray-300 p-2"/></div>
@@ -86,57 +139,84 @@
       </form>
     </div>
 
-    <div class="container-card no-print bg-indigo-50">
+    <div class="container-card bg-indigo-50 border border-indigo-200">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Generación de Voucher / Filtros</h2>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div><label class="block text-sm font-medium text-gray-700">Profesor</label><select id="filterProfesor" class="mt-1 w-full rounded-md border-gray-300 p-2"></select></div>
-        <div><label class="block text-sm font-medium text-gray-700">Curso</label><select id="filterCurso" class="mt-1 w-full rounded-md border-gray-300 p-2"></select></div>
-        <div><label class="block text-sm font-medium text-gray-700">Desde</label><input type="date" id="dateStart" class="mt-1 w-full rounded-md border-gray-300 p-2"/></div>
-        <div><label class="block text-sm font-medium text-gray-700">Hasta (Corte)</label><input type="date" id="dateEnd" class="mt-1 w-full rounded-md border-gray-300 p-2"/></div>
+        <div><label class="block text-sm font-medium text-gray-700">Profesor</label><select id="filterProfesor" class="mt-1 w-full rounded-md border-gray-300 p-2 bg-white"></select></div>
+        <div><label class="block text-sm font-medium text-gray-700">Curso</label><select id="filterCurso" class="mt-1 w-full rounded-md border-gray-300 p-2 bg-white"></select></div>
+        <div><label class="block text-sm font-medium text-gray-700">Desde</label><input type="date" id="dateStart" class="mt-1 w-full rounded-md border-gray-300 p-2 bg-white"/></div>
+        <div><label class="block text-sm font-medium text-gray-700">Hasta (Corte)</label><input type="date" id="dateEnd" class="mt-1 w-full rounded-md border-gray-300 p-2 bg-white"/></div>
         
         <div class="md:col-span-4 flex justify-end items-center pt-4 border-t border-indigo-200 mt-2">
-          <button id="generateVoucherBtn" class="button-primary bg-green-600 hover:bg-green-700" disabled>
-            <i class="fa-solid fa-print"></i> Generar Reporte por Periodo
+          <button id="generateVoucherBtn" class="button-primary bg-green-600 hover:bg-green-700 shadow-lg scale-100 active:scale-95 transition-transform">
+            <i class="fa-solid fa-file-invoice mr-2"></i> Generar Comprobante (Voucher)
           </button>
         </div>
-      </div>
-      <p class="text-xs text-gray-500 mt-2">* Seleccione Profesor y el Rango de Fechas para generar el reporte específico.</p>
-    </div>
-
-    <div class="container-card printable">
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Panel de Control (Vista General)</h2>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="bg-blue-50 rounded-lg p-4 border border-blue-100"><p class="text-sm text-blue-600 font-bold">Total Visualizado</p><p id="totalCount" class="text-3xl font-bold text-gray-900">0</p></div>
-        <div class="bg-red-50 rounded-lg p-4 border border-red-100"><p class="text-sm text-red-600 font-bold">Atrasadas</p><p id="delayedCount" class="text-3xl font-bold text-red-600">0</p></div>
-        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200"><p class="text-sm text-gray-600 font-bold">Suma Días Atraso</p><p id="totalDaysDelayed" class="text-3xl font-bold text-gray-800">0</p></div>
-        <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
-          <p class="text-sm text-amber-700 font-bold">Acumulado Docente</p>
-          <p id="cumulativeByTeacherUpToDate" class="text-3xl font-bold text-amber-800">—</p>
-          <p class="text-[10px] text-amber-600 leading-tight mt-1">(Histórico hasta fecha "Hasta")</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <div class="h-64"><canvas id="chartStatus"></canvas></div>
-        <div class="h-64"><canvas id="chartDelays"></canvas></div>
-      </div>
-
-      <h2 class="text-xl font-bold text-gray-800 mb-4">Detalle de Registros</h2>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left">
-          <thead class="bg-gray-100 text-gray-600 font-bold uppercase text-xs">
-            <tr>
-              <th class="p-3">Título</th><th class="p-3">Profesor</th><th class="p-3">Asignatura</th><th class="p-3">Curso</th><th class="p-3">Plazo</th><th class="p-3">Entrega</th><th class="p-3">Días</th><th class="p-3">Estado</th>
-            </tr>
-          </thead>
-          <tbody id="planificacionesList" class="divide-y divide-gray-200"></tbody>
-        </table>
       </div>
     </div>
   </div>
 
-  <div id="voucher-container" class="p-10 bg-white hidden print-voucher"></div>
+  <div class="max-w-7xl mx-auto space-y-6 printable">
+    <div id="reportHeader" class="items-center">
+      <div class="mr-6">
+          <img src="logo.jpg" style="height: 80px; width: auto;" class="object-contain">
+      </div>
+      <div class="flex-grow flex justify-between items-end">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 uppercase">Reporte de Estado Curricular</h1>
+            <p class="text-sm text-gray-500 mt-1">Escuela Agrícola Sagrados Corazones - UTP</p>
+        </div>
+        <div class="text-right">
+            <p class="text-lg font-bold text-indigo-700" id="printDocenteName">VISTA GENERAL</p>
+            <p class="text-xs text-gray-400" id="printDate">Fecha: --/--/----</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+        <div class="container-card mb-6 border border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Resumen de Gestión</h2>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-blue-50 rounded-lg p-4 border border-blue-100"><p class="text-sm text-blue-600 font-bold">Total Visualizado</p><p id="totalCount" class="text-3xl font-bold text-gray-900">0</p></div>
+                <div class="bg-red-50 rounded-lg p-4 border border-red-100"><p class="text-sm text-red-600 font-bold">Atrasadas</p><p id="delayedCount" class="text-3xl font-bold text-red-600">0</p></div>
+                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200"><p class="text-sm text-gray-600 font-bold">Suma Días Atraso</p><p id="totalDaysDelayed" class="text-3xl font-bold text-gray-800">0</p></div>
+                <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                <p class="text-sm text-amber-700 font-bold">Acumulado Docente</p>
+                <p id="cumulativeByTeacherUpToDate" class="text-3xl font-bold text-amber-800">—</p>
+                <p class="text-[10px] text-amber-600 leading-tight mt-1">(Histórico hasta fecha "Hasta")</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-8 p-4 border rounded-lg bg-gray-50 container-card">
+            <h2 class="text-lg font-bold text-gray-700 mb-4 text-center">Métricas de Cumplimiento Anual</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-2 rounded shadow-sm border chart-container">
+                    <canvas id="chartStatus"></canvas>
+                </div>
+                <div class="bg-white p-2 rounded shadow-sm border chart-container">
+                    <canvas id="chartDelays"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-card">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Detalle de Registros</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left border rounded-lg overflow-hidden">
+                <thead class="bg-gray-100 text-gray-600 font-bold uppercase text-xs">
+                    <tr>
+                    <th class="p-3 border-b">Título</th><th class="p-3 border-b">Profesor</th><th class="p-3 border-b">Asignatura</th><th class="p-3 border-b">Curso</th><th class="p-3 border-b">Plazo</th><th class="p-3 border-b">Entrega</th><th class="p-3 border-b">Días</th><th class="p-3 border-b">Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="planificacionesList" class="divide-y divide-gray-200 bg-white"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div id="voucher-container" class="hidden"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -144,22 +224,19 @@
 
     const $ = (id)=>document.getElementById(id);
     
-    // Configuración
+    // Configuración Firebase
     const cfg = {apiKey:"AIzaSyDJnJlpsqR76z_lBnTNEULYcGoQGIi23VU",authDomain:"planificaciones-18b94.firebaseapp.com",projectId:"planificaciones-18b94",storageBucket:"planificaciones-18b94.appspot.com",messagingSenderId:"268119843295",appId:"1:268119843295:web:bb2bdbcb0affe4ecf3646a"};
     
-    // Rutas Híbridas
     const ROOT_PATH = "";
     const ARTIFACTS_PATH = "artifacts/planificaciones-18b94/users/planificaciones-18b94";
 
     const app=initializeApp(cfg); 
     const db=getFirestore(app);
 
-    // Variables Globales
     let planificacionesData=[];
     let entities = { profesores: new Set(), cursos: new Set(), asignaturas: new Set() };
     let chartStatus=null, chartDelays=null;
 
-    // --- FUNCIÓN DE FECHAS ---
     function toDate(v) {
         if (!v) return null;
         if (v instanceof Date) return v;
@@ -175,24 +252,30 @@
         return null;
     }
 
-    // --- CARGA DOBLE ---
+    // CARGA DE DATOS ROBUSTA
     function loadDualCollection(colName, callback) {
         let data1 = [], data2 = [];
         let loaded1 = false, loaded2 = false;
-        const mergeAndNotify = () => { if(loaded1 && loaded2) callback([...data1, ...data2]); };
+        
+        const mergeAndNotify = () => { 
+            if(loaded1 && loaded2) {
+                const combined = [...data1, ...data2].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                callback(combined); 
+            }
+        };
 
-        onSnapshot(query(collection(db, colName), orderBy('createdAt','desc')), snap => {
+        onSnapshot(collection(db, colName), snap => {
             data1 = []; snap.forEach(d => data1.push({id:d.id, ...d.data(), origin:'root'}));
             loaded1 = true; mergeAndNotify();
         });
 
-        onSnapshot(query(collection(db, `${ARTIFACTS_PATH}/${colName}`), orderBy('createdAt','desc')), snap => {
+        onSnapshot(collection(db, `${ARTIFACTS_PATH}/${colName}`), snap => {
             data2 = []; snap.forEach(d => data2.push({id:d.id, ...d.data(), origin:'artifacts'}));
             loaded2 = true; mergeAndNotify();
         });
     }
 
-    // --- INICIALIZACIÓN ---
+    // Inicialización
     loadDualCollection('planificaciones', (mergedData) => {
         planificacionesData = mergedData;
         mergedData.forEach(p => {
@@ -244,7 +327,6 @@
         renderList('asignaturaList', entities.asignaturas);
     }
 
-    // --- GUARDADO ---
     const saveEntity = async (col, val) => {
         if(!val) return;
         await addDoc(collection(db, `${ARTIFACTS_PATH}/${col}`), { nombre: val, createdAt: serverTimestamp() });
@@ -269,7 +351,6 @@
         $('planificacionForm').reset();
     });
 
-    // --- LÓGICA ---
     function daysDelay(e, a){ 
         const E=toDate(e), A=toDate(a); if(!E||!A) return 0; 
         E.setHours(0,0,0,0); A.setHours(0,0,0,0); 
@@ -285,8 +366,9 @@
         const startStr = $('dateStart').value;
         const endStr = $('dateEnd').value;
 
-        // FILTRO PRINCIPAL (Afecta lista y gráficos en pantalla)
-        // Si hay fechas, filtramos por ellas. Si no, mostramos todo.
+        $('printDocenteName').innerText = fProf ? fProf.toUpperCase() : "VISTA GENERAL (TODOS)";
+        $('printDate').innerText = "Fecha Emisión: " + new Date().toLocaleDateString('es-CL');
+
         const filtered = planificacionesData.filter(p => {
             let ok = true;
             if (fProf && p.profesor !== fProf) ok = false;
@@ -329,9 +411,8 @@
         $('delayedCount').innerText = delay;
         $('totalDaysDelayed').innerText = sumDelay;
 
-        // CÁLCULO DE ACUMULADO HISTÓRICO (Siempre hasta la fecha "Hasta" o hoy)
         if(fProf) {
-            const cutoff = endStr ? new Date(endStr) : new Date(); // Si no hay fecha fin, usar hoy
+            const cutoff = endStr ? new Date(endStr) : new Date();
             const history = planificacionesData.filter(p => p.profesor === fProf && toDate(p.fechaEntrega) && toDate(p.fechaEntrega) <= cutoff);
             
             const maxPorMes = {};
@@ -344,10 +425,8 @@
             });
             const cumul = Object.values(maxPorMes).reduce((a,b)=>a+b,0);
             $('cumulativeByTeacherUpToDate').innerText = cumul;
-            $('generateVoucherBtn').disabled = !endStr; // Solo habilita voucher si hay fecha fin
         } else {
             $('cumulativeByTeacherUpToDate').innerText = "—";
-            $('generateVoucherBtn').disabled = true;
         }
 
         renderCharts(filtered);
@@ -377,36 +456,45 @@
         chartStatus = new Chart($('chartStatus'), {
             type: 'bar',
             data: { labels: months, datasets: [{ label: 'A Tiempo', data: stats.map(s=>s.ok), backgroundColor: '#34d399' }, { label: 'Atrasadas', data: stats.map(s=>s.late), backgroundColor: '#f87171' }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
+            options: { 
+                animation: false, 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { x: { stacked: true }, y: { stacked: true } } 
+            }
         });
 
         chartDelays = new Chart($('chartDelays'), {
             type: 'line',
             data: { labels: months, datasets: [{ label: 'Días Acumulados (En Selección)', data: stats.map(s=>s.days), borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.2)', fill: true, tension: 0.3 }] },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { 
+                animation: false, 
+                responsive: true, 
+                maintainAspectRatio: false 
+            }
         });
     }
 
-    // --- VOUCHER GENERATION (RANGO DE FECHAS) ---
     $('generateVoucherBtn').onclick = () => {
         const prof = $('filterProfesor').value;
         const startStr = $('dateStart').value;
         const endStr = $('dateEnd').value;
         
-        if(!prof || !endStr) return;
+        if(!prof || !endStr) {
+            alert("⚠️ Atención: Para generar el comprobante (voucher), debes seleccionar un PROFESOR y una fecha 'HASTA'.");
+            return;
+        }
 
-        const start = startStr ? new Date(startStr) : new Date('2020-01-01'); // Inicio "infinito" si no selecciona
+        const start = startStr ? new Date(startStr) : new Date('2020-01-01');
         const end = new Date(endStr);
         const periodoTxt = `${startStr ? fmt(start) : 'Inicio'} al ${fmt(end)}`;
         const hoy = new Date().toLocaleDateString('es-CL');
 
-        // 1. Datos del Rango (Lista visible en el voucher)
         const periodData = planificacionesData.filter(p => {
             const d = toDate(p.fechaEntrega);
             return d && d >= start && d <= end && p.profesor === prof;
         });
         
-        // Ordenar cronológicamente
         periodData.sort((a,b) => toDate(a.fechaEntrega) - toDate(b.fechaEntrega));
 
         let sumPeriodDelay = 0;
@@ -427,14 +515,16 @@
             </tr>`;
         }).join('');
 
-        // 2. Acumulado Histórico (Hasta Fecha Fin)
         const cumul = $('cumulativeByTeacherUpToDate').innerText;
 
         $('voucher-container').innerHTML = `
             <div class="space-y-6 text-sm font-sans text-gray-800">
-                <div class="text-center border-b pb-4">
-                    <h1 class="text-2xl font-bold uppercase text-indigo-900">Informe de Cumplimiento</h1>
-                    <p class="text-gray-500">Periodo: <span class="font-bold text-black">${periodoTxt}</span> &bull; Emisión: ${hoy}</p>
+                <div class="flex items-center justify-between border-b pb-4">
+                    <img src="logo.jpg" style="height: 60px; width: auto;" class="object-contain">
+                    <div class="text-right">
+                        <h1 class="text-2xl font-bold uppercase text-indigo-900">Informe de Cumplimiento</h1>
+                        <p class="text-gray-500">Periodo: <span class="font-bold text-black">${periodoTxt}</span> &bull; Emisión: ${hoy}</p>
+                    </div>
                 </div>
 
                 <div class="bg-indigo-50 p-4 rounded-lg flex justify-between items-center">
