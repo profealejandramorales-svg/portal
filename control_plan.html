@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Control de Planificaciones — Maestro v13 (Estable)</title>
+  <title>Control de Planificaciones — Maestro (Gestión UTP)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -15,66 +15,48 @@
     .container-card { background:#fff; padding:1.25rem; border-radius:1rem; box-shadow:0 4px 6px rgba(0,0,0,0.08); }
     .button-primary { background:#4f46e5; color:#fff; padding:0.75rem 1.25rem; border-radius:0.5rem; font-weight:600; transition: 0.2s; cursor: pointer; }
     .button-primary:hover { background:#4338ca; }
+    .button-secondary { background:#3b82f6; color:#fff; padding:0.75rem 1.25rem; border-radius:0.5rem; font-weight:600; transition: 0.2s; cursor: pointer; }
+    .button-secondary:hover { background:#2563eb; }
     .button-ghost { background:#e5e7eb; color:#111827; padding:0.75rem 1.25rem; border-radius:0.5rem; font-weight:600; transition: 0.2s; cursor: pointer; }
     .button-ghost:hover { background:#d1d5db; }
-    .badge { padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.75rem; font-weight:700; text-transform: uppercase; }
-    .badge-completed { background:#d1fae5; color:#065f46; }
-    .badge-pending { background:#fef3c7; color:#92400e; }
-    .badge-delayed { background:#fee2e2; color:#991b1b; }
     
-    /* --- SISTEMA DE IMPRESIÓN ROBUSTO --- */
+    /* Badges */
+    .badge { padding:0.25rem 0.5rem; border-radius:9999px; font-size:0.7rem; font-weight:700; text-transform: uppercase; display: inline-block; }
+    .badge-ok { background:#d1fae5; color:#065f46; }
+    .badge-warn { background:#fef3c7; color:#92400e; }
+    .badge-err { background:#fee2e2; color:#991b1b; }
+    .badge-info { background:#dbeafe; color:#1e40af; }
+
+    /* --- SISTEMA DE IMPRESIÓN --- */
     @media print {
       @page { margin: 0.5cm; size: landscape; }
-      
-      body { 
-        background: white; 
-        -webkit-print-color-adjust: exact !important; 
-        print-color-adjust: exact !important; 
-      }
-
-      /* REGLA MAESTRA: Ocultar todo por defecto al imprimir */
+      body { background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       body > * { display: none !important; }
 
-      /* MODO 1: IMPRIMIR REPORTE (Pantalla Principal) */
-      body:not(.voucher-print-mode) .printable { 
-        display: block !important; 
-        position: absolute;
-        top: 0; left: 0; width: 100%;
-      }
+      /* MODO 1: IMPRIMIR REPORTE */
+      body:not(.voucher-print-mode) .printable { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
       body:not(.voucher-print-mode) .printable * { visibility: visible !important; display: block; }
-      
-      /* Restaurar layout interno del reporte */
       body:not(.voucher-print-mode) .printable .grid { display: grid !important; }
       body:not(.voucher-print-mode) .printable .flex { display: flex !important; }
       body:not(.voucher-print-mode) .printable table { display: table !important; }
       body:not(.voucher-print-mode) .printable tbody { display: table-row-group !important; }
       body:not(.voucher-print-mode) .printable tr { display: table-row !important; }
-      body:not(.voucher-print-mode) .printable td, 
-      body:not(.voucher-print-mode) .printable th { display: table-cell !important; }
+      body:not(.voucher-print-mode) .printable td, body:not(.voucher-print-mode) .printable th { display: table-cell !important; }
 
       /* MODO 2: IMPRIMIR VOUCHER */
-      body.voucher-print-mode #voucher-container { 
-        display: block !important; 
-        position: absolute; 
-        left: 0; top: 0; width: 100%; 
-        background: white;
-        z-index: 9999;
-      }
+      body.voucher-print-mode #voucher-container { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: white; z-index: 9999; }
       body.voucher-print-mode #voucher-container * { visibility: visible !important; }
       body.voucher-print-mode #voucher-container .flex { display: flex !important; }
       body.voucher-print-mode #voucher-container .grid { display: grid !important; }
 
-      /* Ocultar siempre elementos de interfaz */
-      .no-print, header button, input, select, .button-primary, .button-ghost { display: none !important; }
-      
-      /* Ajustes visuales Reporte */
+      .no-print, header button, input, select, .button-primary, .button-secondary, .button-ghost { display: none !important; }
       .container-card { box-shadow: none !important; border: 1px solid #ccc; break-inside: avoid; margin-bottom: 20px; }
       #reportHeader { display: flex !important; margin-bottom: 20px; border-bottom: 2px solid #4f46e5; padding-bottom: 15px; width: 100%; }
       .chart-container { height: 280px !important; width: 100% !important; page-break-inside: avoid; }
     }
 
-    #reportHeader { display: none; } /* Oculto en pantalla */
-    .hidden { display: none; } /* Utilidad simple */
+    #reportHeader { display: none; }
+    .hidden { display: none; }
   </style>
 </head>
 <body class="p-6 md:p-10">
@@ -86,8 +68,8 @@
         <h1 class="text-3xl font-bold text-gray-800">Control de Planificaciones</h1>
       </div>
       <div class="flex items-center gap-2">
-        <span class="font-mono bg-teal-100 text-teal-800 px-3 py-1 rounded-md text-xs">Versión Estable v13</span>
-        <button id="printListBtn" class="button-primary bg-indigo-600 hover:bg-indigo-700 shadow-md">
+        <span class="font-mono bg-indigo-100 text-indigo-800 px-3 py-1 rounded-md text-xs font-bold">Desarrollado por ProfeAle</span>
+        <button id="printListBtn" class="button-primary bg-gray-800 hover:bg-gray-900 shadow-md">
             <i class="fa-solid fa-print mr-2"></i>Imprimir Reporte
         </button>
       </div>
@@ -124,15 +106,26 @@
     </div>
 
     <div class="container-card border-l-4 border-indigo-500">
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Ingreso de Planificación</h2>
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Ingreso / Revisión</h2>
       <form id="planificacionForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div><label class="block text-sm font-medium text-gray-700">Título / Unidad</label><input id="titulo" class="mt-1 w-full rounded-md border border-gray-300 p-2"/></div>
         <div><label class="block text-sm font-medium text-gray-700">Profesor</label><select id="profesor" class="mt-1 w-full rounded-md border border-gray-300 p-2"></select></div>
         <div><label class="block text-sm font-medium text-gray-700">Curso</label><select id="curso" class="mt-1 w-full rounded-md border border-gray-300 p-2"></select></div>
         <div><label class="block text-sm font-medium text-gray-700">Asignatura</label><select id="asignaturaForm" class="mt-1 w-full rounded-md border border-gray-300 p-2"></select></div>
+        
         <div><label class="block text-sm font-medium text-gray-700">Fecha Plazo (Esperada)</label><input type="date" id="fechaEntrega" class="mt-1 w-full rounded-md border border-gray-300 p-2"/></div>
         <div><label class="block text-sm font-medium text-gray-700">Fecha Entrega Real</label><input type="date" id="fechaReal" class="mt-1 w-full rounded-md border border-gray-300 p-2"/></div>
-        <div class="lg:col-span-2 flex justify-end items-end gap-3">
+        
+        <div class="lg:col-span-2">
+           <label class="block text-sm font-bold text-indigo-700">Estado Revisión UTP</label>
+           <select id="estadoRevision" class="mt-1 w-full rounded-md border-2 border-indigo-200 p-2 font-bold text-gray-700">
+               <option value="pendiente">⏳ Pendiente de Revisión</option>
+               <option value="revisado">✅ Revisado (Sin Observaciones)</option>
+               <option value="observado">⚠️ Con Observaciones (Retroalimentar)</option>
+           </select>
+        </div>
+
+        <div class="lg:col-span-4 flex justify-end items-center gap-3 pt-2 border-t mt-2">
           <button type="reset" class="button-ghost">Limpiar</button>
           <button type="submit" class="button-primary">Guardar Registro</button>
         </div>
@@ -140,16 +133,19 @@
     </div>
 
     <div class="container-card bg-indigo-50 border border-indigo-200">
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Generación de Voucher / Filtros</h2>
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Generación de Reportes y Correos</h2>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div><label class="block text-sm font-medium text-gray-700">Profesor</label><select id="filterProfesor" class="mt-1 w-full rounded-md border-gray-300 p-2 bg-white"></select></div>
         <div><label class="block text-sm font-medium text-gray-700">Curso</label><select id="filterCurso" class="mt-1 w-full rounded-md border-gray-300 p-2 bg-white"></select></div>
         <div><label class="block text-sm font-medium text-gray-700">Desde</label><input type="date" id="dateStart" class="mt-1 w-full rounded-md border-gray-300 p-2 bg-white"/></div>
         <div><label class="block text-sm font-medium text-gray-700">Hasta (Corte)</label><input type="date" id="dateEnd" class="mt-1 w-full rounded-md border-gray-300 p-2 bg-white"/></div>
         
-        <div class="md:col-span-4 flex justify-end items-center pt-4 border-t border-indigo-200 mt-2">
-          <button id="generateVoucherBtn" class="button-primary bg-green-600 hover:bg-green-700 shadow-lg scale-100 active:scale-95 transition-transform">
-            <i class="fa-solid fa-file-invoice mr-2"></i> Generar Comprobante (Voucher)
+        <div class="md:col-span-4 flex justify-end items-center gap-3 pt-4 border-t border-indigo-200 mt-2">
+          <button id="sendEmailBtn" class="button-secondary shadow-lg">
+            <i class="fa-solid fa-envelope mr-2"></i> Enviar Resumen Mensual
+          </button>
+          <button id="generateVoucherBtn" class="button-primary bg-green-600 hover:bg-green-700 shadow-lg">
+            <i class="fa-solid fa-file-invoice mr-2"></i> Generar Voucher (PDF)
           </button>
         </div>
       </div>
@@ -183,20 +179,14 @@
                 <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
                 <p class="text-sm text-amber-700 font-bold">Acumulado Docente</p>
                 <p id="cumulativeByTeacherUpToDate" class="text-3xl font-bold text-amber-800">—</p>
-                <p class="text-[10px] text-amber-600 leading-tight mt-1">(Histórico hasta fecha "Hasta")</p>
                 </div>
             </div>
         </div>
 
         <div class="mb-8 p-4 border rounded-lg bg-gray-50 container-card">
-            <h2 class="text-lg font-bold text-gray-700 mb-4 text-center">Métricas de Cumplimiento Anual</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white p-2 rounded shadow-sm border chart-container">
-                    <canvas id="chartStatus"></canvas>
-                </div>
-                <div class="bg-white p-2 rounded shadow-sm border chart-container">
-                    <canvas id="chartDelays"></canvas>
-                </div>
+                <div class="bg-white p-2 rounded shadow-sm border chart-container"><canvas id="chartStatus"></canvas></div>
+                <div class="bg-white p-2 rounded shadow-sm border chart-container"><canvas id="chartDelays"></canvas></div>
             </div>
         </div>
 
@@ -206,8 +196,12 @@
                 <table class="w-full text-sm text-left border rounded-lg overflow-hidden">
                 <thead class="bg-gray-100 text-gray-600 font-bold uppercase text-xs">
                     <tr>
-                    <th class="p-3 border-b">Título</th><th class="p-3 border-b">Profesor</th><th class="p-3 border-b">Asignatura</th><th class="p-3 border-b">Curso</th><th class="p-3 border-b">Plazo</th><th class="p-3 border-b">Entrega</th><th class="p-3 border-b">Días</th><th class="p-3 border-b">Estado</th>
-                    </tr>
+                    <th class="p-3 border-b">Actividad</th>
+                    <th class="p-3 border-b">Profesor</th>
+                    <th class="p-3 border-b">Curso/Asig</th>
+                    <th class="p-3 border-b">Plazo vs Real</th>
+                    <th class="p-3 border-b text-center">Entrega</th>
+                    <th class="p-3 border-b text-center">Rev. UTP</th> <th class="p-3 border-b text-center no-print">Acciones</th> </tr>
                 </thead>
                 <tbody id="planificacionesList" class="divide-y divide-gray-200 bg-white"></tbody>
                 </table>
@@ -220,16 +214,13 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const $ = (id)=>document.getElementById(id);
-    
-    // Configuración Firebase
     const cfg = {apiKey:"AIzaSyDJnJlpsqR76z_lBnTNEULYcGoQGIi23VU",authDomain:"planificaciones-18b94.firebaseapp.com",projectId:"planificaciones-18b94",storageBucket:"planificaciones-18b94.appspot.com",messagingSenderId:"268119843295",appId:"1:268119843295:web:bb2bdbcb0affe4ecf3646a"};
     
     const ROOT_PATH = "";
     const ARTIFACTS_PATH = "artifacts/planificaciones-18b94/users/planificaciones-18b94";
-
     const app=initializeApp(cfg); 
     const db=getFirestore(app);
 
@@ -252,323 +243,169 @@
         return null;
     }
 
-    // CARGA DE DATOS ROBUSTA
     function loadDualCollection(colName, callback) {
         let data1 = [], data2 = [];
         let loaded1 = false, loaded2 = false;
-        
-        const mergeAndNotify = () => { 
-            if(loaded1 && loaded2) {
-                const combined = [...data1, ...data2].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                callback(combined); 
-            }
-        };
-
-        onSnapshot(collection(db, colName), snap => {
-            data1 = []; snap.forEach(d => data1.push({id:d.id, ...d.data(), origin:'root'}));
-            loaded1 = true; mergeAndNotify();
-        });
-
-        onSnapshot(collection(db, `${ARTIFACTS_PATH}/${colName}`), snap => {
-            data2 = []; snap.forEach(d => data2.push({id:d.id, ...d.data(), origin:'artifacts'}));
-            loaded2 = true; mergeAndNotify();
-        });
+        const mergeAndNotify = () => { if(loaded1 && loaded2) { callback([...data1, ...data2].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))); } };
+        onSnapshot(collection(db, colName), snap => { data1 = []; snap.forEach(d => data1.push({id:d.id, ...d.data(), origin:'root'})); loaded1 = true; mergeAndNotify(); });
+        onSnapshot(collection(db, `${ARTIFACTS_PATH}/${colName}`), snap => { data2 = []; snap.forEach(d => data2.push({id:d.id, ...d.data(), origin:'artifacts'})); loaded2 = true; mergeAndNotify(); });
     }
 
-    // Inicialización
-    loadDualCollection('planificaciones', (mergedData) => {
-        planificacionesData = mergedData;
-        mergedData.forEach(p => {
-            if(p.profesor) entities.profesores.add(p.profesor);
-            if(p.curso) entities.cursos.add(p.curso);
-            if(p.asignatura) entities.asignaturas.add(p.asignatura);
-        });
-        updateSelectors();
-        renderDashboard();
+    loadDualCollection('planificaciones', (d) => {
+        planificacionesData = d;
+        d.forEach(p => { if(p.profesor) entities.profesores.add(p.profesor); if(p.curso) entities.cursos.add(p.curso); if(p.asignatura) entities.asignaturas.add(p.asignatura); });
+        updateSelectors(); renderDashboard();
     });
-
-    ['profesores', 'cursos', 'asignaturas'].forEach(type => {
-        loadDualCollection(type, (merged) => {
-            merged.forEach(item => entities[type].add(item.nombre));
-            updateSelectors();
-        });
-    });
+    ['profesores', 'cursos', 'asignaturas'].forEach(t => loadDualCollection(t, (m) => { m.forEach(i => entities[t].add(i.nombre)); updateSelectors(); }));
 
     function updateSelectors() {
         const fill = (id, set) => {
-            const el = $(id);
-            const current = el.value;
-            el.innerHTML = '<option value="">Seleccionar...</option>';
-            Array.from(set).sort().forEach(val => {
-                const opt = document.createElement('option');
-                opt.value = val;
-                opt.textContent = val;
-                el.appendChild(opt);
-            });
-            if(current) el.value = current;
+            const el = $(id); const curr = el.value; el.innerHTML = '<option value="">Seleccionar...</option>';
+            Array.from(set).sort().forEach(val => { const opt = document.createElement('option'); opt.value = val; opt.textContent = val; el.appendChild(opt); });
+            if(curr) el.value = curr;
         };
-        fill('profesor', entities.profesores);
-        fill('curso', entities.cursos);
-        fill('asignaturaForm', entities.asignaturas);
-        fill('filterProfesor', entities.profesores);
-        fill('filterCurso', entities.cursos);
-        
-        const renderList = (id, set) => {
-            const el = $(id); el.innerHTML = '';
-            Array.from(set).sort().forEach(val => {
-                const li = document.createElement('li');
-                li.className = 'flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-200';
-                li.textContent = val;
-                el.appendChild(li);
-            });
-        };
-        renderList('profesorList', entities.profesores);
-        renderList('cursoList', entities.cursos);
-        renderList('asignaturaList', entities.asignaturas);
+        fill('profesor', entities.profesores); fill('curso', entities.cursos); fill('asignaturaForm', entities.asignaturas);
+        fill('filterProfesor', entities.profesores); fill('filterCurso', entities.cursos);
+        const list = (id, set) => { $(id).innerHTML=''; Array.from(set).sort().forEach(v=>{ const li=document.createElement('li'); li.className='flex justify-between p-2 border-b'; li.textContent=v; $(id).appendChild(li); }); };
+        list('profesorList', entities.profesores); list('cursoList', entities.cursos); list('asignaturaList', entities.asignaturas);
     }
 
-    const saveEntity = async (col, val) => {
-        if(!val) return;
-        await addDoc(collection(db, `${ARTIFACTS_PATH}/${col}`), { nombre: val, createdAt: serverTimestamp() });
-    };
+    const saveEntity = async (c, v) => { if(!v) return; await addDoc(collection(db, `${ARTIFACTS_PATH}/${c}`), { nombre: v, createdAt: serverTimestamp() }); };
     $('addProfesorBtn').onclick = () => { saveEntity('profesores', $('profesorInput').value); $('profesorInput').value=''; };
     $('addCursoBtn').onclick = () => { saveEntity('cursos', $('cursoInput').value); $('cursoInput').value=''; };
     $('addAsignaturaBtn').onclick = () => { saveEntity('asignaturas', $('asignaturaInput').value); $('asignaturaInput').value=''; };
 
     $('planificacionForm').addEventListener('submit', async e => {
         e.preventDefault();
-        const payload = {
-            titulo: $('titulo').value.trim(),
-            profesor: $('profesor').value,
-            curso: $('curso').value,
-            asignatura: $('asignaturaForm').value,
-            fechaEntrega: $('fechaEntrega').value || null,
-            fechaReal: $('fechaReal').value || null,
+        await addDoc(collection(db, `${ARTIFACTS_PATH}/planificaciones`), {
+            titulo: $('titulo').value.trim(), profesor: $('profesor').value, curso: $('curso').value, asignatura: $('asignaturaForm').value,
+            fechaEntrega: $('fechaEntrega').value || null, fechaReal: $('fechaReal').value || null,
+            estadoRevision: $('estadoRevision').value, // NUEVO CAMPO
             createdAt: serverTimestamp()
-        };
-        await addDoc(collection(db, `${ARTIFACTS_PATH}/planificaciones`), payload);
-        alert("✅ Guardado correctamente");
-        $('planificacionForm').reset();
+        });
+        alert("✅ Guardado correctamente"); $('planificacionForm').reset();
     });
 
-    function daysDelay(e, a){ 
-        const E=toDate(e), A=toDate(a); if(!E||!A) return 0; 
-        E.setHours(0,0,0,0); A.setHours(0,0,0,0); 
-        const d=Math.ceil((A-E)/86400000); return d>0?d:0; 
-    }
+    function daysDelay(e, a){ const E=toDate(e), A=toDate(a); if(!E||!A) return 0; E.setHours(0,0,0,0); A.setHours(0,0,0,0); const d=Math.ceil((A-E)/86400000); return d>0?d:0; }
     function status(e,a){ if(!a) return 'pending'; return daysDelay(e,a)>0?'delayed':'completed'; }
-    function fmt(d){ const x=toDate(d); return x ? x.toLocaleDateString('es-CL') : '---'; }
+    function fmt(d){ const x=toDate(d); return x ? x.toLocaleDateString('es-CL') : '-'; }
     function ym(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
 
     function renderDashboard(){
-        const fProf = $('filterProfesor').value;
-        const fCur = $('filterCurso').value;
-        const startStr = $('dateStart').value;
-        const endStr = $('dateEnd').value;
-
-        $('printDocenteName').innerText = fProf ? fProf.toUpperCase() : "VISTA GENERAL (TODOS)";
-        $('printDate').innerText = "Fecha Emisión: " + new Date().toLocaleDateString('es-CL');
+        const fP=$('filterProfesor').value, fC=$('filterCurso').value, dS=$('dateStart').value, dE=$('dateEnd').value;
+        $('printDocenteName').innerText = fP ? fP.toUpperCase() : "VISTA GENERAL"; $('printDate').innerText = "Fecha: " + new Date().toLocaleDateString('es-CL');
 
         const filtered = planificacionesData.filter(p => {
-            let ok = true;
-            if (fProf && p.profesor !== fProf) ok = false;
-            if (fCur && p.curso !== fCur) ok = false;
-            
-            const pDate = toDate(p.fechaEntrega);
-            if (pDate && startStr && pDate < new Date(startStr)) ok = false;
-            if (pDate && endStr && pDate > new Date(endStr)) ok = false;
-            
+            let ok = true; const d = toDate(p.fechaEntrega);
+            if(fP && p.profesor!==fP) ok=false; if(fC && p.curso!==fC) ok=false;
+            if(d && dS && d < new Date(dS)) ok=false; if(d && dE && d > new Date(dE)) ok=false;
             return ok;
         });
 
-        const tbody = $('planificacionesList'); tbody.innerHTML='';
-        let total=0, comp=0, delay=0, sumDelay=0;
+        const tb = $('planificacionesList'); tb.innerHTML='';
+        let tot=0, comp=0, del=0, sumDel=0;
 
         filtered.forEach(p => {
             const st = status(p.fechaEntrega, p.fechaReal);
             const dd = daysDelay(p.fechaEntrega, p.fechaReal);
+            tot++; if(st==='completed') comp++; if(st==='delayed') { del++; sumDel+=dd; }
             
-            total++;
-            if(st === 'completed') comp++;
-            if(st === 'delayed') { delay++; sumDelay += dd; }
+            // Lógica de Estado UTP
+            let revBadge = '<span class="badge badge-warn">Pendiente</span>';
+            if(p.estadoRevision === 'revisado') revBadge = '<span class="badge badge-ok">Revisado OK</span>';
+            if(p.estadoRevision === 'observado') revBadge = '<span class="badge badge-err">Observado</span>';
 
-            const tr = document.createElement('tr');
-            tr.className = 'border-b hover:bg-gray-50';
+            // Botón de Alerta de Atraso
+            const alertBtn = (st==='delayed' || st==='pending') 
+                ? `<button onclick="window.sendAlert('${p.profesor}', '${p.titulo}', '${fmt(p.fechaEntrega)}')" class="text-red-600 hover:text-red-800 ml-2" title="Enviar Reclamo"><i class="fa-solid fa-bell"></i></button>` 
+                : '';
+
+            const tr = document.createElement('tr'); tr.className = 'border-b hover:bg-gray-50';
             tr.innerHTML = `
-                <td class="p-3 font-medium">${p.titulo||'-'}</td>
-                <td class="p-3">${p.profesor||'-'}</td>
-                <td class="p-3">${p.asignatura||'-'}</td>
-                <td class="p-3">${p.curso||'-'}</td>
-                <td class="p-3">${fmt(p.fechaEntrega)}</td>
-                <td class="p-3">${fmt(p.fechaReal)}</td>
-                <td class="p-3 ${dd>0?'text-red-600 font-bold':''}">${p.fechaReal ? dd : '-'}</td>
-                <td class="p-3"><span class="badge ${st==='completed'?'badge-completed':(st==='delayed'?'badge-delayed':'badge-pending')}">${st==='completed'?'A Tiempo':(st==='delayed'?'Atrasada':'Pendiente')}</span></td>
+                <td class="p-3"><div class="font-bold text-gray-800">${p.titulo||'-'}</div></td>
+                <td class="p-3 text-xs">${p.profesor||'-'}</td>
+                <td class="p-3 text-xs"><div>${p.curso||'-'}</div><div class="text-gray-500">${p.asignatura||'-'}</div></td>
+                <td class="p-3 text-xs text-center"><div>Plazo: ${fmt(p.fechaEntrega)}</div><div>Real: ${fmt(p.fechaReal)}</div></td>
+                <td class="p-3 text-center"><span class="badge ${st==='completed'?'badge-ok':(st==='delayed'?'badge-err':'badge-warn')}">${st==='completed'?'A Tiempo':(st==='delayed'?'Atraso '+dd+'d':'Pendiente')}</span></td>
+                <td class="p-3 text-center">${revBadge}</td>
+                <td class="p-3 text-center no-print">${alertBtn}</td>
             `;
-            tbody.appendChild(tr);
+            tb.appendChild(tr);
         });
 
-        $('totalCount').innerText = total;
-        $('delayedCount').innerText = delay;
-        $('totalDaysDelayed').innerText = sumDelay;
-
-        if(fProf) {
-            const cutoff = endStr ? new Date(endStr) : new Date();
-            const history = planificacionesData.filter(p => p.profesor === fProf && toDate(p.fechaEntrega) && toDate(p.fechaEntrega) <= cutoff);
-            
-            const maxPorMes = {};
-            history.forEach(p => {
-                const d = daysDelay(p.fechaEntrega, p.fechaReal);
-                if(d > 0) {
-                    const key = ym(toDate(p.fechaEntrega));
-                    maxPorMes[key] = Math.max(maxPorMes[key]||0, d);
-                }
-            });
-            const cumul = Object.values(maxPorMes).reduce((a,b)=>a+b,0);
-            $('cumulativeByTeacherUpToDate').innerText = cumul;
-        } else {
-            $('cumulativeByTeacherUpToDate').innerText = "—";
-        }
-
+        $('totalCount').innerText=tot; $('delayedCount').innerText=del; $('totalDaysDelayed').innerText=sumDel;
+        
+        if(fP) {
+            const cut = dE ? new Date(dE) : new Date();
+            const h = planificacionesData.filter(p=>p.profesor===fP && toDate(p.fechaEntrega) && toDate(p.fechaEntrega)<=cut);
+            const mm={}; h.forEach(p=>{ const d=daysDelay(p.fechaEntrega, p.fechaReal); if(d>0) mm[ym(toDate(p.fechaEntrega))] = Math.max(mm[ym(toDate(p.fechaEntrega))]||0, d); });
+            $('cumulativeByTeacherUpToDate').innerText = Object.values(mm).reduce((a,b)=>a+b,0);
+        } else { $('cumulativeByTeacherUpToDate').innerText="—"; }
         renderCharts(filtered);
     }
 
     function renderCharts(data){
-        if(chartStatus) chartStatus.destroy();
-        if(chartDelays) chartDelays.destroy();
-
-        const year = new Date().getFullYear();
-        const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-        const stats = months.map(() => ({ok:0, late:0, days:0}));
-
-        data.forEach(p => {
-            const d = toDate(p.fechaEntrega);
-            if(d && d.getFullYear() === year) {
-                const m = d.getMonth();
-                const st = status(p.fechaEntrega, p.fechaReal);
-                if(st === 'completed') stats[m].ok++;
-                if(st === 'delayed') {
-                    stats[m].late++;
-                    stats[m].days += daysDelay(p.fechaEntrega, p.fechaReal);
-                }
-            }
-        });
-
-        chartStatus = new Chart($('chartStatus'), {
-            type: 'bar',
-            data: { labels: months, datasets: [{ label: 'A Tiempo', data: stats.map(s=>s.ok), backgroundColor: '#34d399' }, { label: 'Atrasadas', data: stats.map(s=>s.late), backgroundColor: '#f87171' }] },
-            options: { 
-                animation: false, 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                scales: { x: { stacked: true }, y: { stacked: true } } 
-            }
-        });
-
-        chartDelays = new Chart($('chartDelays'), {
-            type: 'line',
-            data: { labels: months, datasets: [{ label: 'Días Acumulados (En Selección)', data: stats.map(s=>s.days), borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.2)', fill: true, tension: 0.3 }] },
-            options: { 
-                animation: false, 
-                responsive: true, 
-                maintainAspectRatio: false 
-            }
-        });
+        if(chartStatus) chartStatus.destroy(); if(chartDelays) chartDelays.destroy();
+        const m=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        const s = m.map(()=>({ok:0,late:0,days:0}));
+        data.forEach(p=>{ const d=toDate(p.fechaEntrega); if(d&&d.getFullYear()===new Date().getFullYear()){ const i=d.getMonth(); if(status(p.fechaEntrega,p.fechaReal)==='completed') s[i].ok++; else if(status(p.fechaEntrega,p.fechaReal)==='delayed'){ s[i].late++; s[i].days+=daysDelay(p.fechaEntrega,p.fechaReal); } } });
+        chartStatus = new Chart($('chartStatus'),{type:'bar',data:{labels:m,datasets:[{label:'OK',data:s.map(x=>x.ok),backgroundColor:'#34d399'},{label:'Late',data:s.map(x=>x.late),backgroundColor:'#f87171'}]},options:{animation:false,responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true}}}});
+        chartDelays = new Chart($('chartDelays'),{type:'line',data:{labels:m,datasets:[{label:'Días Atraso',data:s.map(x=>x.days),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.2)',fill:true,tension:0.3}]},options:{animation:false,responsive:true,maintainAspectRatio:false}});
     }
 
-    $('generateVoucherBtn').onclick = () => {
-        const prof = $('filterProfesor').value;
-        const startStr = $('dateStart').value;
-        const endStr = $('dateEnd').value;
-        
-        if(!prof || !endStr) {
-            alert("⚠️ Atención: Para generar el comprobante (voucher), debes seleccionar un PROFESOR y una fecha 'HASTA'.");
-            return;
+    // --- NUEVAS FUNCIONES DE EMAIL ---
+
+    // 1. Alerta Individual (Botón Campana)
+    window.sendAlert = (prof, title, date) => {
+        const mail = prompt(`Ingrese correo para ${prof}:`, "profesor@colegio.cl");
+        if(mail) {
+            const subj = encodeURIComponent(`Alerta de Atraso: ${title}`);
+            const body = encodeURIComponent(`Estimado/a ${prof},\n\nSe registra pendiente la entrega de la planificación "${title}" cuyo plazo venció el ${date}.\n\nFavor regularizar a la brevedad.\n\nAtte,\nUTP`);
+            window.location.href = `mailto:${mail}?subject=${subj}&body=${body}`;
         }
-
-        const start = startStr ? new Date(startStr) : new Date('2020-01-01');
-        const end = new Date(endStr);
-        const periodoTxt = `${startStr ? fmt(start) : 'Inicio'} al ${fmt(end)}`;
-        const hoy = new Date().toLocaleDateString('es-CL');
-
-        const periodData = planificacionesData.filter(p => {
-            const d = toDate(p.fechaEntrega);
-            return d && d >= start && d <= end && p.profesor === prof;
-        });
-        
-        periodData.sort((a,b) => toDate(a.fechaEntrega) - toDate(b.fechaEntrega));
-
-        let sumPeriodDelay = 0;
-        let maxPeriodDelay = 0;
-
-        const rowsHTML = periodData.map(p => {
-            const d = daysDelay(p.fechaEntrega, p.fechaReal);
-            if(d > 0) { sumPeriodDelay += d; maxPeriodDelay = Math.max(maxPeriodDelay, d); }
-            const st = status(p.fechaEntrega, p.fechaReal);
-            return `<tr class="border-b text-xs">
-                <td class="p-2">${p.titulo||'-'}</td>
-                <td class="p-2">${p.curso||'-'}</td>
-                <td class="p-2">${p.asignatura||'-'}</td>
-                <td class="p-2">${fmt(p.fechaEntrega)}</td>
-                <td class="p-2">${fmt(p.fechaReal)}</td>
-                <td class="p-2 font-bold ${d>0?'text-red-600':''}">${d>0?d:'-'}</td>
-                <td class="p-2"><span class="badge ${st==='completed'?'badge-completed':(st==='delayed'?'badge-delayed':'badge-pending')}">${st==='completed'?'OK':(st==='delayed'?'ATRASO':'PEND')}</span></td>
-            </tr>`;
-        }).join('');
-
-        const cumul = $('cumulativeByTeacherUpToDate').innerText;
-
-        $('voucher-container').innerHTML = `
-            <div class="space-y-6 text-sm font-sans text-gray-800">
-                <div class="flex items-center justify-between border-b pb-4">
-                    <img src="logo.jpg" style="height: 60px; width: auto;" class="object-contain">
-                    <div class="text-right">
-                        <h1 class="text-2xl font-bold uppercase text-indigo-900">Informe de Cumplimiento</h1>
-                        <p class="text-gray-500">Periodo: <span class="font-bold text-black">${periodoTxt}</span> &bull; Emisión: ${hoy}</p>
-                    </div>
-                </div>
-
-                <div class="bg-indigo-50 p-4 rounded-lg flex justify-between items-center">
-                    <div><p class="text-xs text-indigo-500 uppercase font-bold">Docente</p><p class="text-xl font-bold">${prof}</p></div>
-                    <div class="text-right"><p class="text-xs text-indigo-500 uppercase font-bold">Planificaciones en Periodo</p><p class="text-lg">${periodData.length}</p></div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-4 text-center">
-                    <div class="p-3 bg-gray-50 rounded border">
-                        <p class="text-xs text-gray-500 uppercase">Suma Atrasos (Periodo)</p>
-                        <p class="text-2xl font-bold text-gray-800">${sumPeriodDelay}</p>
-                    </div>
-                    <div class="p-3 bg-gray-50 rounded border">
-                        <p class="text-xs text-gray-500 uppercase">Máx Atraso (Periodo)</p>
-                        <p class="text-2xl font-bold text-blue-600">${maxPeriodDelay}</p>
-                    </div>
-                    <div class="p-3 bg-amber-50 rounded border border-amber-200">
-                        <p class="text-xs text-amber-700 font-bold uppercase">Acumulado Histórico Total</p>
-                        <p class="text-3xl font-black text-amber-600">${cumul}</p>
-                        <p class="text-[9px] text-amber-700">(Suma máx mensuales hasta ${fmt(end)})</p>
-                    </div>
-                </div>
-
-                <h3 class="font-bold text-gray-700 mt-6 border-b pb-1">Detalle del Periodo Seleccionado</h3>
-                <table class="w-full text-left mt-2">
-                    <thead class="bg-gray-100 uppercase text-xs">
-                        <tr><th class="p-2">Actividad</th><th class="p-2">Curso</th><th class="p-2">Asig</th><th class="p-2">Plazo</th><th class="p-2">Entrega</th><th class="p-2">Días</th><th class="p-2">Est</th></tr>
-                    </thead>
-                    <tbody>${rowsHTML || '<tr><td colspan="7" class="p-4 text-center text-gray-400">Sin registros en este rango de fechas</td></tr>'}</tbody>
-                </table>
-
-                <div class="flex justify-between mt-16 text-center text-xs break-inside-avoid">
-                    <div class="w-1/3 border-t border-black pt-2"><p class="font-bold">${prof}</p><p>Docente</p></div>
-                    <div class="w-1/3 border-t border-black pt-2"><p class="font-bold">ALEJANDRA MORALES G.</p><p>Jefa UTP</p></div>
-                </div>
-            </div>`;
-        
-        $('voucher-container').classList.remove('hidden');
-        document.body.classList.add('voucher-print-mode');
-        setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('voucher-print-mode'); $('voucher-container').classList.add('hidden'); }, 500); }, 500);
     };
 
-    ['filterProfesor', 'filterCurso', 'dateStart', 'dateEnd'].forEach(id => $(id).addEventListener('change', renderDashboard));
-    $('printListBtn').onclick = () => window.print();
+    // 2. Resumen Mensual (Botón Azul)
+    $('sendEmailBtn').onclick = () => {
+        const prof = $('filterProfesor').value;
+        const dS = $('dateStart').value;
+        const dE = $('dateEnd').value;
+
+        if(!prof || !dE) { alert("Seleccione Profesor y Fecha Hasta"); return; }
+        
+        const mail = prompt(`Ingrese correo para ${prof}:`, "profesor@colegio.cl");
+        if(mail) {
+            // Calcular resumen rápido
+            const periodData = planificacionesData.filter(p => p.profesor === prof && toDate(p.fechaEntrega) >= (dS?new Date(dS):new Date('2020-01-01')) && toDate(p.fechaEntrega) <= new Date(dE));
+            const atrasadas = periodData.filter(p => status(p.fechaEntrega, p.fechaReal) === 'delayed').length;
+            const total = periodData.length;
+            
+            const subj = encodeURIComponent(`Resumen de Cumplimiento Curricular - ${prof}`);
+            const body = encodeURIComponent(`Estimado/a ${prof},\n\nAdjunto resumen de cumplimiento del periodo.\n\nTotal Planificaciones: ${total}\nEntregas Atrasadas: ${atrasadas}\n\nSe ruega revisar el detalle en la plataforma o el PDF adjunto.\n\nAtte,\nEquipo UTP`);
+            window.location.href = `mailto:${mail}?subject=${subj}&body=${body}`;
+        }
+    };
+
+    // 3. Voucher PDF (Misma lógica anterior)
+    $('generateVoucherBtn').onclick = () => {
+        const prof=$('filterProfesor').value, dS=$('dateStart').value, dE=$('dateEnd').value;
+        if(!prof||!dE){alert("Seleccione Profesor y Fecha Hasta");return;}
+        // (Lógica de generación de HTML del voucher idéntica a la anterior...)
+        const pData=planificacionesData.filter(p=>p.profesor===prof&&toDate(p.fechaEntrega)>=(dS?new Date(dS):new Date('2000-01-01'))&&toDate(p.fechaEntrega)<=new Date(dE)).sort((a,b)=>toDate(a.fechaEntrega)-toDate(b.fechaEntrega));
+        let sumD=0, maxD=0;
+        const rows=pData.map(p=>{ 
+            const d=daysDelay(p.fechaEntrega,p.fechaReal), s=status(p.fechaEntrega,p.fechaReal);
+            if(d>0){sumD+=d;maxD=Math.max(maxD,d);}
+            return `<tr class="border-b text-xs"><td class="p-2">${p.titulo}</td><td class="p-2">${p.curso}</td><td class="p-2">${fmt(p.fechaEntrega)}</td><td class="p-2">${fmt(p.fechaReal)}</td><td class="p-2 font-bold ${d>0?'text-red-600':''}">${d>0?d:'-'}</td><td class="p-2"><span class="badge ${s==='completed'?'badge-ok':(s==='delayed'?'badge-err':'badge-warn')}">${s==='completed'?'OK':(s==='delayed'?'LATE':'PEND')}</span></td></tr>`;
+        }).join('');
+        const cumul=$('cumulativeByTeacherUpToDate').innerText;
+        $('voucher-container').innerHTML=`<div class="space-y-6 text-sm font-sans text-gray-800"><div class="flex items-center justify-between border-b pb-4"><img src="logo.jpg" style="height:60px"><div class="text-right"><h1 class="text-2xl font-bold uppercase text-indigo-900">Informe de Cumplimiento</h1><p class="text-gray-500">Periodo: ${dS?fmt(dS):'Inicio'} al ${fmt(dE)}</p></div></div><div class="bg-indigo-50 p-4 rounded-lg flex justify-between items-center"><div><p class="text-xs uppercase font-bold text-indigo-500">Docente</p><p class="text-xl font-bold">${prof}</p></div><div class="text-right"><p class="text-xs uppercase font-bold text-indigo-500">Total Reg.</p><p class="text-lg">${pData.length}</p></div></div><div class="grid grid-cols-3 gap-4 text-center"><div class="p-3 bg-gray-50 border rounded"><p class="text-xs uppercase text-gray-500">Suma Atrasos</p><p class="text-2xl font-bold">${sumD}</p></div><div class="p-3 bg-gray-50 border rounded"><p class="text-xs uppercase text-gray-500">Máx Atraso</p><p class="text-2xl font-bold text-blue-600">${maxD}</p></div><div class="p-3 bg-amber-50 border border-amber-200 rounded"><p class="text-xs uppercase font-bold text-amber-700">Histórico Total</p><p class="text-3xl font-black text-amber-600">${cumul}</p></div></div><h3 class="font-bold text-gray-700 mt-6 border-b pb-1">Detalle</h3><table class="w-full text-left mt-2"><thead class="bg-gray-100 uppercase text-xs"><tr><th class="p-2">Actividad</th><th class="p-2">Curso</th><th class="p-2">Plazo</th><th class="p-2">Real</th><th class="p-2">Días</th><th class="p-2">Est</th></tr></thead><tbody>${rows||'<tr><td colspan="6" class="text-center p-4">Sin datos</td></tr>'}</tbody></table><div class="flex justify-between mt-16 text-center text-xs break-inside-avoid"><div class="w-1/3 border-t border-black pt-2"><p class="font-bold">${prof}</p><p>Docente</p></div><div class="w-1/3 border-t border-black pt-2"><p class="font-bold">UTP</p><p>Revisión</p></div></div></div>`;
+        $('voucher-container').classList.remove('hidden'); document.body.classList.add('voucher-print-mode');
+        setTimeout(()=>{window.print();setTimeout(()=>{document.body.classList.remove('voucher-print-mode');$('voucher-container').classList.add('hidden');},500);},500);
+    };
+
+    ['filterProfesor','filterCurso','dateStart','dateEnd'].forEach(i=>$(i).addEventListener('change',renderDashboard));
+    $('printListBtn').onclick=()=>window.print();
   </script>
 </body>
 </html>
