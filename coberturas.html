@@ -6,43 +6,85 @@
     <title>CurriculaCheck Pro - MASTER UTP</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     
     <style>
-        :root { --sidebar-width: 280px; --primary-color: #0d6efd; }
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+        /* VARIABLES Y RESET */
+        :root { --sidebar-width: 260px; --primary-color: #0d6efd; }
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 0.9rem; overflow-x: hidden; }
         
-        /* ESTILO DEL DASHBOARD AZUL (El completo) */
+        /* SIDEBAR (MENÚ LATERAL) */
         .sidebar { width: var(--sidebar-width); background: #212529; color: white; position: fixed; top: 0; left: 0; bottom: 0; z-index: 1000; display: flex; flex-direction: column; transition: transform 0.3s; }
-        .sidebar-header { padding: 20px; border-bottom: 1px solid #343a40; background: #1a1e21; }
-        .sidebar-menu { flex-grow: 1; overflow-y: auto; padding: 15px; }
-        .nav-link-custom { color: rgba(255,255,255,0.8); padding: 12px 15px; border-radius: 8px; margin-bottom: 4px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; border: 1px solid transparent; }
+        .sidebar-header { padding: 15px; border-bottom: 1px solid #343a40; background: #1a1e21; }
+        .sidebar-menu { flex-grow: 1; overflow-y: auto; padding: 10px; }
+        .nav-link-custom { color: rgba(255,255,255,0.8); padding: 8px 12px; border-radius: 6px; margin-bottom: 2px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; font-size: 0.9rem; }
         .nav-link-custom:hover { background-color: rgba(255,255,255,0.1); color: white; }
-        .nav-link-custom.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-        .nav-link-custom i { font-size: 1.2rem; margin-right: 12px; }
-        .main-content { margin-left: var(--sidebar-width); padding: 30px; transition: margin 0.3s; }
+        .nav-link-custom.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .nav-link-custom i { font-size: 1.1rem; margin-right: 10px; }
+        
+        /* CONTENIDO PRINCIPAL */
+        .main-content { margin-left: var(--sidebar-width); padding: 20px; transition: margin 0.3s; }
         .view-section { display: none; } 
         .view-section.active { display: block; animation: fadeIn 0.3s; }
         
-        .audit-card { background: white; border: 1px solid #dee2e6; border-left: 5px solid #ccc; margin-bottom: 12px; padding: 15px; border-radius: 8px; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; page-break-inside: avoid; }
-        .audit-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        /* TARJETAS DE OA (Audit Card) - OPTIMIZADAS COMPACTAS */
+        .audit-card { 
+            background: white; 
+            border: 1px solid #dee2e6; 
+            border-left: 4px solid #ccc; 
+            margin-bottom: 6px; 
+            padding: 6px 10px; /* Padding reducido */
+            border-radius: 4px; 
+            transition: transform 0.2s, box-shadow 0.2s; 
+            cursor: pointer; 
+            page-break-inside: avoid; /* Evita que se corte al imprimir */
+        }
+        .audit-card:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .audit-card .oa-code { font-size: 0.9rem; width: 45px; font-weight: 700; color: #555; }
+        .audit-card .oa-desc { font-size: 0.85rem; line-height: 1.1; color: #212529; }
         
+        /* COLORES DE ESTADO */
         .status-hit { border-left-color: #198754; } 
         .status-miss { border-left-color: #dc3545; background-color: #fffbfb; } 
         .status-extra { border-left-color: #ffc107; }
 
+        /* TARJETAS ESTADÍSTICAS */
+        .stat-number { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+        .card-stat-header { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: #6c757d; }
+
+        /* ESTILOS DE IMPRESIÓN (CONTROL ESTRICTO) */
         @media print {
-            @page { size: letter; margin: 1.5cm; }
-            body { background-color: white !important; font-size: 12pt; }
-            .sidebar, .btn, .no-print, .nav-tabs, .modal, .alert, .file-upload-area { display: none !important; }
+            @page { size: letter; margin: 0.8cm; } /* Márgenes ajustados para hoja carta */
+            body { background-color: white !important; font-size: 9pt; -webkit-print-color-adjust: exact; }
+            
+            /* Ocultar elementos de navegación */
+            .sidebar, .btn, .no-print, .nav-tabs, .modal, .alert, .file-upload-area, input[type="text"] { display: none !important; }
+            
+            /* Ajustar contenido al ancho completo */
             .main-content { margin-left: 0 !important; padding: 0 !important; width: 100% !important; }
-            .card { border: 1px solid #ccc !important; box-shadow: none !important; }
-            .print-signature-section { display: flex !important; margin-top: 50px; page-break-inside: avoid; }
+            .card { border: 1px solid #ddd !important; box-shadow: none !important; margin-bottom: 10px !important; }
+            
+            /* Ajustes finos a las tarjetas de OA para ahorrar tinta y espacio */
+            .audit-card {
+                border: 1px solid #eee;
+                border-left-width: 4px !important;
+                margin-bottom: 4px !important;
+                padding: 4px 8px !important;
+                box-shadow: none !important;
+                background-color: transparent !important;
+            }
+            .audit-card .oa-desc { font-size: 8.5pt; color: #000; }
+            
+            /* Mostrar sección de firmas */
+            .print-signature-section { display: flex !important; margin-top: 40px; page-break-inside: avoid; }
+            
+            /* Ajustes para modales en caso de error (ocultarlos) */
             #inputObservacionModal { display: none; }
             #viewOnlyObs { display: block !important; }
+            .card-header input { display: none; }
         }
-        #loadingOverlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.8); z-index: 2000; display: flex; justify-content: center; align-items: center; }
+        
+        #loadingOverlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.9); z-index: 2000; display: flex; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
@@ -51,90 +93,141 @@
 
 <nav class="sidebar" id="sidebar">
     <div class="sidebar-header">
-        <h4 class="fw-bold m-0"><i class="bi bi-speedometer2"></i> CurriculaCheck</h4>
-        <div class="text-info small fw-bold mt-1" style="font-size: 0.8rem;">Desarrollado por ProfeAle</div>
-        <div class="mt-4 d-flex align-items-center p-2 rounded bg-dark border border-secondary" id="activeDocenteCard">
-            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 40px; height: 40px;" id="docenteAvatar">?</div>
-            <div class="ms-3 lh-1">
-                <div class="fw-bold text-white" id="docenteNombre">Seleccione Docente</div>
-                <small class="text-white-50" style="font-size: 0.75rem;" id="docenteAsignatura">--</small>
+        <h5 class="fw-bold m-0"><i class="bi bi-speedometer2"></i> CurriculaCheck</h5>
+        <div class="text-info small fw-bold mt-1" style="font-size: 0.7rem;">Desarrollado por ProfeAle</div>
+        
+        <div class="mt-3 d-flex align-items-center p-2 rounded bg-dark border border-secondary" id="activeDocenteCard">
+            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 32px; height: 32px; font-size: 0.8rem;" id="docenteAvatar">?</div>
+            <div class="ms-2 lh-1 overflow-hidden">
+                <div class="fw-bold text-white text-truncate" id="docenteNombre" style="font-size: 0.9rem;">Seleccione Docente</div>
+                <small class="text-white-50 text-truncate d-block" style="font-size: 0.7rem;" id="docenteAsignatura">--</small>
             </div>
         </div>
     </div>
     <div class="sidebar-menu">
-        <small class="text-uppercase text-white-50 fw-bold mb-2 d-block ms-1">Navegación</small>
+        <small class="text-uppercase text-white-50 fw-bold mb-2 d-block ms-1" style="font-size: 0.7rem;">Navegación</small>
         <div class="nav-link-custom active" onclick="window.switchView('dashboard')" id="btn-view-dashboard"><i class="bi bi-bar-chart-steps"></i> Dashboard</div>
         <div class="nav-link-custom" onclick="window.switchView('gestion')" id="btn-view-gestion"><i class="bi bi-gear-wide-connected"></i> Gestión de Datos</div>
-        <hr class="border-secondary my-3">
-        <small class="text-uppercase text-white-50 fw-bold mb-2 d-block ms-1">Cursos del Docente</small>
-        <div id="menuCursosContainer"><small class="text-white-50 ms-3 fst-italic">Cargando cursos...</small></div>
+        <hr class="border-secondary my-2">
+        <small class="text-uppercase text-white-50 fw-bold mb-2 d-block ms-1" style="font-size: 0.7rem;">Cursos del Docente</small>
+        <div id="menuCursosContainer"><small class="text-white-50 ms-3 fst-italic" style="font-size: 0.8rem;">Cargando cursos...</small></div>
     </div>
 </nav>
 
 <main class="main-content">
     
     <div id="view-dashboard" class="view-section active">
-        <div class="d-flex justify-content-between align-items-end mb-4 pb-2 border-bottom">
+        <div class="d-flex justify-content-between align-items-end mb-3 pb-2 border-bottom">
             <div>
+                <h6 class="text-uppercase text-secondary fw-bold mb-1" style="font-size: 0.8rem; letter-spacing: 1px;">REPORTE COBERTURA CURRICULAR</h6>
                 <h2 class="fw-bold text-dark mb-0" id="headerTitulo">Vista General</h2>
-                <span class="text-muted" id="headerSubtitulo">Seleccione un curso del menú lateral</span>
+                <span class="text-muted small" id="headerSubtitulo">Seleccione un curso del menú lateral</span>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-dark shadow-sm no-print" onclick="window.imprimirReporte()"><i class="bi bi-printer-fill me-2"></i> Imprimir Reporte</button>
+                <button class="btn btn-sm btn-dark shadow-sm no-print" onclick="window.imprimirReporte()"><i class="bi bi-printer-fill me-2"></i> Imprimir</button>
             </div>
         </div>
-        <div class="row g-4 mb-4">
-            <div class="col-md-4"><div class="card border-0 shadow-sm h-100 border-start border-4 border-primary"><div class="card-body"><div class="text-uppercase text-muted small fw-bold">Cobertura Real</div><div class="display-5 fw-bold text-dark mt-1" id="stat-percent">0%</div><small class="text-success small"><i class="bi bi-check-circle"></i> OAs Logrados / Planificados</small></div></div></div>
-            <div class="col-md-4"><div class="card border-0 shadow-sm h-100 border-start border-4 border-danger"><div class="card-body"><div class="text-uppercase text-muted small fw-bold">Brechas (Pendientes)</div><div class="display-5 fw-bold text-danger mt-1" id="stat-brecha">0</div><small class="text-danger small">Objetivos del plan no vistos</small></div></div></div>
-            <div class="col-md-4"><div class="card border-0 shadow-sm h-100 border-start border-4 border-warning"><div class="card-body"><div class="text-uppercase text-muted small fw-bold">Actividad Extra</div><div class="display-5 fw-bold text-dark mt-1" id="stat-extra">0</div><small class="text-warning text-dark small">OAs vistos pero no planificados</small></div></div></div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 border-start border-4 border-primary p-2">
+                    <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="card-stat-header">Cobertura Real</div>
+                            <small class="text-success" style="font-size: 0.75rem;"><i class="bi bi-check-circle"></i> OAs Únicos Logrados</small>
+                        </div>
+                        <div class="stat-number text-dark" id="stat-percent">0%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 border-start border-4 border-danger p-2">
+                    <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="card-stat-header">Brechas (Pendientes)</div>
+                            <small class="text-danger" style="font-size: 0.75rem;">OAs del Plan no vistos</small>
+                        </div>
+                        <div class="stat-number text-danger" id="stat-brecha">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 border-start border-4 border-warning p-2">
+                    <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="card-stat-header">Actividad Extra</div>
+                            <small class="text-muted" style="font-size: 0.75rem;">OAs vistos no planificados</small>
+                        </div>
+                        <div class="stat-number text-dark" id="stat-extra">0</div>
+                    </div>
+                </div>
+            </div>
         </div>
+
         <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <div class="card-header bg-white py-2 border-bottom d-flex justify-content-between align-items-center">
                 <h6 class="m-0 fw-bold text-primary"><i class="bi bi-list-check me-2"></i> Matriz de Cobertura</h6>
-                <input type="text" class="form-control form-control-sm bg-light no-print" style="width: 200px;" placeholder="Buscar OA..." onkeyup="window.filtrarOAs(this.value)">
+                <input type="text" class="form-control form-control-sm bg-light no-print" style="width: 200px; font-size: 0.8rem;" placeholder="Buscar OA..." onkeyup="window.filtrarOAs(this.value)">
             </div>
-            <div class="card-body bg-light p-3" id="listaOAs"><div class="text-center text-muted py-5"><i class="bi bi-arrow-left-circle fs-1"></i><p class="mt-2">Seleccione una asignatura del menú.</p></div></div>
+            <div class="card-body bg-light p-2" id="listaOAs">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-arrow-left-circle fs-1"></i>
+                    <p class="mt-2 small">Seleccione una asignatura del menú.</p>
+                </div>
+            </div>
         </div>
-        <div class="print-signature-section row text-center d-none" style="padding-top: 40px;">
-            <div class="col-6"><div style="border-top: 1px solid #000; width: 80%; margin: 0 auto; padding-top: 10px;"><strong id="firmaDocenteNombre">Nombre del Profesor</strong><br><small>Docente de Asignatura</small></div></div>
-            <div class="col-6"><div style="border-top: 1px solid #000; width: 80%; margin: 0 auto; padding-top: 10px;"><strong>Alejandra Morales G.</strong><br><small>Unidad Técnico Pedagógica</small></div></div>
-            <div class="col-12 mt-4"><small class="text-muted fst-italic">Informe generado el <span id="fechaReporte"></span> mediante CurriculaCheck (Dev: ProfeAle).</small></div>
+
+        <div class="print-signature-section row text-center d-none">
+            <div class="col-6">
+                <div style="border-top: 1px solid #000; width: 70%; margin: 0 auto; padding-top: 5px;">
+                    <strong id="firmaDocenteNombre" style="font-size: 0.9rem;">Nombre del Profesor</strong><br>
+                    <small>Docente de Asignatura</small>
+                </div>
+            </div>
+            <div class="col-6">
+                <div style="border-top: 1px solid #000; width: 70%; margin: 0 auto; padding-top: 5px;">
+                    <strong style="font-size: 0.9rem;">Alejandra Morales G.</strong><br>
+                    <small>Unidad Técnico Pedagógica</small>
+                </div>
+            </div>
+            <div class="col-12 mt-3">
+                <small class="text-muted fst-italic" style="font-size: 0.7rem;">Informe generado el <span id="fechaReporte"></span> mediante CurriculaCheck (Dev: ProfeAle).</small>
+            </div>
         </div>
     </div>
 
     <div id="view-gestion" class="view-section">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold m-0"><i class="bi bi-database-gear me-2"></i>Gestión UTP</h2>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold m-0"><i class="bi bi-database-gear me-2"></i>Gestión UTP</h4>
             <div class="text-muted small">Estado: <span class="badge bg-success">ONLINE</span></div>
         </div>
-        <ul class="nav nav-tabs mb-4 no-print" id="gestionTabs">
+        <ul class="nav nav-tabs mb-3 no-print" id="gestionTabs" style="font-size: 0.9rem;">
             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-docentes" type="button">1. Docentes y Cursos</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-carga" type="button">2. Carga de Archivos</button></li>
         </ul>
         <div class="tab-content">
             <div class="tab-pane fade show active" id="tab-docentes">
-                <div class="row g-4">
+                <div class="row g-3">
                     <div class="col-md-4">
-                        <div class="card shadow-sm mb-4">
-                            <div class="card-header fw-bold bg-dark text-white">Nuevo Docente</div>
-                            <div class="card-body">
-                                <div class="mb-3"><label class="form-label">Nombre Completo</label><input type="text" id="inputNewDocente" class="form-control" placeholder="Ej: Juan Pérez"></div>
-                                <div class="mb-3"><label class="form-label">Especialidad</label><input type="text" id="inputNewEsp" class="form-control" placeholder="Ej: Matemáticas"></div>
-                                <button class="btn btn-primary w-100" onclick="window.crearDocente()"><i class="bi bi-cloud-plus"></i> Guardar Docente</button>
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-header fw-bold bg-dark text-white py-2 small">Nuevo Docente</div>
+                            <div class="card-body p-3">
+                                <div class="mb-2"><label class="form-label small">Nombre Completo</label><input type="text" id="inputNewDocente" class="form-control form-control-sm" placeholder="Ej: Juan Pérez"></div>
+                                <div class="mb-2"><label class="form-label small">Especialidad</label><input type="text" id="inputNewEsp" class="form-control form-control-sm" placeholder="Ej: Matemáticas"></div>
+                                <button class="btn btn-primary btn-sm w-100" onclick="window.crearDocente()"><i class="bi bi-cloud-plus"></i> Guardar</button>
                             </div>
                         </div>
                         
                         <div class="card shadow-sm border-primary">
-                            <div class="card-header fw-bold bg-primary text-white">Nuevo Curso</div>
-                            <div class="card-body">
+                            <div class="card-header fw-bold bg-primary text-white py-2 small">Nuevo Curso</div>
+                            <div class="card-body p-3">
                                 <div class="mb-2">
-                                    <label class="small text-muted">Asignar a:</label>
                                     <select class="form-select form-select-sm" id="selectDocenteParaCurso"><option value="">Seleccione docente...</option></select>
                                 </div>
                                 <div class="mb-2">
-                                    <input type="text" class="form-control form-select-sm" id="inputNombreCurso" placeholder="Nombre (Ej: Historia 1°A)">
+                                    <input type="text" class="form-control form-control-sm" id="inputNombreCurso" placeholder="Nombre (Ej: Historia 1°A)">
                                 </div>
-                                <div class="mb-3">
+                                <div class="mb-2">
                                     <select class="form-select form-select-sm" id="inputNivelCurso"><option value="1° Medio">1° Medio</option><option value="2° Medio">2° Medio</option><option value="3° Medio">3° Medio</option><option value="4° Medio">4° Medio</option></select>
                                 </div>
                                 <button class="btn btn-primary btn-sm w-100" onclick="window.crearCurso()"><i class="bi bi-plus-lg"></i> Agregar Curso</button>
@@ -144,16 +237,16 @@
                     
                     <div class="col-md-8">
                         <div class="card shadow-sm h-50 mb-3">
-                            <div class="card-header fw-bold bg-white">Docentes Registrados</div>
-                            <div class="card-body overflow-auto"><div class="table-responsive"><table class="table table-sm table-hover align-middle"><thead class="table-light"><tr><th>Nombre</th><th>Acción</th></tr></thead><tbody id="tablaDocentes"></tbody></table></div></div>
+                            <div class="card-header fw-bold bg-white py-2 small">Docentes Registrados</div>
+                            <div class="card-body overflow-auto p-0"><div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0"><thead class="table-light"><tr><th>Nombre</th><th class="text-end">Acción</th></tr></thead><tbody id="tablaDocentes"></tbody></table></div></div>
                         </div>
 
                         <div class="card shadow-sm h-50 border-warning">
-                            <div class="card-header fw-bold bg-warning bg-opacity-25 text-dark">Listado General de Cursos</div>
-                            <div class="card-body overflow-auto">
+                            <div class="card-header fw-bold bg-warning bg-opacity-25 text-dark py-2 small">Listado General de Cursos</div>
+                            <div class="card-body overflow-auto p-0">
                                 <div class="table-responsive">
-                                    <table class="table table-sm table-hover align-middle">
-                                        <thead class="table-light"><tr><th>Curso</th><th>Profesor Asignado</th><th>Acción</th></tr></thead>
+                                    <table class="table table-sm table-hover align-middle mb-0">
+                                        <thead class="table-light"><tr><th>Curso</th><th>Profesor Asignado</th><th class="text-end">Acción</th></tr></thead>
                                         <tbody id="tablaCursosGeneral"></tbody>
                                     </table>
                                 </div>
@@ -164,45 +257,42 @@
             </div>
 
             <div class="tab-pane fade" id="tab-carga">
-                <div class="alert alert-info"><i class="bi bi-info-circle me-2"></i> Copia y pega el texto de las planificaciones aquí.</div>
-                <div class="row mb-3">
+                <div class="row mb-2">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">Asignatura a Actualizar</label>
-                        <select class="form-select" id="selectCursoCarga" onchange="window.cargarDatosEnInputs(this.value)">
+                        <label class="form-label fw-bold small">Asignatura a Actualizar</label>
+                        <select class="form-select form-select-sm" id="selectCursoCarga" onchange="window.cargarDatosEnInputs(this.value)">
                             <option value="">Seleccione una asignatura...</option>
                         </select>
                     </div>
                 </div>
-                <div class="row g-4">
+                <div class="row g-3">
                     <div class="col-md-6">
                         <div class="card h-100">
-                            <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+                            <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center py-2 small">
                                 <span>1. Planificación (Plan)</span>
                             </div>
-                            <div class="card-body">
-                                <p class="small text-muted mb-2">Pega aquí el texto del Word o Normalizador</p>
-                                <textarea id="textPlan" class="form-control font-monospace small" rows="15" placeholder="Ej: OA 1, Descripción..."></textarea>
+                            <div class="card-body p-2">
+                                <textarea id="textPlan" class="form-control font-monospace" style="font-size: 0.75rem;" rows="15" placeholder="Ej: OA 1, Descripción..."></textarea>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="card h-100">
-                            <div class="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center">
+                            <div class="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center py-2 small">
                                 <span>2. Cobertura (Real)</span>
-                                <label class="btn btn-sm btn-light text-success border-0" style="cursor: pointer;">
+                                <label class="btn btn-sm btn-light text-success border-0 py-0" style="cursor: pointer; font-size: 0.8rem;">
                                     <i class="bi bi-upload me-1"></i> Subir Excel
                                     <input type="file" hidden accept=".xlsx, .xls, .csv" onchange="window.handleFileUpload(this, 'real')">
                                 </label>
                             </div>
-                            <div class="card-body">
-                                <p class="small text-muted mb-2">Sube Excel o pega texto con meses</p>
-                                <textarea id="textReal" class="form-control font-monospace small" rows="15" placeholder="Ej: OA 1, MAR ABR..."></textarea>
+                            <div class="card-body p-2">
+                                <textarea id="textReal" class="form-control font-monospace" style="font-size: 0.75rem;" rows="15" placeholder="Ej: OA 1, MAR ABR..."></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="d-grid mt-4">
-                    <button class="btn btn-dark btn-lg" onclick="window.procesarArchivos()"><i class="bi bi-cpu"></i> Procesar y Guardar en Nube</button>
+                <div class="d-grid mt-3">
+                    <button class="btn btn-dark" onclick="window.procesarArchivos()"><i class="bi bi-cpu"></i> Procesar y Guardar</button>
                 </div>
             </div>
         </div>
@@ -212,25 +302,25 @@
 <div class="modal fade no-print" id="modalEvidencia" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header text-white" id="modalHeaderColor" style="background-color: #333;">
-                <h5 class="modal-title fw-bold">Detalle de Objetivo</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header text-white py-2" id="modalHeaderColor" style="background-color: #333;">
+                <h6 class="modal-title fw-bold">Detalle de Objetivo</h6>
+                <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <h4 id="modalTituloOA" class="fw-bold"></h4>
-                <p id="modalDescOA" class="text-muted fst-italic border-bottom pb-3"></p>
-                <div class="row mb-3">
-                    <div class="col-6"><strong>Estado:</strong> <span id="modalEstadoTexto"></span></div>
-                    <div class="col-6"><strong>Meses:</strong> <span id="modalMesesTexto"></span></div>
+                <h5 id="modalTituloOA" class="fw-bold text-primary"></h5>
+                <p id="modalDescOA" class="text-muted fst-italic border-bottom pb-2 small"></p>
+                <div class="row mb-3 small">
+                    <div class="col-6"><strong>Estado Global:</strong> <span id="modalEstadoTexto"></span></div>
+                    <div class="col-6"><strong>Meses Registrados:</strong> <span id="modalMesesTexto"></span></div>
                 </div>
                 <div class="bg-light p-3 rounded border">
-                    <h6 class="fw-bold text-dark"><i class="bi bi-clipboard-data"></i> Observaciones UTP</h6>
-                    <textarea id="inputObservacionModal" class="form-control mb-2 no-print" rows="3" placeholder="Escriba aquí sus observaciones..."></textarea>
+                    <h6 class="fw-bold text-dark small"><i class="bi bi-clipboard-data"></i> Observaciones UTP</h6>
+                    <textarea id="inputObservacionModal" class="form-control form-control-sm mb-2 no-print" rows="3" placeholder="Escriba aquí sus observaciones..."></textarea>
                     <button class="btn btn-primary btn-sm w-100 no-print" onclick="window.guardarObservacionActual()"><i class="bi bi-save"></i> Guardar Observación</button>
                     <div id="viewOnlyObs" style="display:none;" class="small text-secondary mt-2"></div>
                 </div>
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button></div>
+            <div class="modal-footer py-1"><button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button></div>
         </div>
     </div>
 </div>
@@ -239,13 +329,14 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+    // Configuración Firebase (Original del Usuario)
     const firebaseConfig = { apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs", authDomain: "attendance-ai-s81lt.firebaseapp.com", projectId: "attendance-ai-s81lt", storageBucket: "attendance-ai-s81lt.firebasestorage.app", messagingSenderId: "935781953186", appId: "1:935781953186:web:6c8a7a93ffad180d33b1fb" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     let dbDocentes = [], dbCursos = [], docenteActivo = null, cursoActivo = null;
 
-    // --- CARGA DE DATOS ---
+    // --- 1. CARGA DE DATOS ---
     onSnapshot(collection(db, "docentes"), (s) => { 
         dbDocentes = s.docs.map(d => ({ id: d.id, ...d.data() })); 
         renderTablaDocentes(); 
@@ -258,24 +349,35 @@
         document.getElementById('loadingOverlay').style.display='none'; 
     });
     
+    // Carga de Cursos (Ordenada Alfabéticamente)
     onSnapshot(collection(db, "cursos"), (s) => { 
-        dbCursos = s.docs.map(d => ({ id: d.id, ...d.data() })); 
+        dbCursos = s.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => a.nombre.localeCompare(b.nombre)); 
+        
         actualizarSelectores(); 
         renderTablaCursosGeneral();
         if(docenteActivo) renderSidebarCursos(); 
+        
+        // Recargar dashboard si hay cambios en el curso activo
         const lastCursoId = localStorage.getItem('cc_last_curso');
         if(lastCursoId && docenteActivo) {
              const c = dbCursos.find(x => x.id === lastCursoId);
-             if(c && c.docenteId === docenteActivo.id) window.cargarDashboardCurso(c.id);
+             if(c && c.docenteId === docenteActivo.id) {
+                 // Si el curso activo cambia, redibujamos
+                 if(cursoActivo && cursoActivo.id === c.id) window.cargarDashboardCurso(c.id);
+                 else if(!cursoActivo) window.cargarDashboardCurso(c.id);
+             }
         }
         const selCarga = document.getElementById('selectCursoCarga').value;
         if(selCarga) window.cargarDatosEnInputs(selCarga);
     });
 
-    // --- GESTIÓN DE DOCENTES Y CURSOS ---
+    // --- 2. GESTIÓN DE DOCENTES Y CURSOS ---
     window.switchView = (v) => { document.querySelectorAll('.view-section').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.nav-link-custom').forEach(e=>e.classList.remove('active')); document.getElementById(`view-${v}`).classList.add('active'); document.getElementById(`btn-view-${v}`).classList.add('active'); };
+    
     window.crearDocente = async () => { const n = document.getElementById('inputNewDocente').value; if(!n) return alert("Nombre requerido"); await addDoc(collection(db, "docentes"), { nombre: n, especialidad: document.getElementById('inputNewEsp').value }); document.getElementById('inputNewDocente').value=""; alert("Docente guardado."); };
-    window.borrarDocente = async (id) => { if(confirm("¿Borrar docente y cursos?")) { await deleteDoc(doc(db, "docentes", id)); const q = query(collection(db, "cursos"), where("docenteId", "==", id)); (await getDocs(q)).forEach(d => deleteDoc(d.ref)); alert("Eliminado."); } };
+    
+    window.borrarDocente = async (id) => { if(confirm("¿Borrar docente y cursos asociados?")) { await deleteDoc(doc(db, "docentes", id)); const q = query(collection(db, "cursos"), where("docenteId", "==", id)); (await getDocs(q)).forEach(d => deleteDoc(d.ref)); alert("Eliminado."); } };
     
     window.seleccionarDocente = (id) => { 
         docenteActivo = dbDocentes.find(d => d.id === id); 
@@ -289,9 +391,10 @@
     };
 
     window.crearCurso = async () => { const d = document.getElementById('selectDocenteParaCurso').value, n = document.getElementById('inputNombreCurso').value; if(!d || !n) return alert("Datos incompletos"); await addDoc(collection(db, "cursos"), { docenteId: d, nombre: n, nivel: document.getElementById('inputNivelCurso').value, plan: [], real: [] }); document.getElementById('inputNombreCurso').value=""; alert("Curso creado."); };
+    
     window.borrarCurso = async (id) => { if(confirm("¿Estás seguro de eliminar este curso?")) { await deleteDoc(doc(db, "cursos", id)); alert("Curso eliminado."); } };
 
-    // --- CARGA DE TEXTOS ---
+    // --- 3. CARGA DE TEXTOS Y PARSEO ---
     window.cargarDatosEnInputs = (cursoId) => {
         const textPlan = document.getElementById('textPlan');
         const textReal = document.getElementById('textReal');
@@ -306,7 +409,6 @@
         }
     };
 
-    // --- LECTURA DE EXCEL (Para Cobertura) ---
     window.handleFileUpload = (input, type) => {
         const file = input.files[0];
         if(!file) return;
@@ -318,6 +420,8 @@
             let outputText = "";
             const mesesKey = ["mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
             let headerMap = {}, headerIndex = -1;
+            
+            // Detectar fila de cabecera
             for(let i=0; i<jsonData.length; i++) {
                 let matches = 0;
                 jsonData[i].forEach((cell, idx) => {
@@ -325,6 +429,7 @@
                 });
                 if(matches >= 2) { headerIndex = i; break; }
             }
+            
             if(headerIndex !== -1) {
                 for(let i=headerIndex+1; i<jsonData.length; i++) {
                     const row = jsonData[i];
@@ -348,37 +453,6 @@
         reader.readAsArrayBuffer(file);
     };
 
-    // --- PARSEO INTELIGENTE (Anti-Duplicados y Normalización) ---
-    function parsearTexto(txt, modo) {
-        let resultados = [];
-        let uniqueKeys = {}; 
-        const regex = /(?:^|[\s\W])(OA\s*0*(\d+))(?:[\s:.,-]*)([\s\S]*?)(?=(?:^|[\s\W])OA\s*0*\d+|$)/gim;
-        
-        let match;
-        while ((match = regex.exec(txt)) !== null) {
-            let num = match[2]; 
-            let code = "OA" + num; // Normaliza OA03 -> OA3
-            let desc = match[3].trim().replace(/[\r\n]+/g, " ").substring(0, 200);
-            
-            if(!uniqueKeys[code]) {
-                uniqueKeys[code] = true; 
-                if(modo === 'plan') {
-                    resultados.push({codigo: code, desc: desc, mes: "Anual"});
-                } else {
-                    const meses = ["MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
-                    let foundMeses = meses.filter(m => desc.toUpperCase().includes(m));
-                    if(foundMeses.length > 0) {
-                        resultados.push({codigo: code, meses: foundMeses});
-                    } else {
-                         if(desc.length < 50) resultados.push({codigo: code, meses: ["(Verificar)"]});
-                    }
-                }
-            }
-        }
-        return resultados;
-    }
-
-    // --- PROCESAR Y GUARDAR ---
     window.procesarArchivos = async () => {
         const id = document.getElementById('selectCursoCarga').value;
         if(!id) return alert("Seleccione curso");
@@ -386,20 +460,20 @@
         const txtP = document.getElementById('textPlan').value;
         const txtR = document.getElementById('textReal').value;
         
-        // Parsear con filtro anti-duplicados
-        let nPlan = parsearTexto(txtP, 'plan');
-        let rawReal = parsearTexto(txtR, 'real');
+        // Parsear PLAN
+        let nPlan = [];
+        let planRegex = /(?:^|[\s\W])(OA\s*0*(\d+))(?:[\s:.,-]*)([\s\S]*?)(?=(?:^|[\s\W])OA\s*0*\d+|$)/gim;
+        let pMatch;
+        while ((pMatch = planRegex.exec(txtP)) !== null) {
+             nPlan.push({
+                 codigo: "OA" + pMatch[2],
+                 desc: pMatch[3].trim().substring(0,200),
+                 mes: "Anual" // Placeholder
+             });
+        }
+
+        // Parsear REAL
         let mapReal = {};
-        
-        // Estructurar Real
-        rawReal.forEach(r => {
-             if(!mapReal[r.codigo]) mapReal[r.codigo] = {codigo:r.codigo, meses:[], observaciones:[], logrado:true};
-             if(r.meses) {
-                 r.meses.forEach(m => { if(!mapReal[r.codigo].meses.includes(m)) mapReal[r.codigo].meses.push(m); });
-             }
-        });
-        
-        // Soporte CSV simple del cuadro de texto manual
         if(txtR.includes(',')) {
              txtR.split('\n').forEach(l => {
                  let parts = l.split(',');
@@ -413,16 +487,15 @@
                  }
              });
         }
-        
         let nReal = Object.values(mapReal);
 
-        if(confirm(`RESUMEN:\n- Planificados (Únicos): ${nPlan.length}\n- Evaluados (Únicos): ${nReal.length}\n\n¿Guardar?`)) {
+        if(confirm(`Se procesarán:\n- ${nPlan.length} registros en Planificación.\n- ${nReal.length} registros únicos en Cobertura Real.\n\n¿Guardar?`)) {
             try {
                 await updateDoc(doc(db,"cursos",id), { ...(nPlan.length?{plan:nPlan}:{}), ...(nReal.length?{real:nReal}:{}) });
                 const c = dbCursos.find(x=>x.id===id);
                 window.seleccionarDocente(c.docenteId);
                 window.cargarDashboardCurso(id);
-                alert("¡Guardado!");
+                alert("¡Guardado exitosamente!");
             } catch(e) { alert("Error: "+e.message); }
         }
     };
@@ -430,76 +503,159 @@
     window.guardarObservacionActual = async () => {
         if(!cursoActivo) return;
         const c = document.getElementById('inputObservacionModal').dataset.oaCode, o = document.getElementById('inputObservacionModal').value;
+        
+        // Copiamos el array real actual
         let nR = JSON.parse(JSON.stringify(cursoActivo.real||[]));
+        
+        // Buscar si ya existe la entrada
         let idx = nR.findIndex(x=>x.codigo===c);
-        if(idx>=0) nR[idx].observaciones = [o];
-        else nR.push({codigo:c, meses:[], observaciones:[o], logrado:false});
+        if(idx>=0) {
+            nR[idx].observaciones = [o]; // Sobreescribimos la observación para simplificar
+        } else {
+            // Si es un pendiente que ahora tiene observación, lo creamos
+            nR.push({codigo:c, meses:[], observaciones:[o], logrado:false});
+        }
+        
         await updateDoc(doc(db,"cursos",cursoActivo.id), {real:nR});
         bootstrap.Modal.getInstance(document.getElementById('modalEvidencia')).hide();
         alert("Observación guardada.");
     };
 
+    // --- 4. FUNCIÓN PRINCIPAL DE RENDERIZADO (OPTIMIZADA: MERGE VISUAL) ---
     window.cargarDashboardCurso = (id) => {
         cursoActivo = dbCursos.find(c=>c.id===id);
         if(!cursoActivo) return;
         localStorage.setItem('cc_last_curso', id); 
+        
         document.getElementById('headerTitulo').innerText = cursoActivo.nombre;
-        document.getElementById('headerSubtitulo').innerText = `${cursoActivo.nivel} - Reporte`;
+        document.getElementById('headerSubtitulo').innerText = `${cursoActivo.nivel} - Reporte Generado`;
         const lst = document.getElementById('listaOAs'); lst.innerHTML = "";
-        let log=0, bre=0, ext=0;
         
+        // --- LÓGICA DE UNIFICACIÓN ---
+        
+        // Normalizador de códigos (OA1 === OA01)
         const normalize = (t) => t ? t.toString().replace(/\s+/g, '').toUpperCase().replace(/OA0+(\d+)/, "OA$1") : "";
-        const pSetCodigos = new Set((cursoActivo.plan||[]).map(x=>normalize(x.codigo)));
         
+        // A. UNIFICAR EL PLAN (Map: Codigo -> {desc, original})
+        const uniquePlan = new Map();
         (cursoActivo.plan||[]).forEach(p => {
-            const r = (cursoActivo.real||[]).find(x => normalize(x.codigo) === normalize(p.codigo));
+            const code = normalize(p.codigo);
+            if(!uniquePlan.has(code)) {
+                uniquePlan.set(code, { original: p.codigo, desc: p.desc });
+            }
+        });
+
+        // B. UNIFICAR EL REAL (Map: Codigo -> {meses[], observaciones[]})
+        // Aquí fusionamos las múltiples apariciones del mismo OA en diferentes meses
+        const uniqueReal = new Map();
+        (cursoActivo.real||[]).forEach(r => {
+            const code = normalize(r.codigo);
+            if(!uniqueReal.has(code)) {
+                uniqueReal.set(code, { meses: [...r.meses], observaciones: r.observaciones ? [...r.observaciones] : [] });
+            } else {
+                const existing = uniqueReal.get(code);
+                // Fusionar meses (Set para evitar duplicados como MAR, MAR)
+                r.meses.forEach(m => { if(!existing.meses.includes(m)) existing.meses.push(m); });
+                // Fusionar observaciones
+                if(r.observaciones) existing.observaciones.push(...r.observaciones);
+            }
+        });
+
+        // C. Estadísticas (Basadas en Objetivos ÚNICOS)
+        let log = 0, bre = 0, ext = 0;
+
+        // D. Renderizar PLAN (Ordenado Numéricamente)
+        const sortedPlanKeys = Array.from(uniquePlan.keys()).sort((a,b) => {
+             const nA = parseInt(a.replace(/\D/g,'')) || 0;
+             const nB = parseInt(b.replace(/\D/g,'')) || 0;
+             return nA - nB;
+        });
+
+        sortedPlanKeys.forEach(key => {
+            const p = uniquePlan.get(key);
+            const r = uniqueReal.get(key); // Buscar datos reales fusionados
+
             if(r && r.meses.length>0) { 
                 log++; 
-                lst.innerHTML += card(p.codigo, p.desc, "LOGRADO", "status-hit", "bg-success", r.meses.join(", "), "hit"); 
+                // Renderizamos UNA sola tarjeta con TODOS los meses acumulados
+                lst.innerHTML += card(p.original, p.desc, "LOGRADO", "status-hit", "bg-success", r.meses.join(", "), "hit"); 
             } else { 
                 bre++; 
-                lst.innerHTML += card(p.codigo, p.desc, "PENDIENTE", "status-miss", "bg-danger", "No reportado", "miss"); 
+                lst.innerHTML += card(p.original, p.desc, "PENDIENTE", "status-miss", "bg-danger", "No reportado", "miss"); 
             }
         });
         
-        (cursoActivo.real||[]).forEach(r => {
-            if(!pSetCodigos.has(normalize(r.codigo)) && r.meses.length>0) { 
+        // E. Renderizar EXTRAS (En Real pero no en Plan)
+        uniqueReal.forEach((r, key) => {
+            if(!uniquePlan.has(key) && r.meses.length>0) { 
                 ext++; 
-                lst.innerHTML += card(r.codigo, "Actividad realizada no planificada", "EXTRA", "status-extra", "bg-warning text-dark", r.meses.join(", "), "extra"); 
+                // Usamos el código de la key (ej OA5) ya que no tenemos 'original' del plan
+                lst.innerHTML += card(key, "Actividad realizada no planificada", "EXTRA", "status-extra", "bg-warning text-dark", r.meses.join(", "), "extra"); 
             }
         });
         
-        const pct = (cursoActivo.plan||[]).length > 0 ? Math.round((log / cursoActivo.plan.length)*100) : 0;
+        // F. Actualizar Dashboard UI
+        const totalPlan = uniquePlan.size;
+        const pct = totalPlan > 0 ? Math.round((log / totalPlan)*100) : 0;
+        
         document.getElementById('stat-percent').innerText = pct + "%"; 
         document.getElementById('stat-brecha').innerText = bre; 
         document.getElementById('stat-extra').innerText = ext;
+        
         window.switchView('dashboard');
     };
 
-    function renderTablaDocentes(){ const t=document.getElementById('tablaDocentes'); t.innerHTML=""; dbDocentes.forEach(d => t.innerHTML+=`<tr class="${docenteActivo?.id===d.id?'table-primary':''}"><td>${d.nombre}</td><td><button class="btn btn-sm btn-outline-primary" onclick="window.seleccionarDocente('${d.id}')"><i class="bi bi-eye"></i></button><button class="btn btn-sm btn-outline-danger ms-1" onclick="window.borrarDocente('${d.id}')"><i class="bi bi-x"></i></button></td></tr>`); }
+    // Helpers UI
+    function renderTablaDocentes(){ const t=document.getElementById('tablaDocentes'); t.innerHTML=""; dbDocentes.forEach(d => t.innerHTML+=`<tr class="${docenteActivo?.id===d.id?'table-primary':''}"><td>${d.nombre}</td><td class="text-end"><button class="btn btn-sm btn-outline-primary py-0" onclick="window.seleccionarDocente('${d.id}')"><i class="bi bi-eye"></i></button><button class="btn btn-sm btn-outline-danger ms-1 py-0" onclick="window.borrarDocente('${d.id}')"><i class="bi bi-x"></i></button></td></tr>`); }
     function renderSidebarCursos(){ const c=document.getElementById('menuCursosContainer'); c.innerHTML=""; dbCursos.filter(x=>x.docenteId===docenteActivo.id).forEach(k => c.innerHTML+=`<div class="nav-link-custom ms-2" onclick="window.cargarDashboardCurso('${k.id}')"><i class="bi bi-journal-bookmark"></i> <small>${k.nombre}</small></div>`); }
-    function renderTablaCursosGeneral(){ const t=document.getElementById('tablaCursosGeneral'); t.innerHTML=""; dbCursos.forEach(c => { const doc = dbDocentes.find(d => d.id === c.docenteId); t.innerHTML+=`<tr><td class="small fw-bold">${c.nombre}</td><td class="small">${doc?doc.nombre:'Sin Docente'}</td><td><button class="btn btn-sm btn-danger py-0" onclick="window.borrarCurso('${c.id}')"><i class="bi bi-trash"></i></button></td></tr>`; }); }
+    function renderTablaCursosGeneral(){ const t=document.getElementById('tablaCursosGeneral'); t.innerHTML=""; dbCursos.forEach(c => { const doc = dbDocentes.find(d => d.id === c.docenteId); t.innerHTML+=`<tr><td class="small fw-bold">${c.nombre}</td><td class="small">${doc?doc.nombre:'Sin Docente'}</td><td class="text-end"><button class="btn btn-sm btn-danger py-0" onclick="window.borrarCurso('${c.id}')"><i class="bi bi-trash"></i></button></td></tr>`; }); }
     function actualizarSelectores(){ const d=document.getElementById('selectDocenteParaCurso'), c=document.getElementById('selectCursoCarga'); const vD=d.value, vC=c.value; d.innerHTML='<option value="">Seleccione Docente...</option>'; dbDocentes.forEach(x=>d.innerHTML+=`<option value="${x.id}">${x.nombre}</option>`); c.innerHTML='<option value="">Seleccione Asignatura...</option>'; dbCursos.forEach(x=>{const doc=dbDocentes.find(y=>y.id===x.docenteId); c.innerHTML+=`<option value="${x.id}">${x.nombre} (${doc?doc.nombre:'?'})</option>`}); if(vD) d.value=vD; if(vC) c.value=vC; }
     
+    // Generador de Tarjeta HTML
     function card(c, d, b, cl, bc, f, t) { 
-        return `<div class="audit-card ${cl}" onclick="window.verDetalle('${c}', '${t}')"><div class="row align-items-center"><div class="col-2 fw-bold text-secondary">${c}</div><div class="col-6"><small class="fw-bold text-dark">${d.substring(0,80)}...</small></div><div class="col-4 text-end"><span class="badge ${bc}">${b}</span><div class="small text-muted mt-1">${f}</div></div></div></div>`; 
+        return `
+        <div class="audit-card ${cl}" onclick="window.verDetalle('${c}', '${t}')">
+            <div class="row align-items-center g-1">
+                <div class="col-1 fw-bold text-secondary oa-code">${c}</div>
+                <div class="col-8">
+                    <div class="oa-desc text-dark">${d.substring(0,100)}${d.length>100?'...':''}</div>
+                </div>
+                <div class="col-3 text-end">
+                    <span class="badge ${bc} small" style="font-size: 0.65rem;">${b}</span>
+                    <div class="small text-muted mt-1" style="font-size: 0.7rem;">${f}</div>
+                </div>
+            </div>
+        </div>`; 
     }
     
+    // Ver Detalle (Modal) - También debe recolectar datos fusionados
     window.verDetalle = (c, t) => { 
         const normalize = (val) => val ? val.toString().replace(/\s+/g, '').toUpperCase().replace(/OA0+(\d+)/, "OA$1") : "";
         const target = normalize(c);
+        
+        // Buscar descripción (primera coincidencia en Plan)
         const p = (cursoActivo.plan||[]).find(x => normalize(x.codigo) === target);
-        const r = (cursoActivo.real||[]).find(x => normalize(x.codigo) === target);
         
+        // Buscar todos los datos Reales correspondientes a este OA
+        let mesesTotal = [];
+        let obsTotal = [];
+        
+        (cursoActivo.real||[]).forEach(r => {
+            if(normalize(r.codigo) === target) {
+                r.meses.forEach(m => { if(!mesesTotal.includes(m)) mesesTotal.push(m); });
+                if(r.observaciones) obsTotal.push(...r.observaciones);
+            }
+        });
+
         document.getElementById('modalTituloOA').innerText = c; 
-        document.getElementById('modalDescOA').innerText = p ? p.desc : "Descripción no disponible (Extra)"; 
+        document.getElementById('modalDescOA').innerText = p ? p.desc : "Descripción no disponible (Actividad Extra)"; 
         document.getElementById('modalEstadoTexto').innerText = t==='hit'?"✅ LOGRADO":t==='miss'?"❌ PENDIENTE":"⭐ EXTRA"; 
-        document.getElementById('modalMesesTexto').innerText = r && r.meses.length ? r.meses.join(", ") : "-"; 
+        document.getElementById('modalMesesTexto').innerText = mesesTotal.length ? mesesTotal.join(", ") : "-"; 
         
-        const obs = r && r.observaciones && r.observaciones.length > 0 ? r.observaciones.join("\n") : ""; 
+        const obs = obsTotal.length > 0 ? obsTotal.join("\n---\n") : ""; 
         document.getElementById('inputObservacionModal').value = obs; 
         document.getElementById('inputObservacionModal').dataset.oaCode = c; 
-        document.getElementById('viewOnlyObs').innerText = obs || "Sin observaciones."; 
+        document.getElementById('viewOnlyObs').innerText = obs || "Sin observaciones registradas."; 
         
         new bootstrap.Modal(document.getElementById('modalEvidencia')).show(); 
     };
@@ -507,6 +663,7 @@
     window.filtrarOAs=(v)=>{document.querySelectorAll('.audit-card').forEach(c=>c.style.display=c.innerText.toLowerCase().includes(v.toLowerCase())?'':'none')};
     window.imprimirReporte=()=>{ if(!cursoActivo) return alert("Seleccione curso"); document.getElementById('firmaDocenteNombre').innerText=docenteActivo.nombre; document.getElementById('fechaReporte').innerText=new Date().toLocaleDateString(); window.print(); };
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
