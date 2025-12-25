@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Control de Planificaciones — Gestión UTP v19 (Full Control)</title>
+  <title>Control de Planificaciones — Gestión UTP v22 (Memo Formal)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@300;400;700&display=swap');
     body { font-family: 'Inter', sans-serif; background:#f3f4f6; min-height: 100vh; }
     
     /* UI Element Styles */
@@ -29,13 +29,15 @@
 
     /* --- SISTEMA DE IMPRESIÓN --- */
     @media print {
-      @page { margin: 0.5cm; size: letter; }
+      /* MÁRGENES FORMALES DE 2.5cm */
+      @page { margin: 2.5cm; size: letter; }
+      
       body { background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       body > * { display: none !important; }
 
       /* MODOS DE IMPRESIÓN */
-      body:not(.voucher-print-mode):not(.feedback-print-mode) .printable { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
-      body:not(.voucher-print-mode):not(.feedback-print-mode) .printable * { visibility: visible !important; display: block; }
+      body:not(.voucher-print-mode):not(.feedback-print-mode):not(.memo-print-mode) .printable { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
+      body:not(.voucher-print-mode):not(.feedback-print-mode):not(.memo-print-mode) .printable * { visibility: visible !important; display: block; }
       
       body.voucher-print-mode #voucher-container { display: block !important; position: absolute; left: 0; top: 0; width: 100%; z-index: 9999; }
       body.voucher-print-mode #voucher-container * { visibility: visible !important; }
@@ -46,6 +48,10 @@
       body.feedback-print-mode #feedback-container .flex { display: flex !important; }
       body.feedback-print-mode #feedback-container table { display: table !important; width: 100%; }
 
+      /* MODO MEMO */
+      body.memo-print-mode #memo-container { display: block !important; position: absolute; left: 0; top: 0; width: 100%; z-index: 9999; margin: 0; padding: 0; }
+      body.memo-print-mode #memo-container * { visibility: visible !important; }
+
       .no-print, header, button, input, select, textarea, .list-manage-controls { display: none !important; }
       .grid { display: grid !important; } .flex { display: flex !important; }
       .chart-container { height: 280px !important; width: 100% !important; page-break-inside: avoid; }
@@ -55,7 +61,6 @@
     #reportHeader { display: none; }
     .hidden { display: none; }
     
-    /* Scrollbar para listas */
     .custom-scroll { max-height: 150px; overflow-y: auto; }
     .custom-scroll::-webkit-scrollbar { width: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
@@ -256,6 +261,8 @@
 
   <div id="voucher-container" class="hidden"></div>
   <div id="feedback-container" class="hidden bg-white p-10 max-w-4xl mx-auto"></div>
+  
+  <div id="memo-container" class="hidden bg-white max-w-4xl mx-auto relative font-serif text-gray-900"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -264,7 +271,6 @@
     const $ = (id)=>document.getElementById(id);
     const cfg = {apiKey:"AIzaSyDJnJlpsqR76z_lBnTNEULYcGoQGIi23VU",authDomain:"planificaciones-18b94.firebaseapp.com",projectId:"planificaciones-18b94",storageBucket:"planificaciones-18b94.appspot.com",messagingSenderId:"268119843295",appId:"1:268119843295:web:bb2bdbcb0affe4ecf3646a"};
     
-    const ROOT_PATH = "";
     const ARTIFACTS_PATH = "artifacts/planificaciones-18b94/users/planificaciones-18b94";
     const app=initializeApp(cfg); 
     const db=getFirestore(app);
@@ -279,7 +285,6 @@
     function fmt(d){ const x=toDate(d); return x?x.toLocaleDateString('es-CL'):'-'; }
     function ym(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
 
-    // --- CARGA DE DATOS ---
     function loadPlans() {
         let d1=[], d2=[], l1=false, l2=false;
         const mg=()=>{if(l1&&l2) {
@@ -351,7 +356,6 @@
         fill('asignaturaForm', listsData.asignaturas);
     }
 
-    // --- ACCIONES CRUD ---
     const saveEntity = async (col, val) => {
         if(!val) return;
         try { await addDoc(collection(db, `${ARTIFACTS_PATH}/${col}`), { nombre: val, createdAt: serverTimestamp() }); } 
@@ -408,14 +412,23 @@
             let revBadge='<span class="badge badge-warn">Pendiente</span>';
             if(p.estadoRevision==='revisado')revBadge='<span class="badge badge-ok">Revisado OK</span>';
             if(p.estadoRevision==='observado')revBadge='<span class="badge badge-err">Observado</span>';
-            const alertBtn=(st==='delayed'||st==='pending')?`<button onclick="window.sendAlert('${p.profesor}','${p.titulo}','${fmt(p.fechaEntrega)}')" class="text-red-600 ml-2"><i class="fa-solid fa-bell"></i></button>`:'';
+            
+            // --- BOTONES ---
+            let alertBtn = '';
+            if(st==='delayed' || st==='pending') {
+                alertBtn += `<button onclick="window.sendAlert('${p.profesor}','${p.titulo}','${fmt(p.fechaEntrega)}')" class="text-blue-600 hover:text-blue-800 ml-1" title="Enviar Email"><i class="fa-solid fa-envelope"></i></button>`;
+            }
+            // Botón Memo (>= 10 días atraso)
+            if(parseInt(dd) >= 10) {
+                alertBtn += `<button onclick="window.generateMemo('${p.profesor}', '${p.titulo}', '${fmt(p.fechaEntrega)}', '${fmt(p.fechaReal)}', ${dd})" class="text-red-600 hover:text-red-800 ml-3" title="Generar Memorándum"><i class="fa-solid fa-file-pdf text-lg"></i></button>`;
+            }
 
             tb.innerHTML+=`<tr class="border-b hover:bg-gray-50">
                 <td class="p-3"><div class="font-bold text-gray-800">${p.titulo||'-'}</div></td><td class="p-3 text-xs">${p.profesor||'-'}</td>
                 <td class="p-3 text-xs"><div>${p.curso||'-'}</div><div class="text-gray-500">${p.asignatura||'-'}</div></td>
                 <td class="p-3 text-xs text-center"><div>Plazo: ${fmt(p.fechaEntrega)}</div><div>Real: ${fmt(p.fechaReal)}</div></td>
                 <td class="p-3 text-center"><span class="badge ${st==='completed'?'badge-ok':(st==='delayed'?'badge-err':'badge-warn')}">${st==='completed'?'A Tiempo':(st==='delayed'?'Atraso '+dd+'d':'Pendiente')}</span></td>
-                <td class="p-3 text-center">${revBadge}</td><td class="p-3 text-center no-print">${alertBtn}</td></tr>`;
+                <td class="p-3 text-center">${revBadge}</td><td class="p-3 text-center no-print flex justify-center items-center">${alertBtn}</td></tr>`;
         });
 
         $('totalCount').innerText=tot; $('delayedCount').innerText=del; $('totalDaysDelayed').innerText=sumDel;
@@ -451,7 +464,6 @@
         $('bodyCoberturas').appendChild(tr);
     }
 
-    // --- NUEVA FUNCIÓN MATRIZ EXCEL ---
     $('generateMatrixBtn').onclick = () => {
         const year = $('yearSelector').value;
         const matriz = {}; 
@@ -463,7 +475,6 @@
 
         if (data.length === 0) return alert("No hay datos para el año " + year);
 
-        // Agrupar
         data.forEach(p => {
             const key = `${p.profesor}||${p.curso}||${p.asignatura}`;
             if (!matriz[key]) {
@@ -490,7 +501,6 @@
         filas.forEach(row => {
             const porcentaje = row.totalEntregas > 0 ? Math.round((row.entregasOK / row.totalEntregas) * 100) : 0;
             let celdasMeses = "";
-            // Renderizar de Marzo (2) a Diciembre (11)
             for (let i = 2; i <= 11; i++) { 
                 const val = row.meses[i];
                 const style = val > 0 ? "font-weight:bold; color:#dc2626;" : "color:#d1d5db;";
@@ -545,7 +555,6 @@
 
         container.classList.remove('hidden');
         document.body.classList.add('feedback-print-mode');
-        // Estilo dinamico para landscape
         const style = document.createElement('style');
         style.innerHTML = `@page { size: landscape; margin: 0.5cm; }`;
         document.head.appendChild(style);
@@ -562,6 +571,7 @@
 
     $('btnFeedbackReport').onclick = () => {
         const prof = $('filterProfesor').value;
+        const cursoSeleccionado = $('filterCurso').value; 
         const dS = $('dateStart').value;
         const dE = $('dateEnd').value;
         const observacion = $('inputObservaciones').value || "Sin observaciones registradas.";
@@ -584,11 +594,36 @@
         tablaCoberturasHtml += '</tbody></table>';
         if(!hasRows) tablaCoberturasHtml = '<p class="italic text-gray-500 mb-4">No se ingresó detalle de cobertura por asignatura.</p>';
 
-        const pData = planificacionesData.filter(p => p.profesor === prof && toDate(p.fechaEntrega) >= (dS?new Date(dS):new Date('2000-01-01')) && toDate(p.fechaEntrega) <= new Date(dE));
+        const pData = planificacionesData.filter(p => 
+            p.profesor === prof && 
+            (!cursoSeleccionado || p.curso === cursoSeleccionado) && 
+            toDate(p.fechaEntrega) >= (dS?new Date(dS):new Date('2000-01-01')) && 
+            toDate(p.fechaEntrega) <= new Date(dE)
+        );
+
         const total = pData.length;
         const entregadas = pData.filter(p => p.fechaReal).length;
         const cumplimientoPlan = total > 0 ? Math.round((entregadas/total)*100) : 0;
         const atrasos = pData.filter(p => status(p.fechaEntrega, p.fechaReal) === 'delayed').length;
+
+        const statsCursos = {};
+        pData.forEach(p => {
+            if(!statsCursos[p.curso]) statsCursos[p.curso] = {total:0, ok:0, late:0};
+            statsCursos[p.curso].total++;
+            const st = status(p.fechaEntrega, p.fechaReal);
+            if(st === 'completed') statsCursos[p.curso].ok++;
+            if(st === 'delayed') statsCursos[p.curso].late++;
+        });
+        
+        let desgloseCursosHtml = '';
+        if(Object.keys(statsCursos).length > 0){
+            desgloseCursosHtml = '<div class="mb-4 mt-2"><p class="text-xs font-bold text-gray-500 uppercase mb-1">Desglose por Curso</p><table class="w-full text-xs border text-center"><thead class="bg-gray-200"><tr><th>Curso</th><th>Total</th><th>OK</th><th>Atrasos</th><th>% Cump.</th></tr></thead><tbody>';
+            for (const [c, s] of Object.entries(statsCursos)) {
+                const pct = s.total > 0 ? Math.round(((s.total - s.late)/s.total)*100) : 0;
+                desgloseCursosHtml += `<tr><td class="border p-1 font-bold">${c}</td><td class="border p-1">${s.total}</td><td class="border p-1 text-green-600">${s.ok}</td><td class="border p-1 text-red-600">${s.late}</td><td class="border p-1 font-bold ${pct<80?'text-red-600':'text-blue-600'}">${pct}%</td></tr>`;
+            }
+            desgloseCursosHtml += '</tbody></table></div>';
+        }
 
         $('feedback-container').innerHTML = `
             <div class="font-sans text-gray-800 border-4 border-double border-gray-300 p-8 h-full relative">
@@ -601,11 +636,15 @@
                     </div>
                 </div>
                 <div class="bg-gray-100 p-4 rounded mb-6 flex justify-between">
-                    <div><span class="font-bold text-gray-600 block text-xs">DOCENTE</span><span class="text-lg font-bold">${prof}</span></div>
+                    <div>
+                        <span class="font-bold text-gray-600 block text-xs">DOCENTE</span><span class="text-lg font-bold">${prof}</span>
+                        ${cursoSeleccionado ? `<span class="block text-xs text-indigo-600 font-bold mt-1">FILTRO: CURSO ${cursoSeleccionado}</span>` : ''}
+                    </div>
                     <div class="text-right"><span class="font-bold text-gray-600 block text-xs">PERIODO EVALUADO</span><span>${dS?fmt(dS):'Inicio'} al ${fmt(dE)}</span></div>
                 </div>
                 <h3 class="font-bold text-indigo-800 uppercase text-sm mb-2 border-b">I. Cumplimiento de Planificaciones</h3>
-                <div class="grid grid-cols-2 gap-4 mb-6 text-center">
+                
+                <div class="grid grid-cols-2 gap-4 mb-2 text-center">
                     <div class="border p-3 rounded bg-white shadow-sm">
                         <div class="text-3xl font-bold ${cumplimientoPlan>=80?'text-green-600':'text-red-600'}">${cumplimientoPlan}%</div>
                         <div class="text-xs text-gray-500 uppercase font-bold mt-1">Planificaciones Entregadas</div>
@@ -615,7 +654,10 @@
                         <div class="text-xs text-gray-500 uppercase font-bold mt-1">Entregas con Atraso</div>
                     </div>
                 </div>
-                <h3 class="font-bold text-indigo-800 uppercase text-sm mb-2 border-b">II. Avance de Cobertura Curricular</h3>
+                
+                ${desgloseCursosHtml}
+
+                <h3 class="font-bold text-indigo-800 uppercase text-sm mb-2 border-b mt-6">II. Avance de Cobertura Curricular</h3>
                 ${tablaCoberturasHtml}
                 <h3 class="font-bold text-indigo-800 uppercase text-sm mb-2 border-b">III. Retroalimentación y Compromisos</h3>
                 <div class="border rounded p-4 bg-white min-h-[120px] text-sm leading-relaxed text-justify mb-8">
@@ -647,10 +689,108 @@
         if(!prof||!dE)return alert("Seleccione Profesor y Fecha Hasta");
         const pData=planificacionesData.filter(p=>p.profesor===prof&&toDate(p.fechaEntrega)>=(dS?new Date(dS):new Date('2000-01-01'))&&toDate(p.fechaEntrega)<=new Date(dE)).sort((a,b)=>toDate(a.fechaEntrega)-toDate(b.fechaEntrega));
         let sumD=0, maxD=0;
-        const rows=pData.map(p=>{ const d=daysDelay(p.fechaEntrega,p.fechaReal), s=status(p.fechaEntrega,p.fechaReal); if(d>0){sumD+=d;maxD=Math.max(maxD,d);} return `<tr class="border-b text-xs"><td class="p-2">${p.titulo}</td><td class="p-2">${p.curso}</td><td class="p-2">${fmt(p.fechaEntrega)}</td><td class="p-2">${fmt(p.fechaReal)}</td><td class="p-2 font-bold ${d>0?'text-red-600':''}">${d>0?d:'-'}</td><td class="p-2"><span class="badge ${s==='completed'?'badge-ok':(s==='delayed'?'badge-err':'badge-warn')}">${s}</span></td></tr>`;}).join('');
-        $('voucher-container').innerHTML=`<div class="space-y-6 text-sm font-sans text-gray-800"><div class="border-b pb-4 flex justify-between"><img src="logo.jpg" style="height:60px"><div><h1 class="text-xl font-bold">COMPROBANTE DE ENTREGAS</h1><p class="text-right text-gray-500">${new Date().toLocaleDateString()}</p></div></div><div class="bg-gray-100 p-2 font-bold flex justify-between"><span>${prof}</span><span>${pData.length} Regs.</span></div><table class="w-full text-left mt-4"><thead class="bg-gray-200 text-xs uppercase"><tr><th class="p-2">Actividad</th><th class="p-2">Curso</th><th class="p-2">Plazo</th><th class="p-2">Entrega</th><th class="p-2">Días</th><th class="p-2">Est</th></tr></thead><tbody>${rows}</tbody></table><div class="mt-8 pt-4 border-t text-center text-xs text-gray-400">Generado por ProfeAle System</div></div>`;
+        const dictStatus = { 'completed': 'A TIEMPO', 'delayed': 'ATRASADO', 'pending': 'PENDIENTE' };
+        
+        const rows=pData.map(p=>{ 
+            const d=daysDelay(p.fechaEntrega,p.fechaReal), s=status(p.fechaEntrega,p.fechaReal); 
+            const sEs = dictStatus[s] || s; 
+            if(d>0){sumD+=d;maxD=Math.max(maxD,d);} 
+            return `<tr class="border-b text-xs"><td class="p-2">${p.titulo}</td><td class="p-2">${p.curso}</td><td class="p-2">${fmt(p.fechaEntrega)}</td><td class="p-2">${fmt(p.fechaReal)}</td><td class="p-2 font-bold ${d>0?'text-red-600':''}">${d>0?d:'-'}</td><td class="p-2"><span class="badge ${s==='completed'?'badge-ok':(s==='delayed'?'badge-err':'badge-warn')}">${sEs}</span></td></tr>`;
+        }).join('');
+        
+        $('voucher-container').innerHTML=`<div class="space-y-6 text-sm font-sans text-gray-800"><div class="border-b pb-4 flex justify-between"><img src="logo.jpg" style="height:60px"><div><h1 class="text-xl font-bold">COMPROBANTE DE ENTREGAS</h1><p class="text-right text-gray-500">${new Date().toLocaleDateString()}</p></div></div><div class="bg-gray-100 p-2 font-bold flex justify-between"><span>${prof}</span><span>${pData.length} Regs.</span></div><table class=\"w-full text-left mt-4\"><thead class=\"bg-gray-200 text-xs uppercase\"><tr><th class=\"p-2\">Actividad</th><th class=\"p-2\">Curso</th><th class=\"p-2\">Plazo</th><th class=\"p-2\">Entrega</th><th class=\"p-2\">Días</th><th class=\"p-2\">Est</th></tr></thead><tbody>${rows}</tbody></table><div class=\"mt-8 pt-4 border-t text-center text-xs text-gray-400\">Generado por ProfeAle System</div></div>`;
         $('voucher-container').classList.remove('hidden'); document.body.classList.add('voucher-print-mode');
         setTimeout(()=>{window.print();setTimeout(()=>{document.body.classList.remove('voucher-print-mode');$('voucher-container').classList.add('hidden');},500);},500);
+    };
+
+    // --- FUNCIÓN MEMORANDUM FORMAL (UNA SOLA PLANA) ---
+    window.generateMemo = (profesor, titulo, fechaPlazo, fechaReal, diasAtraso) => {
+        const container = $('memo-container');
+        const fechaHoy = new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        
+        // Plantilla Formal con espaciado ajustado para carta/letter
+        container.innerHTML = `
+            <div class="h-full flex flex-col relative font-serif text-gray-900 leading-snug">
+                <div class="flex items-end justify-between mb-6 border-b-2 border-black pb-2">
+                    <img src="logo.jpg" style="height: 60px;" alt="Logo Escuela">
+                    <div class="text-right">
+                        <h2 class="text-xl font-bold uppercase tracking-wide text-black">Memorándum</h2>
+                        <p class="text-xs font-bold text-gray-600">UNIDAD TÉCNICO PEDAGÓGICA</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-[80px_1fr] gap-2 mb-8 text-base">
+                    <div class="font-bold uppercase">De:</div>
+                    <div>JEFA UNIDAD TÉCNICO PEDAGÓGICA</div>
+                    
+                    <div class="font-bold uppercase">Para:</div>
+                    <div class="uppercase font-semibold">${profesor}</div>
+
+                    <div class="font-bold uppercase">Fecha:</div>
+                    <div class="capitalize">${fechaHoy}</div>
+
+                    <div class="font-bold uppercase">Mat:</div>
+                    <div class="uppercase font-bold underline">INCUMPLIMIENTO DE PLAZOS DE ENTREGA</div>
+                </div>
+
+                <div class="text-justify text-base space-y-4">
+                    <p>Estimado(a) docente:</p>
+                    
+                    <p>
+                        Junto con saludar, me dirijo a usted para informar y dejar constancia del incumplimiento 
+                        en los plazos establecidos para la entrega de la documentación pedagógica correspondiente.
+                    </p>
+
+                    <p>
+                        En específico, se detalla la siguiente situación respecto a la planificación de la unidad:
+                    </p>
+
+                    <div class="bg-gray-50 p-4 border-l-4 border-red-600 my-4 text-sm shadow-sm">
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li><strong>Actividad / Unidad:</strong> ${titulo}</li>
+                            <li><strong>Fecha de Plazo Estipulada:</strong> ${fechaPlazo}</li>
+                            <li><strong>Fecha Real de Recepción:</strong> ${fechaReal}</li>
+                            <li class="mt-2"><strong>Días Totales de Atraso:</strong> <span class="text-red-700 font-bold text-lg border-b border-red-300">${diasAtraso} días</span></li>
+                        </ul>
+                    </div>
+
+                    <p>
+                        Esta situación afecta el normal funcionamiento de los procesos de revisión y seguimiento curricular 
+                        de nuestro establecimiento. Se solicita regularizar sus entregas futuras para evitar medidas administrativas mayores, 
+                        conforme a lo estipulado en nuestro Reglamento Interno y contrato de trabajo respecto al cumplimiento de deberes profesionales.
+                    </p>
+
+                    <p>Sin otro particular, saluda atentamente,</p>
+                </div>
+
+                <div class="flex justify-between mt-16 px-4">
+                    <div class="text-center w-5/12 pt-2 border-t border-black">
+                        <p class="font-bold text-xs uppercase">${profesor}</p>
+                        <p class="text-[10px] text-gray-500 uppercase">Recibí Conforme</p>
+                    </div>
+                    <div class="text-center w-5/12 pt-2 border-t border-black">
+                        <p class="font-bold text-xs uppercase">ALEJANDRA MORALES G.</p>
+                        <p class="text-[10px] text-gray-500 uppercase">Jefa Unidad Técnico Pedagógica</p>
+                    </div>
+                </div>
+                
+                <div class="text-[10px] text-center text-gray-400 mt-8">
+                    Escuela Agrícola Sagrados Corazones - Documento generado el ${new Date().toLocaleDateString()}
+                </div>
+            </div>
+        `;
+
+        // Activar modo impresión Memo
+        container.classList.remove('hidden');
+        document.body.classList.add('memo-print-mode');
+
+        setTimeout(() => {
+            window.print();
+            setTimeout(() => {
+                document.body.classList.remove('memo-print-mode');
+                container.classList.add('hidden');
+            }, 500);
+        }, 500);
     };
 
     ['filterProfesor','filterCurso','dateStart','dateEnd'].forEach(i=>$(i).addEventListener('change',renderDashboard));

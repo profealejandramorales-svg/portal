@@ -11,7 +11,7 @@
     <style>
         body { background-color: #f0f4f3; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* --- ESTILOS VISUALES (PANTALLA) --- */
+        /* --- ESTILOS VISUALES --- */
         .header-band { 
             background: linear-gradient(135deg, #157347 0%, #0b4129 100%); 
             color: white; padding: 15px 0; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
@@ -20,13 +20,13 @@
         .nav-pills .nav-link { color: #198754; font-weight: 600; margin: 0 5px; }
         .check-month { transform: scale(1.4); cursor: pointer; border-color: #198754; }
         .card-oa, .card-st { border-left: 5px solid #198754; background: white; margin-bottom: 12px; transition: transform 0.2s; }
-        .card-st { border-left-color: #fd7e14; } /* Naranja para estrategias */
+        .card-st { border-left-color: #fd7e14; } 
         .card-oa:hover, .card-st:hover { transform: translateX(3px); }
         #loadingOverlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.95); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         .app-footer { margin-top: auto; padding: 25px; text-align: center; color: #6c757d; font-size: 0.85rem; border-top: 1px solid #dee2e6; background: #fff; }
         .dev-credit { font-weight: bold; color: #198754; text-decoration: none; }
 
-        /* --- ESTILOS PDF / IMPRESIÓN --- */
+        /* --- PDF / IMPRESIÓN --- */
         #pdf-content-area {
             display: none; 
             font-family: Arial, sans-serif;
@@ -40,14 +40,12 @@
         .pdf-table th { background-color: #e8f5e9 !important; text-align: center; font-weight: bold; color: #000; text-transform: uppercase; -webkit-print-color-adjust: exact; }
         .pdf-check { font-weight: bold; font-size: 12px; text-align: center; }
         .membrete-table { width: 100%; border-bottom: 2px solid #198754; margin-bottom: 20px; padding-bottom: 10px; }
-        .membrete-table td { border: none; vertical-align: middle; }
-
+        
         @media print {
             body * { visibility: hidden; }
             #pdf-content-area, #pdf-content-area * { visibility: visible; }
             #pdf-content-area { 
-                display: block !important; 
-                position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0;
+                display: block !important; position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0;
             }
             @page { size: landscape; margin: 1cm; }
         }
@@ -114,7 +112,7 @@
                 <button class="nav-link" id="tab-real" data-bs-toggle="pill" data-bs-target="#pills-real" onclick="window.sincronizarCobertura()"><i class="bi bi-check2-square me-2"></i>2. COBERTURA</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link" id="tab-estrategias" data-bs-toggle="pill" data-bs-target="#pills-estrategias" onclick="window.actualizarListaOA_Estrategias()"><i class="bi bi-lightbulb-fill me-2"></i>3. ESTRATEGIAS (Obligatorio)</button>
+                <button class="nav-link" id="tab-estrategias" data-bs-toggle="pill" data-bs-target="#pills-estrategias" onclick="window.actualizarListaOA_Estrategias()"><i class="bi bi-folder2-open me-2"></i>3. ESTRATEGIAS (Portafolio)</button>
             </li>
         </ul>
 
@@ -136,7 +134,7 @@
             <div class="tab-pane fade" id="pills-real">
                 <div class="alert alert-warning bg-opacity-10 border-warning py-2 small d-flex align-items-center">
                     <i class="bi bi-check-circle-fill me-2 fs-5 text-warning"></i>
-                    <div><strong>Instrucción:</strong> Marque las casillas de los meses trabajados para el año en curso.</div>
+                    <div><strong>Instrucción:</strong> Marque las casillas de los meses trabajados.</div>
                 </div>
                 <div class="table-responsive bg-white shadow-sm rounded p-3">
                     <table class="table table-hover align-middle table-sm" id="table-cobertura">
@@ -156,8 +154,8 @@
 
             <div class="tab-pane fade" id="pills-estrategias">
                 <div class="alert alert-danger bg-opacity-10 border-danger py-2 small d-flex align-items-center">
-                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5 text-danger"></i>
-                    <div><strong>Requisito Obligatorio:</strong> Debe registrar al menos <strong>3 estrategias</strong> vinculadas a sus OA para poder guardar.</div>
+                    <i class="bi bi-link-45deg me-2 fs-5 text-danger"></i>
+                    <div><strong>Portafolio Digital:</strong> Es REQUISITO pegar el link (Drive, Web, Video) de la evidencia para cada estrategia registrada.</div>
                 </div>
                 <div id="container-strategies" class="mb-4"></div>
                 <div class="text-center my-4">
@@ -214,9 +212,9 @@
     <h5 style="border-bottom: 1px solid #888; padding-bottom: 2px; font-size: 12px; margin-top: 20px; color: #198754;">II. MATRIZ DE COBERTURA REAL</h5>
     <table class="pdf-table"><thead><tr><th width="25%">OA</th><th>MAR</th><th>ABR</th><th>MAY</th><th>JUN</th><th>JUL</th><th>AGO</th><th>SEP</th><th>OCT</th><th>NOV</th><th>DIC</th></tr></thead><tbody id="pdf-tbody-real"></tbody></table>
     
-    <h5 style="border-bottom: 1px solid #888; padding-bottom: 2px; font-size: 12px; margin-top: 20px; color: #198754;">III. ESTRATEGIAS DIDÁCTICAS Y EVALUATIVAS</h5>
+    <h5 style="border-bottom: 1px solid #888; padding-bottom: 2px; font-size: 12px; margin-top: 20px; color: #198754;">III. ESTRATEGIAS Y EVIDENCIAS DIGITALES</h5>
     <table class="pdf-table">
-        <thead><tr><th width="20%">OA ASOCIADO</th><th>ESTRATEGIA IMPLEMENTADA</th></tr></thead>
+        <thead><tr><th width="20%">OA ASOCIADO</th><th>ESTRATEGIA IMPLEMENTADA</th><th width="25%">RECURSO DIGITAL</th></tr></thead>
         <tbody id="pdf-tbody-estrategias"></tbody>
     </table>
 
@@ -252,7 +250,13 @@
                 </div>
                 <div class="col-md-9">
                     <label class="small text-muted">Descripción de la Estrategia:</label>
-                    <textarea class="form-control border-0 bg-transparent input-st-desc" rows="2" placeholder="Ej: Aprendizaje basado en proyectos sobre..."></textarea>
+                    <textarea class="form-control border-0 bg-transparent input-st-desc mb-2" rows="2" placeholder="Ej: Prueba Sumativa Unidad 1..."></textarea>
+                    
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-secondary border-0"><i class="bi bi-link-45deg"></i></span>
+                        <input type="text" class="form-control input-st-url bg-light border-0" placeholder="Pegar enlace a evidencia (Drive/Web)..." oninput="verificarLink(this)">
+                        <a href="#" target="_blank" class="btn btn-outline-success btn-visit-link" style="display:none;" title="Probar enlace"><i class="bi bi-box-arrow-up-right"></i> Ir</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -269,14 +273,28 @@
     const CLAVE_UNIVERSAL = "2025"; 
 
     let cursoActual = null, docenteNombre = "Docente";
-    let anioActual = "2025"; // Variable global para el año
+    let anioActual = "2025"; 
 
-    // Listener de cambios en selector de año
+    // HELPERS
+    window.borrarCard = (b) => b.closest('.card').remove(); 
+    window.agregarFilaExtra = () => { const c=prompt("Código Extra:"); if(c) addFilaWeb(c.toUpperCase(),"Extra",[],true); };
+    
+    // Función para mostrar/ocultar botón "Ir"
+    window.verificarLink = (input) => {
+        const btn = input.nextElementSibling;
+        if(input.value && input.value.trim() !== ""){
+            btn.href = input.value.startsWith('http') ? input.value : 'https://' + input.value;
+            btn.style.display = 'inline-block';
+        } else {
+            btn.style.display = 'none';
+        }
+    };
+
     window.cambiarAnio = () => {
         anioActual = document.getElementById('selectAnio').value;
-        document.getElementById('selectCurso').value = ""; // Reset curso
+        document.getElementById('selectCurso').value = ""; 
         ocultarZona();
-        alert(`Cambio al año académico ${anioActual}. Seleccione una asignatura para ver los datos de este periodo.`);
+        alert(`Cambio al año académico ${anioActual}.`);
     };
 
     onSnapshot(collection(db, "cursos"), (s) => {
@@ -289,7 +307,6 @@
         listaCursos.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
         listaCursos.forEach(dt => {
-            // Verificar datos segun año seleccionado
             let keyPlan = (anioActual === "2025") ? "plan" : `plan_${anioActual}`;
             const tienePlan = dt[keyPlan] && dt[keyPlan].length > 0;
             const estilo = tienePlan ? 'color: #198754; font-weight: bold;' : '';
@@ -305,7 +322,6 @@
         const id = document.getElementById('selectCurso').value;
         if(!id) { ocultarZona(); return; }
         
-        // Simular seguridad
         setTimeout(async () => {
             if (prompt("🔒 SEGURIDAD REQUERIDA\nIngrese Clave Docente:") !== CLAVE_UNIVERSAL) { alert("⛔ Clave Incorrecta"); document.getElementById('selectCurso').value=""; ocultarZona(); return; }
             
@@ -317,7 +333,7 @@
                 if(cursoActual.docenteId) { const d = await getDoc(doc(db, "docentes", cursoActual.docenteId)); docenteNombre = d.exists()?d.data().nombre:"Docente"; }
                 
                 renderPlan(); 
-                renderStrategies(); // Renderizar estrategias
+                renderStrategies(); 
                 document.getElementById('zona-trabajo').style.display='block'; toggleBtns(false);
                 document.getElementById('loadingOverlay').style.display='none'; 
                 sincronizarCobertura();
@@ -328,15 +344,13 @@
     function ocultarZona(){ document.getElementById('zona-trabajo').style.display='none'; toggleBtns(true); cursoActual=null; }
     function toggleBtns(d){ document.getElementById('btn-pdf').disabled=d; document.getElementById('btn-print').disabled=d; document.getElementById('btn-mail').disabled=d; }
 
-    // Helpers para obtener keys dinamicas segun año
     const getKey = (type) => {
-        if(anioActual === "2025") return (type==="st") ? "estrategias" : type; // Compatibilidad 2025: plan, real, estrategias
-        return `${type}_${anioActual}`; // 2026+: plan_2026, real_2026, estrategias_2026
+        if(anioActual === "2025") return (type==="st") ? "estrategias" : type; 
+        return `${type}_${anioActual}`; 
     }
 
     const renderPlan = () => {
         const c = document.getElementById('container-plan'); c.innerHTML="";
-        // Obtener plan segun año
         const p = cursoActual[getKey('plan')] || [];
         if(p.length===0) window.agregarFilaPlan(); else p.forEach(o=>window.agregarFilaPlan(o.codigo,o.desc,o.mes));
     };
@@ -344,10 +358,9 @@
     const renderStrategies = () => {
         const c = document.getElementById('container-strategies'); c.innerHTML="";
         const s = cursoActual[getKey('st')] || [];
-        if(s.length===0) window.agregarStrategyRow(); else s.forEach(st=>window.agregarStrategyRow(st.oa, st.desc));
+        if(s.length===0) window.agregarStrategyRow(); else s.forEach(st=>window.agregarStrategyRow(st.oa, st.desc, st.url));
     };
 
-    // Actualiza el dropdown de OAs dentro de la pestaña estrategias
     window.actualizarListaOA_Estrategias = () => {
         const oasDisponibles = [];
         document.querySelectorAll('#container-plan .card-oa').forEach(f => {
@@ -369,13 +382,11 @@
         const tbW=document.getElementById('tbody-real'); tbW.innerHTML="";
         const tbP1=document.getElementById('pdf-tbody-plan'); tbP1.innerHTML="";
         const tbP2=document.getElementById('pdf-tbody-real'); tbP2.innerHTML="";
-        const tbP3=document.getElementById('pdf-tbody-estrategias'); tbP3.innerHTML=""; // PDF estrategias
+        const tbP3=document.getElementById('pdf-tbody-estrategias'); tbP3.innerHTML=""; 
 
         let vis=new Set(); const ms=["MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
-
         const realData = cursoActual[getKey('real')] || [];
 
-        // 1. Render Plan y Matriz
         document.querySelectorAll('#container-plan .card-oa').forEach(f => {
             const c=f.querySelector('.input-code').value, d=f.querySelector('.input-desc').value.trim()||"-", m=f.querySelector('.input-mes').value;
             const sv=realData.find(r=>r.codigo===c); const active=sv?sv.meses:[];
@@ -388,7 +399,6 @@
             vis.add(c);
         });
 
-        // 2. Render Extras
         realData.forEach(r=>{
             if(!vis.has(r.codigo)){
                 addFilaWeb(r.codigo,"Objetivo Extra",r.meses,true);
@@ -397,20 +407,21 @@
             }
         });
 
-        // 3. Render Estrategias en PDF
         const estrategiasData = [];
         document.querySelectorAll('.strategy-item').forEach(f => {
             const oa = f.querySelector('.input-st-oa').value;
             const desc = f.querySelector('.input-st-desc').value.trim();
-            if(desc) estrategiasData.push({oa, desc});
+            const url = f.querySelector('.input-st-url').value.trim();
+            if(desc) estrategiasData.push({oa, desc, url});
         });
 
         if(estrategiasData.length > 0) {
             estrategiasData.forEach(e => {
-                tbP3.innerHTML += `<tr><td style="text-align:center; font-weight:bold;">${e.oa}</td><td>${e.desc}</td></tr>`;
+                let urlDisplay = e.url ? `<br><a href="${e.url}" target="_blank" style="font-size:9px; color:blue;">(Ver Recurso/Link)</a>` : '<br><span style="font-size:9px; color:#aaa;">(Sin link)</span>';
+                tbP3.innerHTML += `<tr><td style="text-align:center; font-weight:bold;">${e.oa}</td><td>${e.desc}</td><td style="text-align:center;">${urlDisplay}</td></tr>`;
             });
         } else {
-            tbP3.innerHTML = `<tr><td colspan="2" style="text-align:center; color: #777;">Sin estrategias registradas</td></tr>`;
+            tbP3.innerHTML = `<tr><td colspan="3" style="text-align:center; color: #777;">Sin estrategias registradas</td></tr>`;
         }
 
         document.getElementById('pdf-docente').innerText=docenteNombre; 
@@ -429,14 +440,23 @@
         document.getElementById('container-plan').appendChild(t); 
     };
 
-    window.agregarStrategyRow = (oa="General", desc="") => {
+    window.agregarStrategyRow = (oa="General", desc="", url="") => {
         const t=document.getElementById('tpl-strategy').content.cloneNode(true);
         const sel = t.querySelector('.input-st-oa');
-        sel.value = oa; // Se ajustará despues con actualizarListaOA
+        const inpUrl = t.querySelector('.input-st-url');
+        
+        sel.value = oa; 
         t.querySelector('.input-st-desc').value = desc;
+        inpUrl.value = url;
+        
+        if(url) {
+            const btn = t.querySelector('.btn-visit-link');
+            btn.href = url.startsWith('http') ? url : 'https://' + url;
+            btn.style.display = 'inline-block';
+        }
+
         document.getElementById('container-strategies').appendChild(t);
-        window.actualizarListaOA_Estrategias(); // Actualizar selects recien creados
-        // Restaurar valor si venia de BD
+        window.actualizarListaOA_Estrategias(); 
         const last = document.getElementById('container-strategies').lastElementChild;
         last.querySelector('.input-st-oa').value = oa;
     };
@@ -448,28 +468,52 @@
         document.getElementById('tbody-real').appendChild(tr);
     };
 
+    // --- FUNCIÓN GUARDAR MODIFICADA (NO BLOQUEA, SOLO ADVIERTE) ---
     window.guardarTodo = async () => {
         if(!cursoActual)return;
         
-        // --- VALIDACION OBLIGATORIA DE ESTRATEGIAS ---
         let nStrategies = [];
+        let faltaLink = false;
+
         document.querySelectorAll('.strategy-item').forEach(f => {
             const desc = f.querySelector('.input-st-desc').value.trim();
-            if(desc.length > 5) nStrategies.push({
-                oa: f.querySelector('.input-st-oa').value,
-                desc: desc
-            });
+            const url = f.querySelector('.input-st-url').value.trim();
+            
+            if(desc.length > 5) {
+                if(url.length < 5) faltaLink = true; // Detecta si falta link
+                nStrategies.push({
+                    oa: f.querySelector('.input-st-oa').value,
+                    desc: desc,
+                    url: url
+                });
+            }
         });
 
-        if(nStrategies.length < 3) {
-            alert(`⚠️ ATENCIÓN PROFESOR(A):\n\nPara el año ${anioActual}, es obligatorio registrar al menos 3 ESTRATEGIAS DIDÁCTICAS.\n\nActualmente tiene: ${nStrategies.length}.\nPor favor complete la pestaña "3. ESTRATEGIAS" antes de guardar.`);
-            // Simular clic en la pestaña estrategias
-            const tabEl = document.querySelector('#tab-estrategias');
-            const tab = new bootstrap.Tab(tabEl);
-            tab.show();
-            return; // DETENER GUARDADO
+        // 1. VALIDACIÓN DE LINKS (PERMITE GUARDAR AVANCES)
+        if(faltaLink) {
+            const deseaGuardarAvance = confirm("⚠️ ATENCIÓN: FALTAN EVIDENCIAS\n\nRecuerda completar todas las estrategias, estás grabando avances.\n\n¿Deseas guardar de todas formas?");
+            
+            if(!deseaGuardarAvance) {
+                const tabEl = document.querySelector('#tab-estrategias');
+                const tab = new bootstrap.Tab(tabEl);
+                tab.show();
+                return; // Solo detiene si el usuario dice "Cancelar"
+            }
         }
-        // ---------------------------------------------
+
+        // 2. VALIDACIÓN DE CANTIDAD DE ESTRATEGIAS (PERMITE GUARDAR AVANCES)
+        if(nStrategies.length < 3) {
+            // Solo mostramos esta alerta si no mostramos la anterior (para no saturar)
+            if(!faltaLink) {
+                const continuar = confirm(`⚠️ AVISO: ESTRATEGIAS INCOMPLETAS (${nStrategies.length}/3)\n\n¿Deseas guardar los avances de COBERTURA de todas formas?\n(Se guardará como borrador).`);
+                if(!continuar) {
+                    const tabEl = document.querySelector('#tab-estrategias');
+                    const tab = new bootstrap.Tab(tabEl);
+                    tab.show();
+                    return; 
+                }
+            }
+        }
 
         const btn=event.target; const txt=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner-border spinner-border-sm"></span> Guardando...';
         
@@ -480,14 +524,18 @@
             if(trs.length>0) trs.forEach(tr=>{ let m=[]; tr.querySelectorAll('input:checked').forEach(c=>m.push(c.dataset.mes)); nR.push({codigo:tr.dataset.codigo, meses:m, logrado:m.length>0, observaciones:[]}); });
             else nR=cursoActual[getKey('real')]||[];
 
-            // Armar objeto de update dinamico
             let updateObj = {};
             updateObj[getKey('plan')] = nP;
             updateObj[getKey('real')] = nR;
             updateObj[getKey('st')] = nStrategies;
 
             await updateDoc(doc(db,"cursos",cursoActual.id), updateObj); 
-            alert(`✅ Guardado Exitoso (Año ${anioActual})`);
+            
+            if(faltaLink || nStrategies.length < 3) {
+                alert(`✅ AVANCE GUARDADO.\nRecuerda completar los links y estrategias faltantes para el reporte final.`);
+            } else {
+                alert(`✅ Guardado Exitoso y Completo (Año ${anioActual})`);
+            }
 
         } catch(e){ alert("Error: "+e.message); } finally { btn.disabled=false; btn.innerHTML=txt; }
     };
@@ -505,12 +553,8 @@
         window.descargarPDFDirecto();
         setTimeout(()=>{ if(confirm("PDF descargado. ¿Abrir correo para adjuntar?")) { window.location.href=`mailto:utp@colegio.cl?subject=${encodeURIComponent("Bitacora "+anioActual+": "+cursoActual.nombre)}&body=${encodeURIComponent("Adjunto reporte.\nAtte, "+docenteNombre)}`; } },1500);
     };
-
-    window.borrarCard = (b) => b.closest('.card').remove(); 
-    window.agregarFilaExtra = () => { const c=prompt("Código Extra:"); if(c) addFilaWeb(c.toUpperCase(),"Extra",[],true); };
     
     document.addEventListener("DOMContentLoaded",()=>{ 
-        // Llenar selects de template plan
         const s=document.querySelector('#tpl-plan').content.querySelector('.input-code'); 
         s.innerHTML=""; 
         for(let i=1;i<=30;i++) { let o=document.createElement("option"); o.value="OA"+i; o.innerText="OA "+i; s.appendChild(o); } 
