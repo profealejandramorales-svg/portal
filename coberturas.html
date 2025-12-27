@@ -27,17 +27,17 @@
         .view-section { display: none; } 
         .view-section.active { display: block; animation: fadeIn 0.3s; }
         
-        /* TARJETAS DE OA (Audit Card) - OPTIMIZADAS COMPACTAS */
+        /* TARJETAS DE OA */
         .audit-card { 
             background: white; 
             border: 1px solid #dee2e6; 
             border-left: 4px solid #ccc; 
             margin-bottom: 6px; 
-            padding: 6px 10px; /* Padding reducido */
+            padding: 6px 10px; 
             border-radius: 4px; 
             transition: transform 0.2s, box-shadow 0.2s; 
             cursor: pointer; 
-            page-break-inside: avoid; /* Evita que se corte al imprimir */
+            page-break-inside: avoid; 
         }
         .audit-card:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .audit-card .oa-code { font-size: 0.9rem; width: 45px; font-weight: 700; color: #555; }
@@ -48,43 +48,26 @@
         .status-miss { border-left-color: #dc3545; background-color: #fffbfb; } 
         .status-extra { border-left-color: #ffc107; }
 
-        /* TARJETAS ESTADÍSTICAS */
+        /* ESTADÍSTICAS */
         .stat-number { font-size: 1.8rem; font-weight: 700; line-height: 1; }
         .card-stat-header { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: #6c757d; }
 
-        /* ESTILOS DE IMPRESIÓN (CONTROL ESTRICTO) */
+        /* IMPRESIÓN */
         @media print {
-            @page { size: letter; margin: 0.8cm; } /* Márgenes ajustados para hoja carta */
+            @page { size: letter; margin: 0.8cm; }
             body { background-color: white !important; font-size: 9pt; -webkit-print-color-adjust: exact; }
-            
-            /* Ocultar elementos de navegación */
             .sidebar, .btn, .no-print, .nav-tabs, .modal, .alert, .file-upload-area, input[type="text"] { display: none !important; }
-            
-            /* Ajustar contenido al ancho completo */
             .main-content { margin-left: 0 !important; padding: 0 !important; width: 100% !important; }
             .card { border: 1px solid #ddd !important; box-shadow: none !important; margin-bottom: 10px !important; }
-            
-            /* Ajustes finos a las tarjetas de OA para ahorrar tinta y espacio */
-            .audit-card {
-                border: 1px solid #eee;
-                border-left-width: 4px !important;
-                margin-bottom: 4px !important;
-                padding: 4px 8px !important;
-                box-shadow: none !important;
-                background-color: transparent !important;
-            }
+            .audit-card { border: 1px solid #eee; border-left-width: 4px !important; margin-bottom: 4px !important; padding: 4px 8px !important; box-shadow: none !important; background-color: transparent !important; }
             .audit-card .oa-desc { font-size: 8.5pt; color: #000; }
-            
-            /* Mostrar sección de firmas */
             .print-signature-section { display: flex !important; margin-top: 40px; page-break-inside: avoid; }
-            
-            /* Ajustes para modales en caso de error (ocultarlos) */
             #inputObservacionModal { display: none; }
             #viewOnlyObs { display: block !important; }
-            .card-header input { display: none; }
         }
         
         #loadingOverlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.9); z-index: 2000; display: flex; justify-content: center; align-items: center; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -108,6 +91,8 @@
         <small class="text-uppercase text-white-50 fw-bold mb-2 d-block ms-1" style="font-size: 0.7rem;">Navegación</small>
         <div class="nav-link-custom active" onclick="window.switchView('dashboard')" id="btn-view-dashboard"><i class="bi bi-bar-chart-steps"></i> Dashboard</div>
         <div class="nav-link-custom" onclick="window.switchView('gestion')" id="btn-view-gestion"><i class="bi bi-gear-wide-connected"></i> Gestión de Datos</div>
+        <div class="nav-link-custom" onclick="window.switchView('stats')" id="btn-view-stats"><i class="bi bi-graph-up-arrow"></i> Estadísticas Globales</div>
+        
         <hr class="border-secondary my-2">
         <small class="text-uppercase text-white-50 fw-bold mb-2 d-block ms-1" style="font-size: 0.7rem;">Cursos del Docente</small>
         <div id="menuCursosContainer"><small class="text-white-50 ms-3 fst-italic" style="font-size: 0.8rem;">Cargando cursos...</small></div>
@@ -297,6 +282,45 @@
             </div>
         </div>
     </div>
+    
+    <div id="view-stats" class="view-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold m-0"><i class="bi bi-pie-chart-fill me-2"></i>Reporte de Gestión UTP</h4>
+                <span class="text-muted small">Promedios de cobertura curricular por docente</span>
+            </div>
+            <div class="card bg-dark text-white border-0 shadow-sm px-3 py-2">
+                <small class="text-white-50 text-uppercase fw-bold" style="font-size: 0.65rem;">Promedio Colegio</small>
+                <div class="fs-4 fw-bold lh-1" id="globalSchoolAvg">0%</div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="m-0 fw-bold text-primary">Ranking de Cobertura Docente</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light small text-uppercase text-secondary">
+                            <tr>
+                                <th class="ps-4">Docente</th>
+                                <th class="text-center">Cursos Asignados</th>
+                                <th class="text-center">Cobertura Promedio</th>
+                                <th class="text-end pe-4">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaStatsGlobales">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-light small text-muted">
+                * El cálculo considera OAs únicos planificados vs. logrados, promediando todos los cursos del docente que tengan planificación cargada.
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <div class="modal fade no-print" id="modalEvidencia" tabindex="-1">
@@ -329,7 +353,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    // Configuración Firebase (Original del Usuario)
+    // Configuración Firebase
     const firebaseConfig = { apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs", authDomain: "attendance-ai-s81lt.firebaseapp.com", projectId: "attendance-ai-s81lt", storageBucket: "attendance-ai-s81lt.firebasestorage.app", messagingSenderId: "935781953186", appId: "1:935781953186:web:6c8a7a93ffad180d33b1fb" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -341,15 +365,21 @@
         dbDocentes = s.docs.map(d => ({ id: d.id, ...d.data() })); 
         renderTablaDocentes(); 
         actualizarSelectores(); 
+        
+        // Intentar recuperar el último docente activo
         const lastDocenteId = localStorage.getItem('cc_last_docente');
         if(lastDocenteId && !docenteActivo) {
             const d = dbDocentes.find(x => x.id === lastDocenteId);
             if(d) window.seleccionarDocente(d.id);
         }
+        
+        // Actualizar estadísticas globales si cambia algún docente
+        window.renderGlobalStats();
+
         document.getElementById('loadingOverlay').style.display='none'; 
     });
     
-    // Carga de Cursos (Ordenada Alfabéticamente)
+    // Carga de Cursos
     onSnapshot(collection(db, "cursos"), (s) => { 
         dbCursos = s.docs.map(d => ({ id: d.id, ...d.data() }))
                     .sort((a, b) => a.nombre.localeCompare(b.nombre)); 
@@ -358,22 +388,28 @@
         renderTablaCursosGeneral();
         if(docenteActivo) renderSidebarCursos(); 
         
-        // Recargar dashboard si hay cambios en el curso activo
         const lastCursoId = localStorage.getItem('cc_last_curso');
         if(lastCursoId && docenteActivo) {
              const c = dbCursos.find(x => x.id === lastCursoId);
              if(c && c.docenteId === docenteActivo.id) {
-                 // Si el curso activo cambia, redibujamos
                  if(cursoActivo && cursoActivo.id === c.id) window.cargarDashboardCurso(c.id);
                  else if(!cursoActivo) window.cargarDashboardCurso(c.id);
              }
         }
         const selCarga = document.getElementById('selectCursoCarga').value;
         if(selCarga) window.cargarDatosEnInputs(selCarga);
+        
+        // ACTUALIZACIÓN DE ESTADÍSTICAS GLOBALES
+        window.renderGlobalStats();
     });
 
     // --- 2. GESTIÓN DE DOCENTES Y CURSOS ---
-    window.switchView = (v) => { document.querySelectorAll('.view-section').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.nav-link-custom').forEach(e=>e.classList.remove('active')); document.getElementById(`view-${v}`).classList.add('active'); document.getElementById(`btn-view-${v}`).classList.add('active'); };
+    window.switchView = (v) => { 
+        document.querySelectorAll('.view-section').forEach(e=>e.classList.remove('active')); 
+        document.querySelectorAll('.nav-link-custom').forEach(e=>e.classList.remove('active')); 
+        document.getElementById(`view-${v}`).classList.add('active'); 
+        document.getElementById(`btn-view-${v}`).classList.add('active'); 
+    };
     
     window.crearDocente = async () => { const n = document.getElementById('inputNewDocente').value; if(!n) return alert("Nombre requerido"); await addDoc(collection(db, "docentes"), { nombre: n, especialidad: document.getElementById('inputNewEsp').value }); document.getElementById('inputNewDocente').value=""; alert("Docente guardado."); };
     
@@ -421,7 +457,6 @@
             const mesesKey = ["mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
             let headerMap = {}, headerIndex = -1;
             
-            // Detectar fila de cabecera
             for(let i=0; i<jsonData.length; i++) {
                 let matches = 0;
                 jsonData[i].forEach((cell, idx) => {
@@ -460,7 +495,6 @@
         const txtP = document.getElementById('textPlan').value;
         const txtR = document.getElementById('textReal').value;
         
-        // Parsear PLAN
         let nPlan = [];
         let planRegex = /(?:^|[\s\W])(OA\s*0*(\d+))(?:[\s:.,-]*)([\s\S]*?)(?=(?:^|[\s\W])OA\s*0*\d+|$)/gim;
         let pMatch;
@@ -468,11 +502,10 @@
              nPlan.push({
                  codigo: "OA" + pMatch[2],
                  desc: pMatch[3].trim().substring(0,200),
-                 mes: "Anual" // Placeholder
+                 mes: "Anual"
              });
         }
 
-        // Parsear REAL
         let mapReal = {};
         if(txtR.includes(',')) {
              txtR.split('\n').forEach(l => {
@@ -503,25 +536,104 @@
     window.guardarObservacionActual = async () => {
         if(!cursoActivo) return;
         const c = document.getElementById('inputObservacionModal').dataset.oaCode, o = document.getElementById('inputObservacionModal').value;
-        
-        // Copiamos el array real actual
         let nR = JSON.parse(JSON.stringify(cursoActivo.real||[]));
-        
-        // Buscar si ya existe la entrada
         let idx = nR.findIndex(x=>x.codigo===c);
         if(idx>=0) {
-            nR[idx].observaciones = [o]; // Sobreescribimos la observación para simplificar
+            nR[idx].observaciones = [o];
         } else {
-            // Si es un pendiente que ahora tiene observación, lo creamos
             nR.push({codigo:c, meses:[], observaciones:[o], logrado:false});
         }
-        
         await updateDoc(doc(db,"cursos",cursoActivo.id), {real:nR});
         bootstrap.Modal.getInstance(document.getElementById('modalEvidencia')).hide();
         alert("Observación guardada.");
     };
 
-    // --- 4. FUNCIÓN PRINCIPAL DE RENDERIZADO (OPTIMIZADA: MERGE VISUAL) ---
+    // --- NUEVA LÓGICA DE CÁLCULO ESTADÍSTICO PURO ---
+    const calcularPorcentajeCurso = (curso) => {
+        if (!curso.plan || curso.plan.length === 0) return 0;
+        const normalize = (t) => t ? t.toString().replace(/\s+/g, '').toUpperCase().replace(/OA0+(\d+)/, "OA$1") : "";
+        
+        // 1. Unificar Plan
+        const uniquePlan = new Set();
+        curso.plan.forEach(p => uniquePlan.add(normalize(p.codigo)));
+        
+        // 2. Unificar Real
+        const uniqueReal = new Set();
+        (curso.real || []).forEach(r => {
+            if (r.meses && r.meses.length > 0) uniqueReal.add(normalize(r.codigo));
+        });
+
+        // 3. Calcular intersección
+        let logrados = 0;
+        uniquePlan.forEach(code => {
+            if (uniqueReal.has(code)) logrados++;
+        });
+
+        return uniquePlan.size > 0 ? (logrados / uniquePlan.size) * 100 : 0;
+    };
+
+    // --- NUEVA FUNCIÓN RENDERIZADO GLOBAL ---
+    window.renderGlobalStats = () => {
+        const tbody = document.getElementById('tablaStatsGlobales');
+        tbody.innerHTML = "";
+        
+        let sumaTotalColegio = 0;
+        let cursosConPlanTotal = 0;
+
+        const reporte = dbDocentes.map(docente => {
+            const misCursos = dbCursos.filter(c => c.docenteId === docente.id);
+            if (misCursos.length === 0) return null;
+
+            let sumaPromedios = 0;
+            let cursosValidos = 0;
+
+            misCursos.forEach(curso => {
+                if (curso.plan && curso.plan.length > 0) {
+                    const pct = calcularPorcentajeCurso(curso);
+                    sumaPromedios += pct;
+                    cursosValidos++;
+                    sumaTotalColegio += pct;
+                    cursosConPlanTotal++;
+                }
+            });
+
+            const promedioDocente = cursosValidos > 0 ? (sumaPromedios / cursosValidos) : 0;
+
+            return {
+                nombre: docente.nombre,
+                cursos: misCursos.length,
+                promedio: promedioDocente
+            };
+        }).filter(x => x !== null).sort((a, b) => b.promedio - a.promedio);
+
+        reporte.forEach(r => {
+            const colorBarra = r.promedio < 50 ? 'bg-danger' : r.promedio < 80 ? 'bg-warning' : 'bg-success';
+            const colorTexto = r.promedio < 50 ? 'text-danger' : r.promedio < 80 ? 'text-dark' : 'text-success';
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td class="ps-4 fw-bold text-dark">${r.nombre}</td>
+                    <td class="text-center"><span class="badge bg-secondary rounded-pill">${r.cursos}</span></td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <div class="progress flex-grow-1 me-2" style="height: 6px; max-width: 100px;">
+                                <div class="progress-bar ${colorBarra}" role="progressbar" style="width: ${r.promedio}%"></div>
+                            </div>
+                            <span class="fw-bold small ${colorTexto}">${Math.round(r.promedio)}%</span>
+                        </div>
+                    </td>
+                    <td class="text-end pe-4">
+                        ${r.promedio >= 80 ? '<i class="bi bi-check-circle-fill text-success"></i>' : r.promedio < 50 ? '<i class="bi bi-exclamation-circle-fill text-danger"></i>' : '<i class="bi bi-dash-circle text-muted"></i>'}
+                    </td>
+                </tr>
+            `;
+        });
+
+        const promedioColegio = cursosConPlanTotal > 0 ? Math.round(sumaTotalColegio / cursosConPlanTotal) : 0;
+        document.getElementById('globalSchoolAvg').innerText = `${promedioColegio}%`;
+    };
+
+    // --- 4. RENDERIZADO DASHBOARD INDIVIDUAL ---
     window.cargarDashboardCurso = (id) => {
         cursoActivo = dbCursos.find(c=>c.id===id);
         if(!cursoActivo) return;
@@ -531,12 +643,8 @@
         document.getElementById('headerSubtitulo').innerText = `${cursoActivo.nivel} - Reporte Generado`;
         const lst = document.getElementById('listaOAs'); lst.innerHTML = "";
         
-        // --- LÓGICA DE UNIFICACIÓN ---
-        
-        // Normalizador de códigos (OA1 === OA01)
         const normalize = (t) => t ? t.toString().replace(/\s+/g, '').toUpperCase().replace(/OA0+(\d+)/, "OA$1") : "";
         
-        // A. UNIFICAR EL PLAN (Map: Codigo -> {desc, original})
         const uniquePlan = new Map();
         (cursoActivo.plan||[]).forEach(p => {
             const code = normalize(p.codigo);
@@ -545,8 +653,6 @@
             }
         });
 
-        // B. UNIFICAR EL REAL (Map: Codigo -> {meses[], observaciones[]})
-        // Aquí fusionamos las múltiples apariciones del mismo OA en diferentes meses
         const uniqueReal = new Map();
         (cursoActivo.real||[]).forEach(r => {
             const code = normalize(r.codigo);
@@ -554,17 +660,13 @@
                 uniqueReal.set(code, { meses: [...r.meses], observaciones: r.observaciones ? [...r.observaciones] : [] });
             } else {
                 const existing = uniqueReal.get(code);
-                // Fusionar meses (Set para evitar duplicados como MAR, MAR)
                 r.meses.forEach(m => { if(!existing.meses.includes(m)) existing.meses.push(m); });
-                // Fusionar observaciones
                 if(r.observaciones) existing.observaciones.push(...r.observaciones);
             }
         });
 
-        // C. Estadísticas (Basadas en Objetivos ÚNICOS)
         let log = 0, bre = 0, ext = 0;
 
-        // D. Renderizar PLAN (Ordenado Numéricamente)
         const sortedPlanKeys = Array.from(uniquePlan.keys()).sort((a,b) => {
              const nA = parseInt(a.replace(/\D/g,'')) || 0;
              const nB = parseInt(b.replace(/\D/g,'')) || 0;
@@ -573,11 +675,10 @@
 
         sortedPlanKeys.forEach(key => {
             const p = uniquePlan.get(key);
-            const r = uniqueReal.get(key); // Buscar datos reales fusionados
+            const r = uniqueReal.get(key); 
 
             if(r && r.meses.length>0) { 
                 log++; 
-                // Renderizamos UNA sola tarjeta con TODOS los meses acumulados
                 lst.innerHTML += card(p.original, p.desc, "LOGRADO", "status-hit", "bg-success", r.meses.join(", "), "hit"); 
             } else { 
                 bre++; 
@@ -585,16 +686,13 @@
             }
         });
         
-        // E. Renderizar EXTRAS (En Real pero no en Plan)
         uniqueReal.forEach((r, key) => {
             if(!uniquePlan.has(key) && r.meses.length>0) { 
                 ext++; 
-                // Usamos el código de la key (ej OA5) ya que no tenemos 'original' del plan
                 lst.innerHTML += card(key, "Actividad realizada no planificada", "EXTRA", "status-extra", "bg-warning text-dark", r.meses.join(", "), "extra"); 
             }
         });
         
-        // F. Actualizar Dashboard UI
         const totalPlan = uniquePlan.size;
         const pct = totalPlan > 0 ? Math.round((log / totalPlan)*100) : 0;
         
@@ -611,7 +709,6 @@
     function renderTablaCursosGeneral(){ const t=document.getElementById('tablaCursosGeneral'); t.innerHTML=""; dbCursos.forEach(c => { const doc = dbDocentes.find(d => d.id === c.docenteId); t.innerHTML+=`<tr><td class="small fw-bold">${c.nombre}</td><td class="small">${doc?doc.nombre:'Sin Docente'}</td><td class="text-end"><button class="btn btn-sm btn-danger py-0" onclick="window.borrarCurso('${c.id}')"><i class="bi bi-trash"></i></button></td></tr>`; }); }
     function actualizarSelectores(){ const d=document.getElementById('selectDocenteParaCurso'), c=document.getElementById('selectCursoCarga'); const vD=d.value, vC=c.value; d.innerHTML='<option value="">Seleccione Docente...</option>'; dbDocentes.forEach(x=>d.innerHTML+=`<option value="${x.id}">${x.nombre}</option>`); c.innerHTML='<option value="">Seleccione Asignatura...</option>'; dbCursos.forEach(x=>{const doc=dbDocentes.find(y=>y.id===x.docenteId); c.innerHTML+=`<option value="${x.id}">${x.nombre} (${doc?doc.nombre:'?'})</option>`}); if(vD) d.value=vD; if(vC) c.value=vC; }
     
-    // Generador de Tarjeta HTML
     function card(c, d, b, cl, bc, f, t) { 
         return `
         <div class="audit-card ${cl}" onclick="window.verDetalle('${c}', '${t}')">
@@ -628,15 +725,10 @@
         </div>`; 
     }
     
-    // Ver Detalle (Modal) - También debe recolectar datos fusionados
     window.verDetalle = (c, t) => { 
         const normalize = (val) => val ? val.toString().replace(/\s+/g, '').toUpperCase().replace(/OA0+(\d+)/, "OA$1") : "";
         const target = normalize(c);
-        
-        // Buscar descripción (primera coincidencia en Plan)
         const p = (cursoActivo.plan||[]).find(x => normalize(x.codigo) === target);
-        
-        // Buscar todos los datos Reales correspondientes a este OA
         let mesesTotal = [];
         let obsTotal = [];
         
