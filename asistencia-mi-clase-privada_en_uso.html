@@ -3,335 +3,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Asistencia y Calificaciones (Privado)</title>
+    <title>Gestión Académica - ProfeAle 2025</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .printable-container { width: 100%; }
-        /* Colores de botones según el formato */
-        .btn-add { background-color: #22c55e; } 
-        .btn-add:hover { background-color: #16a34a; }
-        .btn-grade { background-color: #f97316; } 
-        .btn-grade:hover { background-color: #ea580c; }
-        .btn-present { background-color: #22c55e; } 
-        .btn-present:hover { background-color: #16a34a; }
-        .btn-absent { background-color: #ef4444; } 
-        .btn-absent:hover { background-color: #dc2626; }
-        .btn-justified { background-color: #facc15; } 
-        .btn-justified:hover { background-color: #eab308; }
-        .btn-delete { background-color: #9ca3af; } 
-        .btn-delete:hover { background-color: #6b7280; }
-        .btn-volver { background-color: #a855f7; } 
-        .btn-volver:hover { background-color: #9333ea; }
-        .btn-print { background-color: #0d9488; }
-        .btn-print:hover { background-color: #0f766e; }
         
+        /* Botones y Estilos */
+        .btn-add { background-color: #22c55e; } .btn-add:hover { background-color: #16a34a; }
+        .btn-grade { background-color: #f97316; } .btn-grade:hover { background-color: #ea580c; }
+        .btn-delete { background-color: #9ca3af; } .btn-delete:hover { background-color: #6b7280; }
+        .btn-volver { background-color: #a855f7; } .btn-volver:hover { background-color: #9333ea; }
+        .btn-print { background-color: #0d9488; } .btn-print:hover { background-color: #0f766e; }
+        .btn-reset { background-color: #f59e0b; } .btn-reset:hover { background-color: #d97706; }
+        
+        /* Chips de Notas */
+        .grade-chip { cursor: pointer; transition: all 0.2s; }
+        .grade-chip:hover { transform: scale(1.1); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
         /* Reglas de IMPRESIÓN */
         .print-only { display: none; }
-        
         @media print {
             .no-print { display: none !important; }
             .printable-container { margin: 0; padding: 0; box-shadow: none; }
             body { background-color: white; }
-
             .print-only { display: block; }
             
-            #printHeader {
-                position: fixed;
-                top: 0;
-                width: 100%;
-                text-align: center;
-                border-bottom: 1px solid #ccc;
-                padding-bottom: 5px;
-                margin-bottom: 20px;
-                background-color: white;
+            #printHeader { 
+                position: fixed; top: 0; left: 0; width: 100%; 
+                background-color: white; border-bottom: 2px solid #3730a3; 
+                padding: 10px 40px; margin-bottom: 20px; z-index: 1000;
             }
-            
-            #printFooter {
-                position: fixed;
-                bottom: 0;
-                width: 100%;
-                text-align: center;
-                border-top: 1px solid #ccc;
-                padding-top: 5px;
-                margin-top: 20px;
-                background-color: white;
-                font-size: 10px;
+            #printFooter { 
+                position: fixed; bottom: 0; width: 100%; text-align: center; 
+                border-top: 1px solid #ccc; padding-top: 5px; 
+                background-color: white; font-size: 10px; 
             }
-            
-            body > .printable-container {
-                padding-top: 40px; 
-                padding-bottom: 20px; 
-            }
+            body > .printable-container { padding-top: 100px; padding-bottom: 20px; }
+            table { font-size: 11px; width: 100%; }
+            th, td { padding: 4px !important; }
         }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
-    <!-- ENCABEZADO DE IMPRESIÓN -->
     <div id="printHeader" class="print-only">
-        <h3 class="text-xl font-bold text-gray-800">Gestion Academica en el aula</h3>
+        <div class="flex items-center justify-between w-full">
+            <div class="w-1/3">
+                <img src="logo.jpg" onerror="this.style.display='none'" alt="Logo" class="h-16 object-contain">
+            </div>
+            <div class="w-1/3 text-center">
+                <h3 class="text-xl font-bold text-gray-800 uppercase tracking-wider">Gestión Académica</h3>
+                <p class="text-sm text-gray-500 font-bold">ProfeAle</p>
+            </div>
+            <div class="w-1/3 text-right text-xs text-gray-400">
+                <p>Reporte Generado</p>
+                <p class="print-date-placeholder">--/--/----</p>
+            </div>
+        </div>
     </div>
 
-    <div class="printable-container bg-white p-8 rounded-2xl shadow-xl max-w-5xl w-full">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center no-print">Control de Asistencia y Calificaciones</h1>
-        <p class="text-gray-500 mb-6 text-center no-print">Gestión de estudiantes, notas, asistencia y observaciones (Datos Privados).</p>
-        <p id="currentDate" class="text-gray-600 text-center mb-6 no-print font-bold"></p>
+    <div class="printable-container bg-white p-8 rounded-2xl shadow-xl max-w-6xl w-full">
+        
+        <div class="text-center mb-4 no-print relative group">
+            <div class="w-full flex justify-center">
+                <img src="logo.jpg" 
+                     onerror="this.src='https://cdn-icons-png.flaticon.com/512/167/167707.png'" 
+                     alt="Logo Escuela" 
+                     class="h-24 mx-auto object-contain hover:scale-105 transition-transform duration-300 drop-shadow-sm">
+            </div>
+            <p class="text-xs text-gray-300 mt-1 opacity-0 group-hover:opacity-100 transition-opacity absolute w-full text-center bottom-[-20px]">
+                (Guarda tu logo como 'logo.jpg')
+            </p>
+        </div>
 
-        <div class="no-print text-center mb-4">
-             <p class="text-sm text-gray-500">
-                ID de usuario: <span id="userIdDisplay" class="font-mono text-purple-600 font-semibold break-all">Cargando...</span><br>
-                <span id="statusDisplay" class="text-xs font-medium mt-1"></span>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center no-print">Control de Asistencia y Calificaciones</h1>
+        
+        <div class="no-print text-center mb-6 bg-indigo-50 py-2 rounded-lg mx-auto max-w-md border border-indigo-100">
+             <p class="text-sm text-gray-600 flex flex-col items-center justify-center">
+                <span class="font-bold text-indigo-700 text-base">✨ Desarrollado por ProfeAle ✨</span>
+                <span id="statusDisplay" class="text-xs font-medium mt-1 text-green-600">Conectando...</span>
              </p>
         </div>
 
-        <div id="controlsContainer" class="no-print mb-8 space-y-4 md:space-y-0 md:flex md:justify-between md:items-end">
+        <p id="currentDate" class="text-gray-600 text-center mb-6 no-print font-bold"></p>
+
+        <div id="controlsContainer" class="no-print mb-8 space-y-4 md:space-y-0 md:flex md:justify-between md:items-end bg-gray-50 p-4 rounded-xl border border-gray-200">
+             
              <div class="flex flex-col space-y-1">
-                <label for="classSelector" class="text-gray-700 font-medium">Seleccionar Clase</label>
-                <select id="classSelector" class="p-2 border rounded-lg shadow-sm w-48"></select>
+                <label for="classSelector" class="text-gray-700 font-bold text-sm">Seleccionar Clase</label>
+                <div class="flex gap-2">
+                    <select id="classSelector" class="p-2 border rounded-lg shadow-sm w-48 bg-white focus:ring-2 focus:ring-indigo-400"></select>
+                    <button id="addClassBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold px-3 rounded-lg shadow" title="Crear nueva clase">➕</button>
+                </div>
              </div>
              
              <div class="flex flex-col space-y-1">
-                <label for="dateSelector" class="text-gray-700 font-medium">Seleccionar Fecha</label>
-                <input type="date" id="dateSelector" class="p-2 border rounded-lg shadow-sm w-40">
+                <label for="dateSelector" class="text-gray-700 font-bold text-sm">Fecha de Trabajo</label>
+                <input type="date" id="dateSelector" class="p-2 border rounded-lg shadow-sm w-40 bg-white focus:ring-2 focus:ring-indigo-400">
              </div>
 
              <div class="flex flex-col space-y-1">
-                <label for="studentNameInput" class="text-gray-700 font-medium">Agregar Estudiante</label>
+                <label for="studentNameInput" class="text-gray-700 font-bold text-sm">Agregar Estudiante</label>
                 <div class="flex">
-                    <input type="text" id="studentNameInput" placeholder="Ej: Juan Pérez" class="p-2 border rounded-l-lg shadow-sm w-48" />
+                    <input type="text" id="studentNameInput" placeholder="Ej: Juan Pérez" class="p-2 border rounded-l-lg shadow-sm w-48 focus:outline-none focus:ring-2 focus:ring-green-400" />
                     <button id="addStudentBtn" class="btn-add text-white font-bold py-2 px-3 rounded-r-lg transition duration-150 shadow-md">+</button>
                 </div>
              </div>
              
-             <button id="saveDataBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md w-40 md:w-auto">
-                Guardar Datos
+             <button id="saveDataBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md w-full md:w-auto transform hover:-translate-y-1">
+                💾 Guardar Cambios
              </button>
         </div>
 
         <div id="backToTableContainer" class="no-print text-center mb-6 hidden">
-             <button id="backToTableBtn" class="btn-volver text-white font-bold py-2 px-4 rounded-lg transition duration-150 mr-4">
-                Volver a la Tabla
-             </button>
-             <button id="printReportBtn" class="btn-print text-white font-bold py-2 px-4 rounded-lg transition duration-150">
-                Imprimir Reporte
-             </button>
+             <button id="backToTableBtn" class="btn-volver text-white font-bold py-2 px-4 rounded-lg transition duration-150 mr-4">Volver a la Tabla</button>
+             <button id="printReportBtn" class="btn-print text-white font-bold py-2 px-4 rounded-lg transition duration-150">🖨️ Imprimir Reporte</button>
         </div>
 
         <div id="studentsTableContainer" class="min-h-[200px] flex flex-col justify-start printable-container">
-            <div id="loadingIndicator" class="text-center p-10">Cargando datos...</div>
+            <div id="loadingIndicator" class="text-center p-10 font-bold text-gray-500 animate-pulse">Cargando datos de la nube...</div>
             
-            <div id="tableHeader" class="grid grid-cols-6 gap-2 py-3 border-b-2 border-gray-300 font-bold text-gray-700 uppercase text-sm text-center">
-                <div class="col-span-1 text-left">ESTUDIANTE</div>
-                <div>NOTAS</div>
-                <div>PROMEDIO</div>
-                <div>ASISTENCIA</div>
-                <div class="col-span-2 text-left">ACCIONES</div>
+            <div id="tableHeader" class="grid grid-cols-12 gap-2 py-3 border-b-2 border-gray-300 font-bold text-gray-700 uppercase text-xs text-center bg-gray-100 rounded-t-lg">
+                <div class="col-span-3 text-left pl-4">ESTUDIANTE</div>
+                <div class="col-span-4">NOTAS (Click para editar)</div>
+                <div class="col-span-1">PROM</div>
+                <div class="col-span-2">ASISTENCIA</div>
+                <div class="col-span-2">ACCIONES</div>
             </div>
-             <div id="tableBody">
-                <!-- Contenido de la tabla renderizado por JS -->
-             </div>
+             <div id="tableBody" class="bg-white"></div>
         </div>
 
-        <div id="reportButtons" class="no-print mt-8 text-center space-y-4 md:space-y-0 md:flex md:justify-center md:space-x-4">
-            <button id="showReportBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-150">
-                Ver Reporte de Clases
-            </button>
-            <button id="showDetailedReportBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-150">
-                Ver Reporte Detallado
-            </button>
+        <div id="reportButtons" class="no-print mt-8 space-y-4">
+            <div class="text-center md:flex md:justify-center md:space-x-4">
+                <button id="showReportBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg border border-gray-300">📊 Resumen Asistencia</button>
+                <button id="showDetailedReportBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg border border-gray-300">📋 Reporte Detallado</button>
+            </div>
+            
+            <div class="text-center mt-6 border-t pt-4">
+                <p class="text-xs text-gray-400 mb-2">¿Faltan cursos? Pulsa aquí para cargar la nómina importada (1° a 4° Medio)</p>
+                <button id="resetCoursesBtn" class="btn-reset text-white text-xs font-bold py-2 px-4 rounded-lg shadow-sm">🔄 Cargar Nómina 2025</button>
+            </div>
         </div>
 
         <div id="classReportContainer" class="hidden mt-8 printable-container"></div>
         <div id="classDetailsContainer" class="hidden mt-8 printable-container"></div>
         
-        <!-- MODAL DE OBSERVACIONES -->
-        <div id="observationModal" class="no-print fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
-            <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
-                <h3 id="modalTitle" class="text-xl font-bold mb-4 text-gray-800">Observaciones para [Estudiante]</h3>
-                <textarea id="observationTextarea" class="w-full p-3 border rounded-lg h-32 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Escribe aquí las observaciones..."></textarea>
-                <div class="mt-4 flex justify-end space-x-2">
-                    <button id="closeObservationModalBtn" class="bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-400">Cerrar</button>
-                    <button id="saveObservationBtn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700">Guardar Observación</button>
+        <div id="observationModal" class="no-print fixed inset-0 bg-gray-900 bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="bg-indigo-600 p-4">
+                    <h3 id="modalTitle" class="text-xl font-bold text-white">Observaciones</h3>
+                </div>
+                <div class="p-6 flex-1 overflow-y-auto">
+                    <h4 class="text-sm font-bold text-gray-500 uppercase mb-3">Historial Cronológico</h4>
+                    <div id="observationHistory" class="space-y-3 mb-6"></div>
+                    <h4 class="text-sm font-bold text-gray-500 uppercase mb-2">Nueva Observación (<span id="obsDateDisplay"></span>)</h4>
+                    <textarea id="newObservationText" class="w-full p-3 border border-gray-300 rounded-lg h-24 resize-none" placeholder="Escribe el detalle..."></textarea>
+                </div>
+                <div class="bg-gray-50 p-4 flex justify-end space-x-2 border-t">
+                    <button id="closeObservationModalBtn" class="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg">Cancelar</button>
+                    <button id="saveObservationBtn" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg shadow-lg">Guardar</button>
                 </div>
             </div>
         </div>
-        <div id="messageModal" class="no-print fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50"></div>
+
     </div>
     
-    <!-- PIE DE PÁGINA DE IMPRESIÓN -->
-    <div id="printFooter" class="print-only text-gray-500">
-        Desarrollado por ProfeAle
-    </div>
+    <div id="printFooter" class="print-only text-gray-500">Desarrollado por ProfeAle</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración de Firebase (TU CLAVE)
-        const firebaseConfig = {
-            apiKey: "AIzaSyAFp6biz1UTr9Ehaudkpe7QyTFVbdQz5Sc",
-            authDomain: "asistencia-mi-clase.firebaseapp.com",
-            projectId: "asistencia-mi-clase",
-            storageBucket: "asistencia-mi-clase.appspot.com",
-            messagingSenderId: "552398254230",
-            appId: "1:552398254230:web:c58dd07e5ceeb67e0912b7", 
-            measurementId: "G-MYR01HM1YE"
-        };
-        const appId = firebaseConfig.appId; // Usado para la ruta privada
+        // CONFIGURACIÓN
+        const CLAVE_DOCENTE = "ProfeAle"; 
+        const firebaseConfig = { apiKey: "AIzaSyAFp6biz1UTr9Ehaudkpe7QyTFVbdQz5Sc", authDomain: "asistencia-mi-clase.firebaseapp.com", projectId: "asistencia-mi-clase", storageBucket: "asistencia-mi-clase.appspot.com", messagingSenderId: "552398254230", appId: "1:552398254230:web:c58dd07e5ceeb67e0912b7", measurementId: "G-MYR01HM1YE" };
+        const appId = firebaseConfig.appId;
 
-        // --- Estado de la App ---
-        let app, db, auth;
-        let isFirebaseConnected = false;
-        
-        const today = new Date();
-        const offset = today.getTimezoneOffset() * 60000;
-        const localTime = new Date(today.getTime() - offset);
-        const todayString = localTime.toISOString().slice(0, 10);
-        
-        let currentDateString = todayString;
+        let app, db, auth, isFirebaseConnected = false;
+        let currentDateString = new Date().toISOString().slice(0, 10);
         let allClassesData = {};
         let currentClass = null;
         let students = [];
-        let userId;
         let currentStudentIndex = -1;
 
-        // --- DOM Elements ---
-        function getEl(id) { return document.getElementById(id); }
-        
-        const userIdDisplay = getEl('userIdDisplay');
+        // DOM Elements
+        const getEl = (id) => document.getElementById(id);
         const statusDisplay = getEl('statusDisplay');
         const currentDateElement = getEl('currentDate');
         const studentsTableContainer = getEl('studentsTableContainer');
         const loadingIndicator = getEl('loadingIndicator');
         const classSelector = getEl('classSelector');
         const dateSelector = getEl('dateSelector');
+        const studentNameInput = getEl('studentNameInput');
+        
         const saveDataBtn = getEl('saveDataBtn');
         const showReportBtn = getEl('showReportBtn');
         const showDetailedReportBtn = getEl('showDetailedReportBtn');
         const backToTableBtn = getEl('backToTableBtn');
         const printReportBtn = getEl('printReportBtn'); 
+        const addStudentBtn = getEl('addStudentBtn');
+        const addClassBtn = getEl('addClassBtn');
+        const resetCoursesBtn = getEl('resetCoursesBtn');
+        
         const classReportContainer = getEl('classReportContainer');
         const classDetailsContainer = getEl('classDetailsContainer');
-        const studentNameInput = getEl('studentNameInput');
-        const addStudentBtn = getEl('addStudentBtn');
         const tableBody = getEl('tableBody');
         const tableHeader = getEl('tableHeader');
         const controlsContainer = getEl('controlsContainer');
         const reportButtons = getEl('reportButtons');
         const backToTableContainer = getEl('backToTableContainer');
-        const messageModal = getEl('messageModal'); 
-        
-        const observationModal = getEl('observationModal');
-        const modalTitle = getEl('modalTitle');
-        const observationTextarea = getEl('observationTextarea');
-        const saveObservationBtn = getEl('saveObservationBtn');
-        const closeObservationModalBtn = getEl('closeObservationModalBtn');
 
-        // --- Datos Iniciales (LISTA COMPLETA DE 7 CURSOS) ---
-        const initialClassData = {
-            "Primero Medio A": [
-                'ALBURQUENQUE DEL GRECCO EMILYA ANTONIA', 'ANABALÓN BELTRÁN BENJAMÍN NICOLÁS',
-                'CONTRERAS SALGADO HADEEY ALEJANDRA', 'FERRADA ALBORNOZ AGUSTÍN ALEXIS',
-                'HERNÁNDEZ FERNÁNDEZ DHARIEN ALEXSANDER', 'IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA',
-                'LAGOS LASTRA ALEXANDRA DANAE', 'LÓPEZ LÓPEZ LUCIANO ANTONIO',
-                'MALDONADO FLORES ANTONELLA BELÉN', 'MARIN MARÍN IGNACIO ANTONIO',
-                'MONTECINO DÍAZ VALESKA BELÉN', 'MUÑOZ CONTRERAS LUIS GABRIEL',
-                'MUÑOZ LUNA ROGER JOEL', 'NAVARRO VILLANUEVA KARLA PAZ',
-                'ORELLANA ARRIAGADA SEBASTIÁN ANDRÉS', 'QUEZADA NARANJO FELIPE ALONSO',
-                'QUINTEROS VERGARA FERNANDA FLORENCIA', 'RAMÍREZ VILLALOBOS DUVAN EMILIO',
-                'SANTANDER LÓPEZ MARÍA JOSÉ', 'TAPIA CASTILLA JEANFRANCO PATRICK',
-                'URBINA CÁCERES FRANCHESCA POULETTE', 'VÁSQUEZ ZALDUENDO AMANDA ISABEL',
-                'ZABALAGA COFRÉ DAMIÁN ANDRÉS', 'BAEZ DONOSO LUKAS ALFONSO',
-                'MESA DÍAZ GONZALO IGNACIO', 'BAREA SALGADO SERGIO ALEXANDER'
+        const observationModal = getEl('observationModal');
+        const observationHistory = getEl('observationHistory');
+        const newObservationText = getEl('newObservationText');
+        const obsDateDisplay = getEl('obsDateDisplay');
+        
+        // DATOS IMPORTADOS DE NÓMINA 2025.CSV
+        const fullDefaultClasses = {
+            "1° Medio A": [
+                "ALBURQUENQUE DEL GRECCO EMILYA ANTONIA", "ANABALÓN BELTRÁN BENJAMÍN NICOLÁS", "CONTRERAS SALGADO HADEEY ALEJANDRA",
+                "FERRADA ALBORNOZ AGUSTÍN ALEXIS", "HERNÁNDEZ FERNÁNDEZ DHARIEN ALEXSANDER", "IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA",
+                "LAGOS LASTRA ALEXANDRA DANAE", "LÓPEZ LÓPEZ LUCIANO ANTONIO", "MALDONADO FLORES ANTONELLA BELÉN",
+                "MONTECINO DÍAZ VALESKA BELÉN", "MUÑOZ CONTRERAS LUIS GABRIEL", "MUÑOZ LUNA ROGER JOEL",
+                "NAVARRO VILLANUEVA KARLA PAZ", "ORELLANA ARRIAGADA SEBASTIÁN ANDRÉS", "QUEZADA NARANJO FELIPE ALONSO",
+                "QUINTEROS VERGARA FERNANDA FLORENCIA", "RAMÍREZ VILLALOBOS DUVAN EMILIO", "SANTANDER LÓPEZ MARÍA JOSÉ",
+                "TAPIA CASTILLA JEANFRANCO PATRICK", "URBINA CÁCERES FRANCHESCA POULETTE", "VÁSQUEZ ZALDUENDO AMANDA ISABEL",
+                "ZABALAGA COFRÉ DAMIÁN ANDRÉS", "BAEZ DONOSO LUKAS ALFONSO", "MESA DÍAZ GONZALO IGNACIO"
             ],
-            "Primero Medio B": [
-                'ARAVENA ZÚÑIGA NOEMÍ JESÚS DE LAS ESTRELLAS', 'ASTUDILLO CAMPOS CRISTÓBAL ANTONIO',
-                'ASTUDILLO VÁSQUEZ BRUNO FERNANDO LEÓN', 'CASTILLO MUÑOZ RENÉ ANTONIO',
-                'CID CERDA MARÍA EVANGELINA', 'CUMINAO VIDAL CATALINA ANDREA',
-                'DÍAZ MALUENDA MIGUEL ALBERTO', 'KILTAN GONZÁLEZ DIDIER EZEQUIEL',
-                'LÓPEZ ACUÑA MARCO EMILIO', 'LÓPEZ NOVOA EYDAN DAMIÁN',
-                'MÉNDEZ SUAZO FABIÁN FELIPE', 'MOYA REYES MATEO ANTONIO BENJAMÍN',
-                'OSES CAMPOS VALENTINA ABIGAIL', 'PALMA ORELLANA ANTONELLA FRANCISCA',
-                'PEREIRA ORELLANA MONSERRAT ALAMIRA', 'PÉREZ ORMAZÁBAL ZADKA ALEJANDRA',
-                'ROJAS GONZÁLEZ FLORENCIA TRINIDAD', 'ROJAS LEIVA EDUARDO JAVIER',
-                'VÁSQUEZ AGUILERA SCARLET NICOLE', 'YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN',
-                'VARGAS MORAGA MARTINA SAYEN', 'SALAZAR SALAS PEDRO JOSÉ',
-                'VERA BRAVO FLORENCIA ANTONIA', 'PÉREZ QUEVEDO CONSTANZA TRINIDAD',
-                'SALGADO TOLEDO FRANCISCO JAVIER', 'RIQUELME SANTOS BENJAMÍN ALONSO'
+            "1° Medio B": [
+                "ARAVENA ZÚÑIGA NOEMÍ JESÚS DE LAS ESTRELLAS", "ASTUDILLO CAMPOS CRISTÓBAL ANTONIO", "ASTUDILLO VÁSQUEZ BRUNO FERNANDO LEÓN",
+                "CUMINAO VIDAL CATALINA ANDREA", "DÍAZ MALUENDA MIGUEL ALBERTO", "KILTAN GONZÁLEZ DIDIER EZEQUIEL",
+                "LÓPEZ ACUÑA MARCO EMILIO", "LÓPEZ NOVOA EYDAN DAMIÁN", "MÉNDEZ SUAZO FABIÁN FELIPE",
+                "MOYA REYES MATEO ANTONIO BENJAMÍN", "OSES CAMPOS VALENTINA ABIGAIL", "PALMA ORELLANA ANTONELLA FRANCISCA",
+                "PEREIRA ORELLANA MONSERRAT ALAMIRA", "PÉREZ ORMAZÁBAL ZADKA ALEJANDRA", "ROJAS GONZÁLEZ FLORENCIA TRINIDAD",
+                "ROJAS LEIVA EDUARDO JAVIER", "VÁSQUEZ AGUILERA SCARLET NICOLE", "YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN",
+                "VARGAS MORAGA MARTINA SAYEN", "SALAZAR SALAS PEDRO JOSÉ", "VERA BRAVO FLORENCIA ANTONIA",
+                "PÉREZ QUEVEDO CONSTANZA TRINIDAD", "RIQUELME SANTOS BENJAMÍN ALONSO"
             ],
-            "Segundo Medio A": [
-                'AHUMADA ROJAS TRINIDAD BELÉN', 'ESPINOSA TORRES FERNANDA ELENA',
-                'ESPINOZA PEÑALILLO BRAYAN JESÚS', 'GONZÁLEZ SALAZAR EMILIA CATALINA',
-                'MEDEL OJEDA LEÓN IGNACIO', 'MORALES REIMÁN ALFONSO TOMÁS',
-                'PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO', 'PINTO TOBAR JORDÁN AMARO',
-                'RECABAL YÁÑEZ KEVIN ANDRÉS', 'RIQUELME CASTILLO MATÍAS EDUARDO ANTONIO',
-                'RIVERA ABARZA CONSTANZA VICTORIA', 'SANTIS CASSEUS TEIVA SCARLETT',
-                'SOBARZO YÉVENES KATHERINNE ALEXIA BELÉN', 'TOLEDO ALBORNOZ ANTONELLA INES',
-                'VENEGAS ARRIAGADA ANTONIA EDITH', 'VIELMA ZABALAGA JOAN MANUEL',
-                'MEZA COLIMÁN ANGEL BLAS', 'PALMA ORELLANA ANTONELLA FRANCISCA'
+            "1° Medio C": [],
+            "2° Medio A": [
+                "AHUMADA ROJAS TRINIDAD BELÉN", "ESPINOSA TORRES FERNANDA ELENA", "ESPINOZA PEÑALILLO BRAYAN JESÚS",
+                "GONZÁLEZ SALAZAR EMILIA CATALINA", "MEDEL OJEDA LEÓN IGNACIO", "MORALES REIMÁN ALFONSO TOMÁS",
+                "PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO", "PINTO TOBAR JORDÁN AMARO", "RECABAL YÁÑEZ KEVIN ANDRÉS",
+                "RIQUELME CASTILLO MATÍAS EDUARDO ANTONIO", "RIVERA ABARZA CONSTANZA VICTORIA", "SANTIS CASSEUS TEIVA SCARLETT",
+                "SOBARZO YÉVENES KATHERINNE ALEXIA BELÉN", "TOLEDO ALBORNOZ ANTONELLA INES", "VENEGAS ARRIAGADA ANTONIA EDITH",
+                "VIELMA ZABALAGA JOAN MANUEL", "MEZA COLIMÁN ANGEL BLAS", "SAAVEDRA BRAVO FLORENCIA ALEJANDRA"
             ],
-            "Segundo Medio B": [
-                'ARAYA DOMÍNGUEZ ALEX FABIÁN', 'BRAVO MENARES ALEX JOHAN',
-                'CARRASCO LEIVA BENJAMÍN IGNACIO', 'CARVAJAL URRUTIA CONSTANZA PRISILA (DANIEL)',
-                'ENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER', 'FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO',
-                'JARAMILLO VILLAR EMILIO SCOTT', 'LÓPEZ VILLAR MARTÍN ALONSO',
-                'MIRANDA MUÑOZ ALEXANDRA JAVIERA', 'MUÑOZ TRONCOSO HÉCTOR ANTONIO',
-                'OLIVARES VALENZUELA ALONSO IGNACIO', 'OLIVARES VALENZUELA ANTONELLA DANAE IGNACIA',
-                'ORELLANA GARRIDO MATÍAS LEANDRO', 'PUNOY MEDEL MILLARAY ANGÉLICA',
-                'QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO', 'RIQUELME COLOMA DALIA CONSTANZA',
-                'SALGADO ROJAS VICENTE MOISÉS', 'SANDOVAL CERPA VICENTE ESTEBAN',
-                'SOTO NARANJO CHRISTOPHER', 'VEKARIC VERDEJO MARTÍN'
+            "2° Medio B": [
+                "ARAYA DOMÍNGUEZ ALEX FABIÁN", "BRAVO MENARES ALEX JOHAN", "CARRASCO LEIVA BENJAMÍN IGNACIO",
+                "CARVAJAL URRUTIA CONSTANZA PRISILA (DANIEL)", "ENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER", "FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO",
+                "JARAMILLO VILLAR EMILIO SCOTT", "LÓPEZ VILLAR MARTÍN ALONSO", "MIRANDA MUÑOZ ALEXANDRA JAVIERA",
+                "MUÑOZ TRONCOSO HÉCTOR ANTONIO", "OLIVARES VALENZUELA ALONSO IGNACIO", "OLIVARES VALENZUELA ANTONELLA DANAE IGNACIA",
+                "ORELLANA GARRIDO MATÍAS LEANDRO", "PUNOY MEDEL MILLARAY ANGÉLICA", "QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO",
+                "RIQUELME COLOMA DALIA CONSTANZA", "SALGADO ROJAS VICENTE MOISÉS", "SANDOVAL CERPA VICENTE ESTEBAN",
+                "SOTO NARANJO CHRISTOPHER", "VEKARIC VERDEJO MARTÍN"
             ],
-            "Tercero Medio A": [
-                'ALCÁNTAR GARCÍA MARTINA ALEJANDRA', 'BAHAMONDE MUÑOZ ARIEL LEON',
-                'CAMPOS MUÑOZ CRISTOPHER JESÚS', 'CANCINO ORÓSTICA VICENTE GASPAR',
-                'CARRASCO GONZÁLEZ CAMILA ANDREA', 'COFRÉ CASTILLO ANTONIO ANDRÉS',
-                'CONTRERAS VENEGAS BELÉN ALEJANDRA', 'GALDAMES VERGARA FELIPE ESTEBAN',
-                'GARCÍA GONZÁLEZ SANTIAGO HUMBERTO', 'GONZÁLEZ AMIGO FRANCISCA IGNACIA',
-                'GONZÁLEZ SALAZAR JOAQUÍN ALONSO', 'GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN',
-                'JARA SEPÚLVEDA KATRINA DARINKA', 'MARTÍNEZ LIZANA AARON ALEJANDRO',
-                'MEZA CARRASCO BENJAMÍN INTI', 'MIÑO GONZALEZ CATALINA ANDREA',
-                'MORAGA PACHECO RENATO IGNACIO', 'PÉREZ CORÓN MANUEL IGNACIO',
-                'SAMANIEGO CORTEZ JAKSON FERGIE', 'SEPÚLVEDA SALAZAR SOFÍA ANTONIA',
-                'TAPIA ACUÑA GABRIEL ANTONIO', 'VEGA VIVANCO CRISTÓBAL ANTONIO',
-                'VERA NAVARRETE DANIELA ELIZABETH', 'VILLALOBOS ARAVENA KARINA ANGELINA',
-                'VILLALOBOS VILLALOBOS SAMIR LUCIAN JESÚS', 'HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO',
-                'TORREALBA MOYA FLORVELIS DE LOS ANGELES', 'CARO URRUTIA CONSUELO ANTONIA',
-                'LOBOS CÁCERES ANTONIA PAZ'
+            "2° Medio C": [],
+            "3° Medio A": [
+                "ALCÁNTAR GARCÍA MARTINA ALEJANDRA", "BAHAMONDE MUÑOZ ARIEL LEON", "CAMPOS MUÑOZ CRISTOPHER JESÚS",
+                "CANCINO ORÓSTICA VICENTE GASPAR", "CARRASCO GONZÁLEZ CAMILA ANDREA", "COFRÉ CASTILLO ANTONIO ANDRÉS",
+                "CONTRERAS VENEGAS BELÉN ALEJANDRA", "GALDAMES VERGARA FELIPE ESTEBAN", "GARCÍA GONZÁLEZ SANTIAGO HUMBERTO",
+                "GONZÁLEZ AMIGO FRANCISCA IGNACIA", "GONZÁLEZ SALAZAR JOAQUÍN ALONSO", "GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN",
+                "JARA SEPÚLVEDA KATRINA DARINKA", "MARTÍNEZ LIZANA AARON ALEJANDRO", "MEZA CARRASCO BENJAMÍN INTI",
+                "MIÑO GONZALEZ CATALINA ANDREA", "MORAGA PACHECO RENATO IGNACIO", "PÉREZ CORÓN MANUEL IGNACIO",
+                "SAMANIEGO CORTEZ JAKSON FERGIE", "SEPÚLVEDA SALAZAR SOFÍA ANTONIA", "TAPIA ACUÑA GABRIEL ANTONIO",
+                "VEGA VIVANCO CRISTÓBAL ANTONIO", "VERA NAVARRETE DANIELA ELIZABETH", "VILLALOBOS ARAVENA KARINA ANGELINA",
+                "VILLALOBOS VILLALOBOS SAMIR LUCIAN JESÚS", "HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO", "TORREALBA MOYA FLORVELIS DE LOS ANGELES",
+                "CARO URRUTIA CONSUELO ANTONIA", "LOBOS CÁCERES ANTONIA PAZ"
             ],
-            "Tercero Medio C": [
-                'ARELLANO ACUÑA MARTÍN ANTONIO', 'AROS ÁVILA DAYANA IGNACIA',
-                'CABRERA COLOMBINO MARÍA GRACIA', 'FUENTES CARRASCO YARIXA ALEJANDRA',
-                'GÓMEZ CANCINO DANIELA ALEJANDRA', 'GUTIÉRREZ CARRIÓN MILLARAY CAROLINA',
-                'HONORATO TAPIA GLORIA JAVIERA', 'LARA RIVERA BENJAMÍN ESTEBAN',
-                'PALACIOS SOTO JOSÉ TOMÁS', 'PEZO SANTANDER JOSÉ CRISTÓBAL',
-                'ROCHA ROJAS JOSÉ PABLO WILLIAMS', 'ROJAS YÉVENES FABIANA ISIDORA',
-                'SÁNCHEZ PAREJA ANDY ANTONIO', 'SANTANDER LÓPEZ SIMÓN ESTEBAN',
-                'TRONCOSO LIZAMA SIOMARA IGNACIA', 'WARNKEN ROJAS LUCIANA BERNABELA',
-                'DE LA HOZ VALENZUELA FRANCO SEBASTIÁN', 'COLLAO MEDINA ANAÍS VALENTINA'
+            "3° Medio B": [],
+            "3° Medio C": [
+                "ARELLANO ACUÑA MARTÍN ANTONIO", "AROS ÁVILA DAYANA IGNACIA", "CABRERA COLOMBINO MARÍA GRACIA",
+                "FUENTES CARRASCO YARIXA ALEJANDRA", "GÓMEZ CANCINO DANIELA ALEJANDRA", "GUTIÉRREZ CARRIÓN MILLARAY CAROLINA",
+                "HONORATO TAPIA GLORIA JAVIERA", "LARA RIVERA BENJAMÍN ESTEBAN", "PALACIOS SOTO JOSÉ TOMÁS",
+                "PEZO SANTANDER JOSÉ CRISTÓBAL", "ROCHA ROJAS JOSÉ PABLO WILLIAMS", "ROJAS YÉVENES FABIANA ISIDORA",
+                "SÁNCHEZ PAREJA ANDY ANTONIO", "SANTANDER LÓPEZ SIMÓN ESTEBAN", "TRONCOSO LIZAMA SIOMARA IGNACIA",
+                "WARNKEN ROJAS LUCIANA BERNABELA", "DE LA HOZ VALENZUELA FRANCO SEBASTIÁN", "COLLAO MEDINA ANAÍS VALENTINA"
             ],
-            "Cuarto Medio A": [
-                'AGURTO CRESPO HOMERO ALEXANDER', 'ANDIA DE LA HOZ CATALINA BELEN',
-                'FUENTES GONZÁLEZ ESTEBAN ALEXANDER', 'GARCÍA ROJAS SOFÍA ELENA',
-                'GODOY HERRERA ANTONELLA CONSTANZA PAZ', 'GONZÁLEZ CASTRO KEVIN ALEJANDRO',
-                'MARCHANT MORÁN PÍA IGNACIA', 'QUINTANA SAN MARTÍN ALAN VICENTE',
-                'RECABAL YÁÑEZ CRISTOFER BASTIÁN', 'ROJAS GONZÁLEZ GABRIEL ANTONIO',
-                'TOLEDO MUÑOZ ESPERANZA BELÉN', 'YÁÑEZ GONZÁLEZ FRANCISCA ALEJANDRA'
-            ],
-            "Cuarto Medio C": [
-                'Josefa Morales', 'Benjamín Pérez', 'Constanza Varela'
-            ],
+            "4° Medio A": [], 
+            "4° Medio B": [], 
+            "4° Medio C": []
         };
 
-        // --- FUNCIÓN CLAVE PARA LA RUTA DE DATOS (ADMIN) ---
-        function getMyPrivateDocRef() {
-            // RUTA DE LA VERSIÓN PRIVADA (artifacts)
-            return doc(db, `artifacts/${appId}/public/data/calificaciones/master_data`);
-        }
-        // --------------------------------------------------------
+        function getMyPrivateDocRef() { return doc(db, `artifacts/${appId}/public/data/calificaciones/master_data`); }
 
         async function initApp() {
              try {
@@ -339,451 +296,295 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
                 isFirebaseConnected = true;
-
                 dateSelector.value = currentDateString;
 
                 onAuthStateChanged(auth, user => {
                     if (user) {
-                        userId = user.uid;
-                        userIdDisplay.textContent = `ID de Sesión: ${userId.substring(0, 8)}...`;
-                        statusDisplay.textContent = 'Conectado a Firebase (Admin)';
-                        statusDisplay.className = 'text-xs font-medium text-green-600'; 
+                        statusDisplay.textContent = '● CONECTADO (ADMIN)';
                         loadDataFromFirestore();
                     } else {
-                        signInAnonymously(auth).catch(e => console.error("Error inicio anónimo:", e));
+                        signInAnonymously(auth).catch(e => console.error(e));
                     }
                 });
-             } catch (e) {
-                 console.error("Error al iniciar Firebase:", e);
-                 showMessage('Error Fatal', 'No se pudo conectar a Firebase. Verifique su configuración.');
-             }
+             } catch (e) { alert('Error Fatal: No se pudo conectar a Firebase.'); }
              updateCurrentDateUI();
              setupEventHandlers();
         }
 
         function loadDataFromFirestore() {
-            try {
-                // USAR RUTA PRIVADA
-                const docRef = getMyPrivateDocRef(); 
-
-                onSnapshot(docRef, (docSnap) => {
-                    loadingIndicator.style.display = 'none';
-                    if (docSnap.exists() && docSnap.data().classes) {
-                        allClassesData = docSnap.data().classes;
-                        
-                        // *** FIX CLAVE: Inicializar grades y observations al cargar los datos ***
-                        for (const className in allClassesData) {
-                            allClassesData[className] = allClassesData[className].map(student => ({
-                                name: student.name,
-                                grades: student.grades || [], // Asegurar array
-                                attendance: student.attendance || {},
-                                observations: student.observations || '' // Asegurar string
-                            }));
-                        }
-                        // *** FIN FIX CLAVE ***
-
-                        if (!currentClass || !allClassesData[currentClass]) {
-                            currentClass = Object.keys(allClassesData)[0];
-                        }
-                    } else {
-                        showMessage('Creación de Datos', 'Creando la lista de clases inicial. Por favor, guarde una vez que la tabla aparezca.');
-                        createInitialData(); 
-                        return; 
-                    }
-                    students = allClassesData[currentClass] || [];
-                    initializeClassSelector();
-                    renderStudentsTable();
-                }, (error) => {
-                    loadingIndicator.style.display = 'none';
-                    studentsTableContainer.innerHTML = `<p class="text-red-600">Error al cargar los datos: ${error.message}</p>`;
-                    showMessage('Error de Sincronización', `No se pudieron cargar los datos. Error: ${error.message}`);
-                });
-            } catch (e) {
+            const docRef = getMyPrivateDocRef(); 
+            onSnapshot(docRef, (docSnap) => {
                 loadingIndicator.style.display = 'none';
-                showMessage('Error', e.message);
-            }
+                if (docSnap.exists() && docSnap.data().classes) {
+                    allClassesData = docSnap.data().classes;
+                    
+                    // Normalización de datos antiguos
+                    for (const className in allClassesData) {
+                        allClassesData[className] = allClassesData[className].map(s => {
+                            const normalizedGrades = (s.grades || []).map(g => (typeof g === 'object' && g.value) ? g : { value: g, date: '---', id: Date.now() + Math.random() });
+                            let normalizedObs = [];
+                            if (Array.isArray(s.observations)) normalizedObs = s.observations;
+                            else if (s.observations && typeof s.observations === 'string') normalizedObs = [{ text: s.observations, date: '---', id: Date.now() }];
+                            return { name: s.name, grades: normalizedGrades, attendance: s.attendance || {}, observations: normalizedObs };
+                        });
+                    }
+                    if (!currentClass || !allClassesData[currentClass]) currentClass = Object.keys(allClassesData)[0];
+                } else {
+                    createInitialData(); 
+                    return; 
+                }
+                students = allClassesData[currentClass] || [];
+                initializeClassSelector();
+                renderStudentsTable();
+            });
         }
 
         async function createInitialData() {
+             // Si no hay datos, iniciamos con la lista completa
              const initialClasses = {};
-             for (const className in initialClassData) {
-                 initialClasses[className] = initialClassData[className].map(name => ({
-                     name, grades: [], attendance: {}, observations: ''
-                 }));
+             for (const className in fullDefaultClasses) {
+                 initialClasses[className] = fullDefaultClasses[className].map(name => ({ name, grades: [], attendance: {}, observations: [] }));
              }
-             const docRef = getMyPrivateDocRef();
-             try {
-                await setDoc(docRef, { classes: initialClasses });
-                console.log("Datos iniciales creados en Firestore. La UI se actualizará.");
-             } catch (e) {
-                 console.error("Fallo al crear datos iniciales:", e);
-                 showMessage('Error de Escritura', 'No se pudo crear la data inicial. Verifique que sus reglas de seguridad permitan CREAR/ESCRIBIR en la ruta de artifacts.');
-             }
+             await setDoc(getMyPrivateDocRef(), { classes: initialClasses });
+        }
+
+        // FUNCIONES DE GESTIÓN DE CLASES
+        async function loadDefaultCourses() {
+            if(!confirm("⚠️ ¿Estás seguro? Esto agregará la NÓMINA 2025 completa (1° a 4° Medio) a tu lista actual. No borrará los alumnos existentes.")) return;
+            
+            let updated = false;
+            for (const className in fullDefaultClasses) {
+                if (!allClassesData[className]) {
+                    allClassesData[className] = fullDefaultClasses[className].map(name => ({ name, grades: [], attendance: {}, observations: [] }));
+                    updated = true;
+                }
+            }
+            
+            if(updated) {
+                await setDoc(getMyPrivateDocRef(), { classes: allClassesData });
+                alert("✅ Cursos 2025 cargados exitosamente.");
+            } else {
+                alert("ℹ️ Los cursos ya existían.");
+            }
+        }
+
+        async function addNewClass() {
+            const name = prompt("Nombre del nuevo curso (Ej: 5° Básico A):");
+            if(name && name.trim() !== "") {
+                if(allClassesData[name]) return alert("Ese curso ya existe.");
+                allClassesData[name] = [];
+                currentClass = name;
+                await setDoc(getMyPrivateDocRef(), { classes: allClassesData });
+                alert(`✅ Curso "${name}" creado.`);
+            }
         }
 
         async function saveData() {
-             if (!isFirebaseConnected || !appId) { showMessage('Sin conexión', 'No está conectado a Firebase para guardar datos.'); return; }
+             if (!isFirebaseConnected) return;
              try {
-                 // USAR setDoc para sobrescribir y eliminar permanentemente los estudiantes borrados
-                 const docRef = getMyPrivateDocRef();
-                 await setDoc(docRef, { classes: allClassesData });
-                 showMessage('Guardado', 'Datos guardados correctamente.', false);
-             } catch (e) { 
-                 showMessage('Error de Guardado', 'No se pudieron guardar los datos. Error: ' + e.message);
-             }
+                 await setDoc(getMyPrivateDocRef(), { classes: allClassesData });
+                 saveDataBtn.textContent = "✅ Guardado";
+                 setTimeout(() => saveDataBtn.textContent = "💾 Guardar Cambios", 2000);
+             } catch (e) { alert('Error: ' + e.message); }
         }
         
         function addStudent() {
-            const name = studentNameInput.value.trim();
-            if (!name || !currentClass) {
-                showMessage('Advertencia', 'Debes seleccionar una clase y escribir un nombre.');
-                return;
-            }
-            if (students.some(s => s.name === name.toUpperCase())) {
-                showMessage('Advertencia', 'Este estudiante ya existe en la clase.');
-                return;
-            }
-            const newStudent = { name: name.toUpperCase(), grades: [], attendance: {}, observations: '' };
-            students.push(newStudent);
+            const name = studentNameInput.value.trim().toUpperCase();
+            if (!name || !currentClass) return alert('Escribe un nombre válido.');
+            if (students.some(s => s.name === name)) return alert('Ya existe.');
+            students.push({ name: name, grades: [], attendance: {}, observations: [] });
             studentNameInput.value = '';
-            
-            allClassesData[currentClass] = students;
-            renderStudentsTable();
+            updateDataAndRender();
         }
 
-        // --- Funciones de UI y Lógica Auxiliar ---
-        
         function showView(view) {
-            getEl('studentsTableContainer').style.display = 'none';
-            getEl('classReportContainer').style.display = 'none';
-            getEl('classDetailsContainer').style.display = 'none';
-
+            studentsTableContainer.style.display = 'none';
+            classReportContainer.style.display = 'none';
+            classDetailsContainer.style.display = 'none';
             controlsContainer.classList.add('hidden');
             reportButtons.classList.add('hidden');
             backToTableContainer.classList.add('hidden');
-            tableHeader.style.display = 'none';
 
             if (view === 'table') {
-                getEl('studentsTableContainer').style.display = 'flex';
+                studentsTableContainer.style.display = 'flex';
                 controlsContainer.classList.remove('hidden');
                 reportButtons.classList.remove('hidden');
-                getEl('tableHeader').style.display = students.length > 0 ? 'grid' : 'none';
             } else if (view === 'report') {
-                getEl('classReportContainer').style.display = 'block';
+                classReportContainer.style.display = 'block';
                 backToTableContainer.classList.remove('hidden');
             } else if (view === 'detailed') {
-                getEl('classDetailsContainer').style.display = 'block';
+                classDetailsContainer.style.display = 'block';
                 backToTableContainer.classList.remove('hidden');
             }
         }
 
-        function showMessage(title, message, isConfirm = false, callback = () => {}) { 
-            console.log(`[Modal] ${title}: ${message}`);
-            if (!isConfirm) alert(`${title}: ${message}`);
-            else if (confirm(`${title}: ${message}`)) callback(true);
-        }
-        
         function renderStudentsTable() { 
             tableHeader.style.display = students.length > 0 ? 'grid' : 'none';
-
-            tableBody.innerHTML = students.map((student, index) => `
-                <div data-index="${index}" class="grid grid-cols-6 gap-2 py-3 border-b border-gray-100 hover:bg-gray-50 items-center text-sm">
-                    <div class="col-span-1 text-left font-medium text-gray-800">${student.name}</div>
-                    
-                    <div class="text-center text-gray-500">${student.grades.length}</div>
-                    <div class="text-center font-bold text-blue-600">${calculateAverage(student.grades)}</div>
-                    
-                    <div class="text-center space-x-1">
-                         <button data-status="P" data-index="${index}" class="btn-present attendance-btn text-white w-6 h-6 rounded-full text-xs ${getAttendanceStatus(student) === 'P' ? 'opacity-100' : 'opacity-30'}">P</button>
-                         <button data-status="A" data-index="${index}" class="btn-absent attendance-btn text-white w-6 h-6 rounded-full text-xs ${getAttendanceStatus(student) === 'A' ? 'opacity-100' : 'opacity-30'}">A</button>
-                         <button data-status="J" data-index="${index}" class="btn-justified attendance-btn text-white w-6 h-6 rounded-full text-xs ${getAttendanceStatus(student) === 'J' ? 'opacity-100' : 'opacity-30'}">J</button>
+            tableBody.innerHTML = students.map((student, index) => {
+                const gradesHtml = student.grades.map((g, gIndex) => `
+                    <div onclick="editGrade(${index}, ${gIndex})" title="${g.date}"
+                         class="grade-chip inline-flex items-center justify-center bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full mr-1 mb-1 border border-blue-200">
+                        ${g.value.toFixed(1)}
+                    </div>`).join('');
+                const hasObs = student.observations && student.observations.length > 0;
+                return `
+                <div class="grid grid-cols-12 gap-2 py-3 border-b border-gray-100 hover:bg-gray-50 items-center text-sm px-2">
+                    <div class="col-span-3 text-left font-semibold text-gray-800 truncate pl-2">${student.name}</div>
+                    <div class="col-span-4 flex flex-wrap content-center">${gradesHtml.length > 0 ? gradesHtml : '<span class="text-gray-300 text-xs italic">Sin notas</span>'}</div>
+                    <div class="col-span-1 text-center font-bold text-gray-700">${calculateAverage(student.grades)}</div>
+                    <div class="col-span-2 flex justify-center space-x-1">
+                         <button data-status="P" data-index="${index}" class="attendance-btn w-7 h-7 rounded-full text-xs font-bold transition-all ${getAttendanceStatus(student) === 'P' ? 'bg-green-500 text-white scale-110' : 'bg-gray-200 text-gray-400'}">P</button>
+                         <button data-status="A" data-index="${index}" class="attendance-btn w-7 h-7 rounded-full text-xs font-bold transition-all ${getAttendanceStatus(student) === 'A' ? 'bg-red-500 text-white scale-110' : 'bg-gray-200 text-gray-400'}">A</button>
+                         <button data-status="J" data-index="${index}" class="attendance-btn w-7 h-7 rounded-full text-xs font-bold transition-all ${getAttendanceStatus(student) === 'J' ? 'bg-yellow-400 text-white scale-110' : 'bg-gray-200 text-gray-400'}">J</button>
                     </div>
-                    
-                    <div class="col-span-2 flex justify-start space-x-2 pl-4">
-                        <input type="number" step="0.1" placeholder="Nota" class="p-1 border rounded w-16 text-center text-xs">
-                        <button data-index="${index}" class="btn-grade text-white font-bold w-6 h-6 rounded-full text-xs">+</button>
-                        <button data-index="${index}" class="btn-delete text-white w-6 h-6 rounded-full text-xs">🗑️</button>
-                        <!-- Botón de Observación -->
-                        <button data-index="${index}" class="observation-btn text-indigo-600 hover:text-indigo-900 w-6 h-6 rounded-full text-xs">
-                           ${student.observations ? '📝' : '💬'} 
-                        </button>
+                    <div class="col-span-2 flex justify-end items-center space-x-2 pr-2">
+                        <div class="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200">
+                            <input type="number" id="gradeInput-${index}" step="0.1" class="w-10 bg-transparent text-center text-xs focus:outline-none">
+                            <button onclick="addGrade(${index})" class="text-orange-500 font-bold px-1 text-lg leading-none">+</button>
+                        </div>
+                        <button onclick="openObservationModal(${index})" class="w-8 h-8 rounded-full border flex items-center justify-center ${hasObs ? 'text-indigo-600 bg-indigo-100' : 'text-gray-400 bg-gray-100'}">${hasObs ? '📝' : '💬'}</button>
+                        <button data-index="${index}" class="btn-delete text-white w-7 h-7 rounded-full text-xs shadow hover:bg-gray-500 flex items-center justify-center">🗑️</button>
                     </div>
-                </div>
-            `).join('');
-            
+                </div>`; }).join('');
             attachTableListeners();
         }
 
-        function calculateAverage(grades) { 
-            if (grades.length === 0) return '0.0';
-            const sum = grades.reduce((acc, grade) => acc + grade, 0);
-            return (sum / grades.length).toFixed(1);
+        // REPORTES
+        function generateClassReport() {
+            showView('report');
+            const classNames = Object.keys(allClassesData);
+            classReportContainer.innerHTML = `
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Resumen de Asistencia General</h2>
+                <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200 border"><thead class="bg-gray-50"><tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Clase</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-green-600 uppercase">P</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-red-600 uppercase">A</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-yellow-600 uppercase">J</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase">%</th>
+                </tr></thead><tbody class="bg-white divide-y divide-gray-200">${classNames.map(c => {
+                    const s = calculateClassSummary(c);
+                    return `<tr><td class="px-6 py-4 font-medium text-gray-900">${c}</td><td class="px-6 py-4 text-center">${s.total_students}</td><td class="px-6 py-4 text-center text-green-600 font-bold">${s.P}</td><td class="px-6 py-4 text-center text-red-600 font-bold">${s.A}</td><td class="px-6 py-4 text-center text-yellow-600 font-bold">${s.J}</td><td class="px-6 py-4 text-center font-bold">${s.tasa_asistencia}</td></tr>`;
+                }).join('')}</tbody></table></div>`;
         }
-        
-        function getAttendanceStatus(student) { 
-            return student.attendance[currentDateString] || 'N/A';
+
+        function generateDetailedReport(className) {
+            if (!className) return alert("Selecciona una clase.");
+            showView('detailed');
+            const data = allClassesData[className] || [];
+            let dates = new Set();
+            data.forEach(s => Object.values(s.attendance || {}).length > 0 && Object.keys(s.attendance).forEach(d => dates.add(d)));
+            const sortedDates = Array.from(dates).sort();
+            
+            // Fix si no hay fechas
+            const datesHeader = sortedDates.length > 0 
+                ? sortedDates.map(d => `<th class="px-2 py-2 text-center w-8">${d.substring(5)}</th>`).join('') 
+                : '<th class="px-2 py-2 text-center">Sin Fechas</th>';
+
+            classDetailsContainer.innerHTML = `
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Reporte Detallado: ${className}</h2>
+                <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200 border text-xs"><thead class="bg-gray-100"><tr>
+                    <th class="px-2 py-2 text-left border-r sticky left-0 bg-gray-100">Estudiante</th><th class="px-2 py-2 text-center border-r">Prom</th>${datesHeader}<th class="px-4 py-2 text-left">Obs</th>
+                </tr></thead><tbody class="bg-white divide-y divide-gray-200">${data.map(s => {
+                    const datesCells = sortedDates.length > 0 
+                        ? sortedDates.map(d => `<td class="px-1 py-2 text-center border-r ${s.attendance[d]==='P'?'bg-green-50 font-bold text-green-600':(s.attendance[d]==='A'?'bg-red-50 font-bold text-red-600':(s.attendance[d]==='J'?'bg-yellow-50 font-bold text-yellow-600':'text-gray-300'))}">${s.attendance[d]||'-'}</td>`).join('')
+                        : '<td class="px-1 py-2 text-center text-gray-400">-</td>';
+                    return `<tr><td class="px-2 py-3 font-medium border-r sticky left-0 bg-white">${s.name}</td><td class="px-2 py-3 text-center font-bold text-blue-600 border-r">${calculateAverage(s.grades)}</td>${datesCells}<td class="px-4 py-3 text-gray-600">${(s.observations||[]).map(o=>`${o.date}: ${o.text}`).join(' | ')}</td></tr>`;
+                }).join('')}</tbody></table></div>`;
         }
+
+        // UTILIDADES Y HANDLERS
+        function calculateClassSummary(className) {
+            const cls = allClassesData[className] || [];
+            let sum = { P: 0, A: 0, J: 0, total_students: cls.length, total_records: 0 };
+            cls.forEach(s => {
+                if(s.attendance) Object.values(s.attendance).forEach(st => { if (st in sum) { sum[st]++; sum.total_records++; } });
+            });
+            sum.tasa_asistencia = sum.total_records > 0 ? ((sum.P + sum.J) / sum.total_records * 100).toFixed(1) + '%' : 'N/A';
+            return sum;
+        }
+
+        window.addGrade = (index) => {
+            const val = parseFloat(getEl(`gradeInput-${index}`).value);
+            if (isNaN(val) || val < 1 || val > 7) return alert('Nota inválida');
+            students[index].grades.push({ value: val, date: currentDateString, id: Date.now() });
+            getEl(`gradeInput-${index}`).value = '';
+            updateDataAndRender();
+        };
+
+        window.editGrade = (sIdx, gIdx) => {
+            if(prompt("🔒 Clave Docente:") !== CLAVE_DOCENTE) return alert("Clave Incorrecta");
+            const act = prompt(`Editar (nota) o 'borrar'`, students[sIdx].grades[gIdx].value);
+            if(!act) return;
+            if(act.toLowerCase()==='borrar') students[sIdx].grades.splice(gIdx, 1);
+            else students[sIdx].grades[gIdx].value = parseFloat(act);
+            updateDataAndRender();
+        };
+
+        window.openObservationModal = (index) => {
+            currentStudentIndex = index;
+            getEl('modalTitle').textContent = `Observaciones: ${students[index].name}`;
+            obsDateDisplay.textContent = currentDateString;
+            newObservationText.value = '';
+            const hist = students[index].observations || [];
+            observationHistory.innerHTML = hist.length ? hist.map(o => `<div class="bg-gray-50 border-l-4 border-indigo-400 p-2 mb-2"><span class="text-xs font-bold text-indigo-600">${o.date}</span><p class="text-sm">${o.text}</p></div>`).join('') : '<p class="text-gray-400 italic">Sin observaciones.</p>';
+            observationModal.style.display = 'flex';
+        };
+
+        window.saveObservation = () => {
+            const txt = newObservationText.value.trim();
+            if(!txt) return;
+            if(!students[currentStudentIndex].observations) students[currentStudentIndex].observations = [];
+            students[currentStudentIndex].observations.push({ text: txt, date: currentDateString, id: Date.now() });
+            observationModal.style.display = 'none';
+            updateDataAndRender();
+        };
+
+        function updateDataAndRender() { allClassesData[currentClass] = students; renderStudentsTable(); }
+        function calculateAverage(g) { return (!g || !g.length) ? '0.0' : (g.reduce((a, b) => a + (b.value||0), 0) / g.length).toFixed(1); }
+        function getAttendanceStatus(s) { return (s.attendance && s.attendance[currentDateString]) ? s.attendance[currentDateString] : 'N/A'; }
         
         function initializeClassSelector() {
             classSelector.innerHTML = '';
-            const classNames = Object.keys(allClassesData);
-            classNames.forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
-                if (name === currentClass) {
-                    option.selected = true;
-                }
-                classSelector.appendChild(option);
+            Object.keys(allClassesData).forEach(n => {
+                const opt = document.createElement('option'); opt.value = n; opt.textContent = n;
+                if(n === currentClass) opt.selected = true;
+                classSelector.appendChild(opt);
             });
         }
 
         function updateCurrentDateUI() { 
-             const dateParts = currentDateString.split('-');
-             const dateToFormat = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-             
-             const formattedDate = dateToFormat.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-             currentDateElement.textContent = `Fecha Seleccionada: ${formattedDate}`;
+             const parts = currentDateString.split('-');
+             const d = new Date(parts[0], parts[1]-1, parts[2]);
+             currentDateElement.textContent = d.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
              dateSelector.value = currentDateString;
-        }
-        
-        function openObservationModal(studentIndex) {
-            currentStudentIndex = studentIndex;
-            const student = students[studentIndex];
-            
-            modalTitle.textContent = `Observaciones para: ${student.name}`;
-            observationTextarea.value = student.observations || '';
-            observationModal.style.display = 'flex';
+             document.querySelectorAll('.print-date-placeholder').forEach(el => el.textContent = d.toLocaleDateString('es-ES'));
         }
 
-        function saveObservation() {
-            if (currentStudentIndex !== -1) {
-                const student = students[currentStudentIndex];
-                student.observations = observationTextarea.value.trim();
-                allClassesData[currentClass] = students;
-                
-                closeObservationModalBtn.click(); 
-                renderStudentsTable(); 
-                showMessage('Observación Guardada', `Observación registrada para ${student.name}. NO OLVIDE hacer clic en 'Guardar Datos' para hacerla permanente.`, false);
-            }
-        }
-
-        function calculateClassSummary(className) {
-            if (Object.keys(allClassesData).length === 0) return { P: 0, A: 0, J: 0, total_students: 0, total_records: 0, tasa_asistencia: 'N/A' };
-
-            const classStudents = allClassesData[className] || [];
-            let summary = { P: 0, A: 0, J: 0, total_students: classStudents.length, total_records: 0 };
-            
-            classStudents.forEach(student => {
-                Object.values(student.attendance).forEach(status => {
-                    if (status in summary) {
-                        summary[status]++;
-                        summary.total_records++;
-                    }
-                });
-            });
-            
-            if (summary.total_records > 0) {
-                summary.tasa_asistencia = ((summary.P + summary.J) / summary.total_records * 100).toFixed(2) + '%';
-            } else {
-                summary.tasa_asistencia = 'N/A';
-            }
-
-            return summary;
-        }
-
-        function generateClassReport() {
-            if (Object.keys(allClassesData).length === 0) {
-                showMessage('Advertencia', 'No hay datos de clases cargados para generar el reporte.');
-                return;
-            }
-            
-            showView('report');
-            const classNames = Object.keys(allClassesData);
-
-            let tableHTML = `
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Reporte Resumen de Clases</h2>
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clase</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Estudiantes</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Presentes (P)</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ausentes (A)</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Justif. (J)</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Tasa de Asistencia</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        ${classNames.map(className => {
-                            const summary = calculateClassSummary(className);
-                            return `
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${className}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm">${summary.total_students}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-green-600 font-bold">${summary.P}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-red-600 font-bold">${summary.A}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-yellow-600 font-bold">${summary.J}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-bold">${summary.tasa_asistencia}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
-            classReportContainer.innerHTML = tableHTML;
-        }
-
-        function generateDetailedReport(className) {
-            if (!className || Object.keys(allClassesData).length === 0) {
-                showMessage('Advertencia', 'Debe seleccionar una clase válida para generar el reporte detallado.');
-                return;
-            }
-
-            showView('detailed');
-            const classData = allClassesData[className] || [];
-
-            let allDates = new Set();
-            classData.forEach(student => {
-                Object.keys(student.attendance).forEach(date => allDates.add(date));
-            });
-            const sortedDates = Array.from(allDates).sort(); 
-
-            let reportHTML = `
-                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Reporte Detallado de ${className}</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">Estudiante</th>
-                                <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Promedio</th>
-                                ${sortedDates.map(date => `<th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">${date.substring(5)}</th>`).join('')}
-                                <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Observaciones</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            ${classData.map(student => {
-                                const attendanceCells = sortedDates.map(date => {
-                                    const status = student.attendance[date] || '—';
-                                    let colorClass = '';
-                                    if (status === 'P') colorClass = 'text-green-600 font-bold';
-                                    else if (status === 'A') colorClass = 'text-red-600 font-bold';
-                                    else if (status === 'J') colorClass = 'text-yellow-600 font-bold';
-                                    return `<td class="px-3 py-4 whitespace-nowrap text-center ${colorClass}">${status}</td>`;
-                                }).join('');
-                                
-                                return `
-                                    <tr>
-                                        <td class="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white z-0">${student.name}</td>
-                                        <td class="px-3 py-4 whitespace-nowrap text-center text-sm font-bold text-blue-600">${calculateAverage(student.grades)}</td>
-                                        ${attendanceCells}
-                                        <td class="px-3 py-4 text-sm text-gray-500">${student.observations || 'N/A'}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            classDetailsContainer.innerHTML = reportHTML;
-        }
-        
         function attachTableListeners() {
-            // 1. Lógica de Asistencia
-            document.querySelectorAll('.attendance-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const index = parseInt(e.target.dataset.index);
-                    const status = e.target.dataset.status;
-                    if (students[index]) {
-                        students[index].attendance[currentDateString] = status;
-                        allClassesData[currentClass] = students;
-                        renderStudentsTable();
-                    }
-                });
-            });
-            
-            // 2. Lógica: Añadir Notas
-            document.querySelectorAll('.btn-grade').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const studentIndex = parseInt(e.target.dataset.index);
-                    const inputField = e.target.previousElementSibling; 
-                    const gradeValue = parseFloat(inputField.value);
-                    
-                    if (isNaN(gradeValue) || gradeValue < 1.0 || gradeValue > 7.0) {
-                        showMessage('Advertencia de Nota', 'Por favor, ingrese una nota válida entre 1.0 y 7.0.');
-                        return;
-                    }
-
-                    if (students[studentIndex]) {
-                        students[studentIndex].grades.push(gradeValue);
-                        allClassesData[currentClass] = students;
-                        inputField.value = '';
-                        renderStudentsTable();
-                        showMessage('Nota Registrada', `Nota ${gradeValue.toFixed(1)} registrada para ${students[studentIndex].name}. NO OLVIDE hacer clic en 'Guardar Datos' para hacerla permanente.`, false);
-                    }
-                });
-            });
-
-            // 3. Lógica: Eliminar Estudiante
-            document.querySelectorAll('.btn-delete').forEach(button => {
-                 button.addEventListener('click', (e) => {
-                    const studentIndex = parseInt(e.target.dataset.index);
-                    const studentName = students[studentIndex].name;
-                    
-                    showMessage('Confirmar Eliminación', `¿Estás seguro de que quieres eliminar a ${studentName}? ESTO NO SE PUEDE DESHACER.`, true, (confirmed) => {
-                        if (confirmed) {
-                           students.splice(studentIndex, 1);
-                           allClassesData[currentClass] = students;
-                           renderStudentsTable();
-                           showMessage('Estudiante Eliminado', `${studentName} ha sido eliminado. Recuerda hacer clic en 'Guardar Datos'.`, false);
-                        }
-                    });
-                });
-            });
-
-            // 4. Lógica: Abrir Modal de Observaciones
-            document.querySelectorAll('.observation-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const index = parseInt(e.target.dataset.index);
-                    openObservationModal(index);
-                });
-            });
+            document.querySelectorAll('.attendance-btn').forEach(b => b.addEventListener('click', (e) => {
+                if(!students[e.target.dataset.index].attendance) students[e.target.dataset.index].attendance = {};
+                students[e.target.dataset.index].attendance[currentDateString] = e.target.dataset.status;
+                updateDataAndRender();
+            }));
+            document.querySelectorAll('.btn-delete').forEach(b => b.addEventListener('click', (e) => {
+                if(confirm("¿Eliminar?")) { students.splice(e.target.dataset.index, 1); updateDataAndRender(); }
+            }));
         }
         
         function setupEventHandlers() { 
              saveDataBtn.addEventListener('click', saveData);
-             showReportBtn.addEventListener('click', () => { generateClassReport(); });
-             showDetailedReportBtn.addEventListener('click', () => { generateDetailedReport(currentClass); });
+             getEl('closeObservationModalBtn').addEventListener('click', () => observationModal.style.display = 'none');
+             getEl('saveObservationBtn').addEventListener('click', window.saveObservation); 
+             classSelector.addEventListener('change', (e) => { currentClass = e.target.value; students = allClassesData[currentClass] || []; renderStudentsTable(); });
+             dateSelector.addEventListener('change', (e) => { currentDateString = e.target.value; updateCurrentDateUI(); renderStudentsTable(); });
+             showReportBtn.addEventListener('click', generateClassReport);
+             showDetailedReportBtn.addEventListener('click', () => generateDetailedReport(currentClass));
              backToTableBtn.addEventListener('click', () => showView('table'));
-             printReportBtn.addEventListener('click', () => window.print()); 
+             printReportBtn.addEventListener('click', () => window.print());
              addStudentBtn.addEventListener('click', addStudent);
-
-             closeObservationModalBtn.addEventListener('click', () => observationModal.style.display = 'none');
-             saveObservationBtn.addEventListener('click', saveObservation);
-
-
-             classSelector.addEventListener('change', (e) => {
-                currentClass = e.target.value;
-                students = allClassesData[currentClass] || [];
-                renderStudentsTable();
-             });
-             
-             dateSelector.addEventListener('change', (e) => {
-                let selectedValue = e.target.value; 
-                
-                if (selectedValue && !/^\d{4}-\d{2}-\d{2}$/.test(selectedValue)) {
-                    const parts = selectedValue.split('-');
-                    if (parts.length === 3) {
-                         selectedValue = `${parts[2]}-${parts[1]}-${parts[0]}`; 
-                    }
-                }
-                
-                currentDateString = selectedValue;
-                
-                updateCurrentDateUI();
-                renderStudentsTable(); 
-                showView('table');
-             });
+             addClassBtn.addEventListener('click', addNewClass);
+             resetCoursesBtn.addEventListener('click', loadDefaultCourses);
         }
 
         window.onload = initApp;
