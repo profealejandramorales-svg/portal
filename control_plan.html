@@ -29,7 +29,6 @@
 
     /* --- SISTEMA DE IMPRESIÓN --- */
     @media print {
-      /* MÁRGENES FORMALES DE 2.5cm */
       @page { margin: 2.5cm; size: letter; }
       
       body { background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -230,11 +229,16 @@
             <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2 flex items-center">
                 Resumen de Gestión <span id="yearDisplayBadge" class="ml-2 text-sm bg-indigo-100 text-indigo-800 px-2 py-1 rounded">2025</span>
             </h2>
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
                 <div class="bg-blue-50 rounded-lg p-4 border border-blue-100"><p class="text-sm text-blue-600 font-bold">Total Visualizado</p><p id="totalCount" class="text-3xl font-bold text-gray-900">0</p></div>
                 <div class="bg-red-50 rounded-lg p-4 border border-red-100"><p class="text-sm text-red-600 font-bold">Atrasadas</p><p id="delayedCount" class="text-3xl font-bold text-red-600">0</p></div>
                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200"><p class="text-sm text-gray-600 font-bold">Suma Días Atraso</p><p id="totalDaysDelayed" class="text-3xl font-bold text-gray-800">0</p></div>
                 <div class="bg-amber-50 rounded-lg p-4 border border-amber-200"><p class="text-sm text-amber-700 font-bold">Acumulado Docente</p><p id="cumulativeByTeacherUpToDate" class="text-3xl font-bold text-amber-800">—</p></div>
+                
+                <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                    <p class="text-sm text-indigo-700 font-bold">% Cumplimiento</p>
+                    <p id="schoolCompliance" class="text-3xl font-bold text-indigo-800">0%</p>
+                </div>
             </div>
         </div>
 
@@ -432,6 +436,17 @@
         });
 
         $('totalCount').innerText=tot; $('delayedCount').innerText=del; $('totalDaysDelayed').innerText=sumDel;
+        
+        // --- AQUÍ ESTÁ EL CÁLCULO DEL PORCENTAJE ---
+        const porcentajeCumplimiento = tot > 0 ? Math.round(((tot - del) / tot) * 100) : 0;
+        const elPct = $('schoolCompliance');
+        elPct.innerText = porcentajeCumplimiento + "%";
+        
+        // Cambio de color dinámico (Semáforo)
+        if(porcentajeCumplimiento >= 80) elPct.className = "text-3xl font-bold text-green-600";
+        else if(porcentajeCumplimiento >= 50) elPct.className = "text-3xl font-bold text-yellow-600";
+        else elPct.className = "text-3xl font-bold text-red-600";
+
         if(fP){
             const cut=dE?new Date(dE):new Date(), h=planificacionesData.filter(p=>p.profesor===fP&&toDate(p.fechaEntrega)&&toDate(p.fechaEntrega)<=cut);
             const mm={}; h.forEach(p=>{const d=daysDelay(p.fechaEntrega,p.fechaReal);if(d>0)mm[ym(toDate(p.fechaEntrega))]=Math.max(mm[ym(toDate(p.fechaEntrega))]||0,d);});
@@ -708,7 +723,6 @@
         const container = $('memo-container');
         const fechaHoy = new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         
-        // Plantilla Formal con espaciado ajustado para carta/letter
         container.innerHTML = `
             <div class="h-full flex flex-col relative font-serif text-gray-900 leading-snug">
                 <div class="flex items-end justify-between mb-6 border-b-2 border-black pb-2">
@@ -780,7 +794,6 @@
             </div>
         `;
 
-        // Activar modo impresión Memo
         container.classList.remove('hidden');
         document.body.classList.add('memo-print-mode');
 
