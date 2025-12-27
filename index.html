@@ -3,300 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Maestro - Administración General 2026</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Portal Administración - ProfeAle</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        :root {
-            --bg-color: #eef2f7;
-            --card-hover: #ffffff;
-            /* Colores por Módulo */
-            --mod-admin: #212529;   /* Negro - Estratégico */
-            --mod-utp: #0d6efd;     /* Azul - Técnico Pedagógico */
-            --mod-insp: #6610f2;    /* Morado - Convivencia */
-            --mod-orient: #d63384;  /* Rosa - Orientación/PIE */
-            --mod-aula: #198754;    /* Verde - Docencia */
+        body { 
+            font-family: 'Quicksand', sans-serif; 
+            background-color: #fff1f2; /* Rosa muy suave */
+            background-image: radial-gradient(#e9d5ff 2px, transparent 2px), radial-gradient(#e9d5ff 2px, transparent 2px);
+            background-size: 32px 32px;
+            background-position: 0 0, 16px 16px;
         }
-        body { background-color: var(--bg-color); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
         
-        /* HEADER */
-        .main-header {
-            background: linear-gradient(90deg, #1a1a1a 0%, #343a40 100%);
-            color: white; padding: 1rem 0; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .school-logo { height: 60px; margin-right: 15px; border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; padding: 2px; }
-        
-        /* RELOJ DIGITAL */
-        .clock-widget {
-            font-variant-numeric: tabular-nums;
-            font-size: 1.2rem; /* Tamaño mediano */
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: 1px;
-        }
-        .user-name {
-            font-size: 1.3rem; /* Nombre más grande */
-            font-weight: 800;
-            color: white;
+        /* Efecto Cristal */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
-        /* SECCIONES */
-        .module-title {
-            font-size: 0.9rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
-            margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #dee2e6;
-            display: flex; align-items: center; color: #6c757d;
-        }
-        
-        /* TARJETAS */
+        /* Tarjetas */
         .app-card {
-            background: white; border: none; border-radius: 8px; 
-            transition: all 0.2s ease-in-out; text-decoration: none; color: inherit; 
-            height: 100%; display: block; overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative;
+            transition: all 0.3s ease;
+            border-left: 5px solid transparent;
         }
-        .app-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
-        
-        .card-body-custom { padding: 1rem; display: flex; align-items: center; gap: 12px; }
-        
-        .app-icon {
-            width: 45px; height: 45px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem; flex-shrink: 0; transition: 0.3s;
+        .app-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(219, 39, 119, 0.15);
         }
+
+        /* Colores Temáticos */
+        .border-admin { border-left-color: #db2777; }   /* Rosa Fuerte */
+        .icon-admin { color: #db2777; background-color: #fce7f3; }
+
+        .border-utp { border-left-color: #9333ea; }     /* Lila Fuerte */
+        .icon-utp { color: #9333ea; background-color: #f3e8ff; }
+
+        .border-insp { border-left-color: #be185d; }    /* Frambuesa */
+        .icon-insp { color: #be185d; background-color: #fbe7f3; }
+
+        .border-pie { border-left-color: #7c3aed; }     /* Violeta */
+        .icon-pie { color: #7c3aed; background-color: #ede9fe; }
+
+        .border-calc { border-left-color: #0891b2; }    /* Cyan */
+        .icon-calc { color: #0891b2; background-color: #ecfeff; }
+
+        /* Reloj y Títulos */
+        .title-font { font-family: 'Dancing Script', cursive; }
         
-        .app-info h5 { font-weight: 700; font-size: 0.9rem; margin-bottom: 2px; color: #343a40; }
-        .app-info p { font-size: 0.7rem; color: #6c757d; margin: 0; line-height: 1.2; }
-
-        /* BORDES Y COLORES DINÁMICOS */
-        /* Admin */
-        .border-admin:hover { border-top: 3px solid var(--mod-admin); }
-        .icon-admin { background-color: #e2e3e5; color: var(--mod-admin); }
-        /* UTP */
-        .border-utp:hover { border-top: 3px solid var(--mod-utp); }
-        .icon-utp { background-color: #cfe2ff; color: var(--mod-utp); }
-        /* Inspectoría */
-        .border-insp:hover { border-top: 3px solid var(--mod-insp); }
-        .icon-insp { background-color: #e0cffc; color: var(--mod-insp); }
-        /* Orientación */
-        .border-orient:hover { border-top: 3px solid var(--mod-orient); }
-        .icon-orient { background-color: #f7d6e6; color: var(--mod-orient); }
-        /* Aula */
-        .border-aula:hover { border-top: 3px solid var(--mod-aula); }
-        .icon-aula { background-color: #d1e7dd; color: var(--mod-aula); }
-
-        .footer { text-align: center; padding: 2rem; color: #adb5bd; font-size: 0.75rem; margin-top: auto;}
+        /* Decoración Floral */
+        .flower-icon { color: #d8b4fe; opacity: 0.6; position: absolute; z-index: 0; }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col text-slate-700">
 
-    <header class="main-header">
-        <div class="container d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center">
-                <img src="logo.jpg" alt="SS.CC." class="school-logo">
+    <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-pink-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between relative overflow-hidden">
+            <i class="fa-solid fa-spa flower-icon text-4xl -top-2 -left-2 rotate-12"></i>
+            
+            <div class="flex items-center gap-4 z-10">
+                <img src="logo.jpg" class="h-14 w-14 object-contain bg-pink-50 rounded-full p-1 border-2 border-pink-200" onerror="this.style.display='none'">
                 <div>
-                    <h1 class="h5 fw-bold mb-0">Portal Maestro</h1>
-                    <span class="badge bg-danger rounded-pill">Acceso Total</span>
+                    <h1 class="text-2xl font-bold text-pink-700 title-font">Portal ProfeAle</h1>
+                    <p class="text-xs text-purple-600 font-semibold uppercase tracking-wider">Dirección & Gestión 2026</p>
                 </div>
             </div>
-            <div class="text-end d-none d-md-block text-white-50">
-                <div class="user-name">ProfeAle</div>
-                <div id="live-clock" class="clock-widget my-1">--:--:--</div>
-                <div id="date-display" class="small opacity-75"></div>
+            
+            <div class="text-right z-10 hidden md:block">
+                <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-pink-100 text-pink-800 border border-pink-200 shadow-sm">
+                    <i class="fa-solid fa-crown"></i>
+                    Administradora
+                </span>
             </div>
         </div>
     </header>
 
-    <div class="container pb-5">
-
-        <div class="row mb-4">
-            <div class="col-12"><div class="module-title"><i class="fa-solid fa-briefcase me-2"></i>Administración & RR.HH.</div></div>
+    <div class="max-w-4xl mx-auto w-full mt-8 px-4 relative">
+        <div class="glass-panel rounded-3xl p-8 text-center shadow-lg border-t-4 border-l-4 border-purple-300 relative overflow-hidden group">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-300 via-purple-300 to-pink-300"></div>
             
-            <div class="col-md-6 col-lg-3 mb-3">
-                <a href="carga.html" class="app-card border-admin">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-admin"><i class="fa-solid fa-users-gear"></i></div>
-                        <div class="app-info"><h5>Dotación Docente</h5><p>Cargas, Contratos y PIE.</p></div>
-                    </div>
-                </a>
+            <p class="text-purple-400 font-bold tracking-[0.3em] text-sm uppercase mb-1">Hora Oficial</p>
+            <div id="clock-display" class="text-7xl md:text-8xl font-bold text-slate-700 tracking-tight leading-none drop-shadow-sm font-mono">
+                00:00:00
             </div>
-            <div class="col-md-6 col-lg-3 mb-3">
-                <a href="horario3.html" class="app-card border-admin">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-admin"><i class="fa-solid fa-calendar-days"></i></div>
-                        <div class="app-info"><h5>Planificador General</h5><p>Generador de horarios.</p></div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-3">
-                <a href="permisos.html" class="app-card border-admin">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-admin"><i class="fa-solid fa-user-lock"></i></div>
-                        <div class="app-info"><h5>Control Permisos</h5><p>Administrativos y licencias.</p></div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-3">
-                <a href="inventario.html" class="app-card border-admin">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-admin"><i class="fa-solid fa-boxes-stacked"></i></div>
-                        <div class="app-info"><h5>Inventario</h5><p>Control de activos y QR.</p></div>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <div class="row mb-4">
-            <div class="col-12"><div class="module-title" style="color: var(--mod-utp)"><i class="fa-solid fa-graduation-cap me-2"></i>Unidad Técnica (UTP)</div></div>
+            <p id="date-display" class="text-pink-600 text-xl font-medium mt-2 capitalize font-serif italic"></p>
             
-            <div class="col-md-6 col-lg-3 mb-3">
-                <a href="coberturas.html" class="app-card border-utp">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-utp"><i class="fa-solid fa-chart-pie"></i></div>
-                        <div class="app-info"><h5>Cobertura Curricular</h5><p>CurriculaCheck Master.</p></div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-3">
-                <a href="control_plan.html" class="app-card border-utp">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-utp"><i class="fa-solid fa-clipboard-check"></i></div>
-                        <div class="app-info"><h5>Control Planes</h5><p>Revisión planificaciones.</p></div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-3">
-                <a href="acompanamiento.html" class="app-card border-utp">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-utp"><i class="fa-solid fa-chalkboard-user"></i></div>
-                        <div class="app-info"><h5>Acompañamiento</h5><p>Observación de aula.</p></div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-3">
-                <a href="horario_profe.html" class="app-card border-utp">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-utp"><i class="fa-solid fa-clock"></i></div>
-                        <div class="app-info"><h5>Horario Individual</h5><p>Vista docente detallada.</p></div>
-                    </div>
-                </a>
-            </div>
+            <i class="fa-solid fa-leaf text-green-200 text-6xl absolute -bottom-4 -right-4 rotate-45 opacity-50 group-hover:rotate-12 transition-transform duration-700"></i>
+            <i class="fa-brands fa-pagelines text-pink-200 text-5xl absolute top-4 left-4 -rotate-12 opacity-50"></i>
         </div>
-
-        <div class="row mb-4">
-            <div class="col-12"><div class="module-title" style="color: var(--mod-insp)"><i class="fa-solid fa-gavel me-2"></i>Convivencia Escolar</div></div>
-            
-            <div class="col-md-6 col-lg-4 mb-3">
-                <a href="suspensiones.html" class="app-card border-insp">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-insp"><i class="fa-solid fa-file-shield"></i></div>
-                        <div class="app-info"><h5>Suspensiones</h5><p>Faltas graves y RICE.</p></div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-lg-4 mb-3">
-                <a href="atrasos.html" class="app-card border-insp">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-insp"><i class="fa-solid fa-user-clock"></i></div>
-                        <div class="app-info"><h5>Control Atrasos</h5><p>Tickets de ingreso.</p></div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-lg-4 mb-3">
-                <a href="salida_alumnos.html" class="app-card border-insp">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-insp"><i class="fa-solid fa-door-open"></i></div>
-                        <div class="app-info"><h5>Control Salidas</h5><p>Retiros y apoderados.</p></div>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <div class="row mb-4">
-            <div class="col-12"><div class="module-title" style="color: var(--mod-orient)"><i class="fa-solid fa-hands-holding-child me-2"></i>Orientación & PIE</div></div>
-            
-            <div class="col-md-6 col-lg-4 mb-3">
-                <a href="pie.html" class="app-card border-orient">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-orient"><i class="fa-solid fa-puzzle-piece"></i></div>
-                        <div class="app-info"><h5>Gestor PIE</h5><p>PACI, FUR y NEE.</p></div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-lg-4 mb-3">
-                <a href="entrevistas.html" class="app-card border-orient">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-orient"><i class="fa-solid fa-comments"></i></div>
-                        <div class="app-info"><h5>Entrevistas</h5><p>Atención apoderados.</p></div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-lg-4 mb-3">
-                <a href="repitencia.html" class="app-card border-orient">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-orient"><i class="fa-solid fa-file-contract"></i></div>
-                        <div class="app-info"><h5>Decreto 67</h5><p>Actas y repitencia.</p></div>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-12"><div class="module-title" style="color: var(--mod-aula)"><i class="fa-solid fa-book-open me-2"></i>Docencia</div></div>
-            
-            <div class="col-md-6 col-lg-3 mb-3">
-                <a href="bitacora.html" class="app-card border-aula">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-aula"><i class="fa-solid fa-pen-to-square"></i></div>
-                        <div class="app-info"><h5>Bitácora</h5><p>Registro de clases.</p></div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-3">
-                <a href="calculadora_notas.html" class="app-card border-aula">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-aula"><i class="fa-solid fa-calculator"></i></div>
-                        <div class="app-info"><h5>Notas</h5><p>Calculadora.</p></div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-3">
-                <a href="salva.html" class="app-card border-aula">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-aula"><i class="fa-solid fa-life-ring"></i></div>
-                        <div class="app-info"><h5>Salva Semestre</h5><p>Proyección.</p></div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-6 col-lg-3 mb-3">
-                <a href="nem.html" class="app-card border-aula">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-aula"><i class="fa-solid fa-ranking-star"></i></div>
-                        <div class="app-info"><h5>NEM</h5><p>Ranking.</p></div>
-                    </div>
-                </a>
-            </div>
-        </div>
-
     </div>
 
-    <footer class="footer">
-        <p class="mb-0">Sistema de Gestión Integrado • Escuela Agrícola Sagrados Corazones</p>
-        <p class="mb-0 fw-bold">Desarrollado por ProfeAle &copy; 2026</p>
+    <main class="flex-grow max-w-7xl mx-auto px-4 py-10 w-full space-y-12">
+
+        <div class="relative">
+            <h2 class="text-2xl font-bold text-pink-800 mb-6 flex items-center gap-3 border-b-2 border-pink-200 pb-2">
+                <span class="bg-pink-100 p-2 rounded-lg"><i class="fa-solid fa-briefcase text-pink-600"></i></span>
+                Administración & RR.HH.
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <a href="permisos.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-admin">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-admin transition-transform group-hover:scale-110"><i class="fa-solid fa-user-lock"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition">Permisos</h3><p class="text-xs text-gray-500">Control licencias.</p></div>
+                </a>
+                <a href="carga.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-admin">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-admin transition-transform group-hover:scale-110"><i class="fa-solid fa-users-gear"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition">Dotación</h3><p class="text-xs text-gray-500">Carga horaria.</p></div>
+                </a>
+                <a href="horario_profe.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-admin">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-admin transition-transform group-hover:scale-110"><i class="fa-solid fa-calendar-days"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition">Horarios</h3><p class="text-xs text-gray-500">Gestor de bloques.</p></div>
+                </a>
+                <a href="certificados.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-admin">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-admin transition-transform group-hover:scale-110"><i class="fa-solid fa-stamp"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition">Certificados</h3><p class="text-xs text-gray-500">Alumno regular.</p></div>
+                </a>
+                <a href="inventario.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-admin">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-admin transition-transform group-hover:scale-110"><i class="fa-solid fa-boxes-stacked"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition">Inventario</h3><p class="text-xs text-gray-500">Control activos.</p></div>
+                </a>
+            </div>
+        </div>
+
+        <div>
+            <h2 class="text-2xl font-bold text-purple-800 mb-6 flex items-center gap-3 border-b-2 border-purple-200 pb-2">
+                <span class="bg-purple-100 p-2 rounded-lg"><i class="fa-solid fa-graduation-cap text-purple-600"></i></span>
+                Gestión UTP
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <a href="acompanamiento.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-clipboard-user"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Acompañamiento</h3><p class="text-xs text-gray-500">Observación aula.</p></div>
+                </a>
+                <a href="coberturas.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-chart-pie"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Coberturas</h3><p class="text-xs text-gray-500">Avance curricular.</p></div>
+                </a>
+                <a href="plani.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-list-check"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Revisión Planes</h3><p class="text-xs text-gray-500">Semáforo entregas.</p></div>
+                </a>
+                <a href="bitacora.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-book-open"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Bitácora</h3><p class="text-xs text-gray-500">Registro clases.</p></div>
+                </a>
+                <a href="control_plan.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-file-signature"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Memos UTP</h3><p class="text-xs text-gray-500">Documentos formales.</p></div>
+                </a>
+                <a href="asistencia-mi-clase-privada_en_uso.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-chalkboard-user"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Supervisión Aula</h3><p class="text-xs text-gray-500">Vista Mi Clase.</p></div>
+                </a>
+                <a href="prestamo.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-laptop"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Recursos CRA</h3><p class="text-xs text-gray-500">Tablets y Lab.</p></div>
+                </a>
+            </div>
+        </div>
+
+        <div>
+            <h2 class="text-2xl font-bold text-cyan-800 mb-6 flex items-center gap-3 border-b-2 border-cyan-200 pb-2">
+                <span class="bg-cyan-100 p-2 rounded-lg"><i class="fa-solid fa-calculator text-cyan-600"></i></span>
+                Herramientas de Cálculo
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <a href="calculadora_notas.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-calc">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-calc transition-transform group-hover:scale-110"><i class="fa-solid fa-percent"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-cyan-600 transition">Notas Pro</h3><p class="text-xs text-gray-500">Promedios.</p></div>
+                </a>
+                <a href="salva.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-calc">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-calc transition-transform group-hover:scale-110"><i class="fa-solid fa-life-ring"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-cyan-600 transition">Salva Semestre</h3><p class="text-xs text-gray-500">Proyección.</p></div>
+                </a>
+                <a href="nem.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-calc">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-calc transition-transform group-hover:scale-110"><i class="fa-solid fa-ranking-star"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-cyan-600 transition">NEM</h3><p class="text-xs text-gray-500">Ranking y Puntaje.</p></div>
+                </a>
+            </div>
+        </div>
+
+        <div>
+            <h2 class="text-2xl font-bold text-pink-900 mb-6 flex items-center gap-3 border-b-2 border-pink-200 pb-2">
+                <span class="bg-pink-100 p-2 rounded-lg"><i class="fa-solid fa-gavel text-pink-700"></i></span>
+                Convivencia Escolar
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <a href="atrasos.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-insp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-insp transition-transform group-hover:scale-110"><i class="fa-solid fa-user-clock"></i></div>
+                    <div><h3 class="font-bold text-gray-800">Atrasos</h3><p class="text-xs text-gray-500">Ingresos tarde.</p></div>
+                </a>
+                <a href="salida_alumnos.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-insp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-insp transition-transform group-hover:scale-110"><i class="fa-solid fa-door-open"></i></div>
+                    <div><h3 class="font-bold text-gray-800">Salidas</h3><p class="text-xs text-gray-500">Retiros anticipados.</p></div>
+                </a>
+                <a href="suspensiones.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-insp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-insp transition-transform group-hover:scale-110"><i class="fa-solid fa-file-shield"></i></div>
+                    <div><h3 class="font-bold text-gray-800">Sanciones</h3><p class="text-xs text-gray-500">Registro medidas.</p></div>
+                </a>
+                <a href="citacion.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-insp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-insp transition-transform group-hover:scale-110"><i class="fa-solid fa-comments"></i></div>
+                    <div><h3 class="font-bold text-gray-800">Citaciones</h3><p class="text-xs text-gray-500">Apoderados.</p></div>
+                </a>
+                <a href="justificativos.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-insp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-insp transition-transform group-hover:scale-110"><i class="fa-solid fa-file-medical"></i></div>
+                    <div><h3 class="font-bold text-gray-800">Justificativos</h3><p class="text-xs text-gray-500">Licencias.</p></div>
+                </a>
+            </div>
+        </div>
+
+        <div>
+            <h2 class="text-2xl font-bold text-violet-800 mb-6 flex items-center gap-3 border-b-2 border-violet-200 pb-2">
+                <span class="bg-violet-100 p-2 rounded-lg"><i class="fa-solid fa-puzzle-piece text-violet-600"></i></span>
+                PIE & Orientación
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <a href="pie.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-pie">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-pie transition-transform group-hover:scale-110"><i class="fa-solid fa-users-viewfinder"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-violet-600 transition">Gestor PIE</h3><p class="text-xs text-gray-500">Colaborativo & Admisión 2026.</p></div>
+                </a>
+                <a href="repitencia.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-pie">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-pie transition-transform group-hover:scale-110"><i class="fa-solid fa-file-contract"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-violet-600 transition">Decreto 67</h3><p class="text-xs text-gray-500">Actas repitencia.</p></div>
+                </a>
+                <a href="entrevistas.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-pie">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-pie transition-transform group-hover:scale-110"><i class="fa-solid fa-clipboard-question"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-violet-600 transition">Entrevistas</h3><p class="text-xs text-gray-500">Registro casos.</p></div>
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-white/60 py-8 mt-auto text-center border-t border-pink-100">
+        <p class="text-sm font-semibold text-slate-600">Sistema de Gestión Integrado • Escuela Agrícola Sagrados Corazones</p>
+        <p class="text-xs text-pink-500 mt-1">Diseñado con cariño por ProfeAle &copy; 2026</p>
     </footer>
 
     <script>
-        // Función para actualizar el reloj y la fecha
-        function updateHeaderInfo() {
+        function updateClock() {
             const now = new Date();
-            // Reloj Digital
-            document.getElementById('live-clock').textContent = now.toLocaleTimeString('es-CL');
-            // Fecha
+            const timeString = now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
             const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('date-display').textContent = now.toLocaleDateString('es-ES', dateOptions);
+            const dateString = now.toLocaleDateString('es-ES', dateOptions);
+            
+            document.getElementById('clock-display').textContent = timeString;
+            document.getElementById('date-display').textContent = dateString;
         }
-        // Actualizar cada segundo
-        setInterval(updateHeaderInfo, 1000);
-        updateHeaderInfo(); // Primera llamada inmediata
+        setInterval(updateClock, 1000);
+        updateClock();
     </script>
+
 </body>
 </html>
