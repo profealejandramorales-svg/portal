@@ -3,28 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acompañamiento - ProfeAle v16</title>
+    <title>Acompañamiento 360° - UTP (Ordenado)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    
     <style>
         body { background-color: #f0f2f5; font-family: 'Segoe UI', system-ui, sans-serif; }
         .header-band { background: linear-gradient(135deg, #157347 0%, #0b4129 100%); color: white; padding: 20px 0; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .container-app { max-width: 1000px; margin: 0 auto; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .container-app { max-width: 1100px; margin: 0 auto; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .selector-box { background-color: #e8f5e9; border: 2px solid #198754; padding: 20px; border-radius: 10px; margin-bottom: 30px; }
-        .form-select-lg { font-weight: bold; color: #0f5132; }
-        .resultado-container { display: none; margin-top: 15px; }
-        .oa-card { background: white; border-left: 5px solid #ccc; padding: 12px; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .oa-card.planificado { border-left-color: #0d6efd; }
-        .oa-card.realizado { border-left-color: #198754; background-color: #f1fff5; }
-        .oa-card.extra { border-left-color: #ffc107; background-color: #fff9e6; }
-        .criteria-box { border-left: 5px solid #198754; background: #fff; margin-bottom: 25px; padding: 20px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .criteria-title { font-weight: 700; color: #157347; font-size: 1.1em; }
-        .dev-footer { text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; color: #6c757d; font-size: 0.85rem; }
-        @media print { .no-print, .header-band { display: none !important; } .container-app { box-shadow: none; padding: 0; } .selector-box { border: 1px solid #ccc; background: none; } .criteria-box { break-inside: avoid; border: 1px solid #ccc; } textarea { border: none; resize: none; } }
+        
+        /* TARJETAS */
+        .digital-plan-card { border-left: 5px solid #6f42c1; background: #f3f0ff; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+        .digital-plan-title { color: #563d7c; font-weight: bold; font-size: 1.1em; border-bottom: 1px solid #dcd6f7; padding-bottom: 5px; margin-bottom: 10px; }
+        .secuencia-badge { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; color: white; margin-right: 5px; }
+        .bg-inicio { background-color: #198754; } .bg-desarrollo { background-color: #0d6efd; } .bg-cierre { background-color: #dc3545; }
+        .oa-card { background: white; border-left: 5px solid #ccc; padding: 10px; margin-bottom: 8px; border-radius: 6px; font-size: 0.9rem; }
+        .oa-card.planificado { border-left-color: #0d6efd; } .oa-card.realizado { border-left-color: #198754; background-color: #f1fff5; }
+        .criteria-box { border-left: 5px solid #198754; background: #fff; margin-bottom: 20px; padding: 15px; border-radius: 6px; border: 1px solid #e0e0e0; }
+        .criteria-title { font-weight: 700; color: #157347; }
+        
+        @media print { 
+            .no-print, .header-band { display: none !important; } 
+            .container-app { box-shadow: none; padding: 0; max-width: 100%; } 
+            .selector-box { border: none; background: none; padding: 0; }
+            .digital-plan-card { background: #fff; border: 1px solid #ccc; }
+            textarea { border: none; resize: none; font-family: inherit; } 
+            .page-break { page-break-before: always; }
+        }
     </style>
 </head>
 <body>
@@ -32,169 +44,233 @@
 <div class="header-band no-print">
     <div class="container d-flex align-items-center gap-3">
         <div class="bg-white text-success rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 55px; height: 55px; font-size: 26px;">
-            <i class="fas fa-clipboard-list"></i>
+            <i class="fas fa-clipboard-user"></i>
         </div>
         <div>
-            <h3 class="m-0 fw-bold">Acompañamiento al Aula</h3>
-            <p class="mb-0 opacity-75 small">Gestión Técnica Pedagógica</p>
+            <h3 class="m-0 fw-bold">Acompañamiento al Aula 360°</h3>
+            <p class="mb-0 opacity-75 small">Gestión Técnica Pedagógica Integrada</p>
         </div>
     </div>
 </div>
 
 <div class="container-app">
-    
     <div class="selector-box no-print">
         <div class="row g-3 align-items-end">
-            <div class="col-md-8">
-                <label class="form-label fw-bold text-success"><i class="fas fa-search"></i> Seleccione el Curso a Evaluar:</label>
-                <select id="select-curso" class="form-select form-select-lg" onchange="cargarDatos()">
-                    <option value="">Cargando lista de cursos...</option>
+            <div class="col-md-5">
+                <label class="form-label fw-bold text-success">1. Curso/Asignatura (Base Bitácora):</label>
+                <select id="select-curso" class="form-select" onchange="cargarDatosCombinados()">
+                    <option value="">Cargando...</option>
                 </select>
             </div>
-            <div class="col-md-4">
-                <label class="form-label fw-bold text-success">Mes de la Visita:</label>
-                <input type="date" id="fecha" class="form-control form-control-lg" onchange="cargarDatos()">
+            <div class="col-md-3">
+                <label class="form-label fw-bold text-success">2. Fecha Visita:</label>
+                <input type="date" id="fecha" class="form-control" onchange="cargarDatosCombinados()">
             </div>
-        </div>
-
-        <div id="panel-resultados" class="resultado-container">
-            <hr>
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="m-0 fw-bold text-secondary">Planificación Detectada para <span id="lbl-mes" class="text-primary">MES</span>:</h6>
-                <span class="badge bg-light text-dark border">
-                    <span class="text-success">■ Realizado</span> &nbsp; 
-                    <span class="text-primary">■ Planificado</span> &nbsp; 
-                    <span class="text-warning">■ Extra</span>
-                </span>
+            <div class="col-md-4 text-end">
+                <small class="text-muted d-block mb-1">Estado de Conexión:</small>
+                <span class="badge bg-success"><i class="fas fa-link"></i> Bitácora</span>
+                <span class="badge bg-primary"><i class="fas fa-wifi"></i> Digital</span>
             </div>
-            <div id="lista-oas"></div>
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-6"><label class="fw-bold small">Docente:</label><input type="text" id="docente" class="form-control" readonly></div>
-        <div class="col-md-6"><label class="fw-bold small">N° de Visita:</label><input type="text" id="visita" class="form-control"></div>
+    <div class="row g-3 mb-4 p-3 bg-light rounded border">
+        <div class="col-md-4"><label class="fw-bold small text-muted">DOCENTE:</label><input type="text" id="docente-nombre" class="form-control fw-bold border-0 bg-transparent" readonly></div>
+        <div class="col-md-4"><label class="fw-bold small text-muted">ASIGNATURA/CURSO:</label><input type="text" id="asignatura-nombre" class="form-control fw-bold border-0 bg-transparent" readonly></div>
+        <div class="col-md-4"><label class="fw-bold small text-muted">N° VISITA / FOCO:</label><input type="text" id="foco-visita" class="form-control" placeholder="Ej: Visita N°1 - Clima de Aula"></div>
     </div>
-    <hr class="no-print">
+
+    <div class="row mb-4">
+        <div class="col-md-7">
+            <h6 class="fw-bold text-primary mb-3"><i class="fas fa-laptop-code"></i> Planificación Digital (Detalle de Clase)</h6>
+            <div id="digital-content" class="small">
+                <div class="alert alert-light border text-center text-muted">Seleccione curso y fecha para buscar planificación digital.</div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <h6 class="fw-bold text-success mb-3"><i class="fas fa-book"></i> Contexto Curricular (Bitácora)</h6>
+            <div id="bitacora-content" class="small">
+                <div class="alert alert-light border text-center text-muted">Esperando selección...</div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+    <h5 class="fw-bold text-dark mb-4"><i class="fas fa-check-double"></i> Pauta de Observación</h5>
     <div id="container-criterios"></div>
-    <div class="criteria-box">
-        <div class="criteria-title"><i class="fas fa-handshake"></i> Acuerdos y Compromisos</div>
-        <textarea id="acuerdos" class="form-control obs-box" rows="4"></textarea>
+
+    <div class="criteria-box mt-4 page-break">
+        <div class="criteria-title mb-2"><i class="fas fa-handshake"></i> Acuerdos y Compromisos de Mejora</div>
+        <textarea id="acuerdos" class="form-control" rows="4" placeholder="Redacte aquí los acuerdos tomados con el docente..."></textarea>
     </div>
-    <div class="row mt-5 pt-4 text-center signature-section" style="page-break-inside: avoid;">
-        <div class="col-6"><div class="border-top border-dark pt-2 w-75 mx-auto"><strong>Firma Docente</strong></div></div>
-        <div class="col-6"><div class="border-top border-dark pt-2 w-75 mx-auto"><strong>Alejandra Morales G.</strong><br><small>Unidad Técnico Pedagógica</small></div></div>
+
+    <div class="row mt-5 pt-5 text-center" style="page-break-inside: avoid;">
+        <div class="col-6"><div class="border-top border-dark pt-2 w-75 mx-auto"><strong>Firma Docente</strong><br><small class="text-muted">Tomado de conocimiento</small></div></div>
+        <div class="col-6"><div class="border-top border-dark pt-2 w-75 mx-auto"><strong>Alejandra Morales G.</strong><br><small class="text-muted">Jefa Unidad Técnico Pedagógica</small></div></div>
     </div>
+
     <div class="text-end mt-5 no-print">
-        <button class="btn btn-success shadow-lg px-4 py-2 rounded-pill fw-bold" onclick="guardarTodo()"><i class="fas fa-print me-2"></i> Guardar y Generar PDF</button>
+        <button class="btn btn-primary btn-lg shadow rounded-pill fw-bold" onclick="window.print()"><i class="fas fa-file-pdf"></i> Generar PDF / Imprimir</button>
     </div>
-    <div class="dev-footer no-print">Escuela Agrícola Sagrados Corazones &bull; Desarrollado por <span class="text-success fw-bold">ProfeAle</span></div>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+<script>
+    const configBitacora = { apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs", authDomain: "attendance-ai-s81lt.firebaseapp.com", projectId: "attendance-ai-s81lt", storageBucket: "attendance-ai-s81lt.firebasestorage.app", messagingSenderId: "935781953186", appId: "1:935781953186:web:6c8a7a93ffad180d33b1fb" };
+    const appBitacora = firebase.initializeApp(configBitacora, "appBitacora");
+    const dbBitacora = appBitacora.firestore();
 
-    const firebaseConfig = { apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs", authDomain: "attendance-ai-s81lt.firebaseapp.com", projectId: "attendance-ai-s81lt", storageBucket: "attendance-ai-s81lt.firebasestorage.app", messagingSenderId: "935781953186", appId: "1:935781953186:web:6c8a7a93ffad180d33b1fb" };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    let cursosGlobal = [];
+    const configPlanif = { apiKey: "AIzaSyDJnJlpsqR76z_lBnTNEULYcGoQGIi23VU", authDomain: "planificaciones-18b94.firebaseapp.com", projectId: "planificaciones-18b94", storageBucket: "planificaciones-18b94.appspot.com", messagingSenderId: "268119843295", appId: "1:268119843295:web:bb2bdbcb0affe4ecf3646a" };
+    const appPlanif = firebase.initializeApp(configPlanif, "appPlanif");
+    const dbPlanif = appPlanif.firestore();
+
+    let cursosCache = [];
+    let mapaDocentes = {}; // Diccionario ID -> Nombre
 
     const criterios = [
-        { t: "1. Planificación de la Clase", d: "Estructura (Inicio-Desarrollo-Cierre) y objetivo visible.", s: { "Logrado": "Estructura clara y objetivo presente.", "Medianamente Logrado": "Cierre abrupto. Sug: Gestionar mejor el tiempo.", "Por Mejorar": "Clase desestructurada. Sug: Escribir ruta de aprendizaje." } },
-        { t: "2. Gestión del Ambiente", d: "Clima de aula, normas y manejo conductual.", s: { "Logrado": "Clima propicio.", "Medianamente Logrado": "Interrupciones menores. Sug: Refuerzo positivo.", "Por Mejorar": "Desorden generalizado. Sug: Detener clase y normar." } },
-        { t: "3. Metodología y Estrategias", d: "Rol activo del estudiante y coherencia didáctica.", s: { "Logrado": "Estudiantes activos.", "Medianamente Logrado": "Clase expositiva. Sug: Actividad práctica.", "Por Mejorar": "Clase dictada. Sug: Trabajo colaborativo." } },
-        { t: "4. Interacción Pedagógica", d: "Calidad de preguntas y feedback.", s: { "Logrado": "Preguntas desafiantes.", "Medianamente Logrado": "Preguntas de memoria. Sug: Preguntar ¿Por qué?", "Por Mejorar": "Sin interacción." } },
-        { t: "5. Evaluación Formativa", d: "Monitoreo del aprendizaje.", s: { "Logrado": "Monitoreo constante.", "Medianamente Logrado": "Solo al final. Sug: Circular por puestos.", "Por Mejorar": "No verifica aprendizaje. Sug: Ticket de salida." } },
-        { t: "6. Atención a la Diversidad (DUA)", d: "Opciones múltiples para acceder al aprendizaje.", s: { "Logrado": "Recursos variados.", "Medianamente Logrado": "Solo texto. Sug: Apoyo visual.", "Por Mejorar": "Estandarización total." } }
+        { t: "1. Estructura de la Clase", d: "Se visualiza inicio, desarrollo y cierre. Objetivo claro.", s: { "L": "Clase bien estructurada.", "ML": "Cierre débil o ausente.", "PM": "Sin estructura clara." } },
+        { t: "2. Gestión de Aula", d: "Clima propicio, manejo conductual y normas.", s: { "L": "Ambiente de respeto.", "ML": "Interrupciones frecuentes.", "PM": "Desorden generalizado." } },
+        { t: "3. Estrategias Didácticas", d: "Coherencia con el OA, rol activo del estudiante.", s: { "L": "Estudiantes protagonistas.", "ML": "Clase muy expositiva.", "PM": "Dictado/Copia excesiva." } },
+        { t: "4. Evaluación Formativa", d: "Monitoreo del aprendizaje durante la clase.", s: { "L": "Monitoreo constante.", "ML": "Solo pregunta a algunos.", "PM": "No verifica aprendizaje." } },
+        { t: "5. Uso de Recursos/DUA", d: "Materiales adecuados y atención a la diversidad.", s: { "L": "Recursos variados.", "ML": "Solo texto/pizarrón.", "PM": "Sin recursos de apoyo." } }
     ];
 
     document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('fecha').valueAsDate = new Date();
         renderCriterios();
-        await cargarListaCursos();
+        await cargarDatosMaestros();
     });
 
-    async function cargarListaCursos() {
-        const select = document.getElementById('select-curso');
+    async function cargarDatosMaestros() {
+        const sel = document.getElementById('select-curso');
+        sel.innerHTML = '<option>Cargando Sistema...</option>';
+        
         try {
-            const snap = await getDocs(collection(db, "cursos"));
-            select.innerHTML = '<option value="">-- Seleccione un Curso --</option>';
-            cursosGlobal = [];
-            snap.forEach(doc => {
-                const data = doc.data();
-                cursosGlobal.push({ id: doc.id, ...data });
-                select.innerHTML += `<option value="${doc.id}">${data.nombre.toUpperCase()} (${data.nivel || ''})</option>`;
+            // 1. Cargar Docentes
+            const docentesSnap = await dbBitacora.collection('docentes').get();
+            mapaDocentes = {};
+            docentesSnap.forEach(d => {
+                mapaDocentes[d.id] = d.data().nombre;
             });
-        } catch (e) { console.error(e); select.innerHTML = '<option>Error de conexión</option>'; }
+
+            // 2. Cargar Cursos
+            const cursosSnap = await dbBitacora.collection('cursos').get();
+            cursosCache = [];
+            
+            cursosSnap.forEach(doc => {
+                const d = doc.data();
+                // 3. Resolver Nombre Docente
+                let nombreDocente = d.docenteNombre;
+                if (!nombreDocente && d.docenteId && mapaDocentes[d.docenteId]) {
+                    nombreDocente = mapaDocentes[d.docenteId];
+                }
+                
+                cursosCache.push({ id: doc.id, ...d, nombreDocenteResuelto: nombreDocente });
+            });
+
+            // 4. ORDENAR ALFABÉTICAMENTE
+            cursosCache.sort((a, b) => {
+                const nombreA = a.nombre.toUpperCase();
+                const nombreB = b.nombre.toUpperCase();
+                
+                if (nombreA < nombreB) return -1;
+                if (nombreA > nombreB) return 1;
+                
+                // Si el nombre es igual (ej: Biología), ordenar por Nivel
+                return a.nivel.localeCompare(b.nivel, undefined, { numeric: true, sensitivity: 'base' });
+            });
+
+            // 5. Renderizar Opciones
+            sel.innerHTML = '<option value="">-- Seleccione --</option>';
+            cursosCache.forEach(c => {
+                const textoDocente = c.nombreDocenteResuelto ? c.nombreDocenteResuelto : "⚠ Sin Asignar";
+                sel.innerHTML += `<option value="${c.id}">${c.nombre} (${c.nivel}) - ${textoDocente}</option>`;
+            });
+
+        } catch(e) { 
+            console.error(e);
+            sel.innerHTML = '<option>Error de Conexión con Bitácora</option>';
+        }
     }
 
-    window.cargarDatos = () => {
+    window.cargarDatosCombinados = async () => {
         const cursoId = document.getElementById('select-curso').value;
         const fechaTxt = document.getElementById('fecha').value;
-        if (!cursoId || !fechaTxt) return;
+        const divDigital = document.getElementById('digital-content');
+        
+        if(!cursoId || !fechaTxt) return;
 
-        const curso = cursosGlobal.find(c => c.id === cursoId);
-        if (curso && curso.docenteNombre) document.getElementById('docente').value = curso.docenteNombre;
+        const cursoData = cursosCache.find(c => c.id === cursoId);
+        const docenteReal = cursoData.nombreDocenteResuelto;
+
+        if(cursoData) {
+            document.getElementById('docente-nombre').value = docenteReal || "NO ASIGNADO";
+            document.getElementById('asignatura-nombre').value = `${cursoData.nombre} - ${cursoData.nivel}`;
+        }
+
+        if (!docenteReal) {
+            divDigital.innerHTML = `<div class="alert alert-warning text-center fw-bold"><i class="fas fa-exclamation-triangle"></i> ATENCIÓN: Curso sin docente asignado en BD.</div>`;
+            return;
+        }
 
         const dateObj = new Date(fechaTxt + "T00:00:00");
-        const meses = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
-        const mesActual = meses[dateObj.getMonth()];
+        const mesesShort = ["MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+        const mesIndex = dateObj.getMonth(); 
+        let mesBusqueda = (mesIndex >= 2 && mesIndex <= 11) ? mesesShort[mesIndex - 2] : "";
 
-        document.getElementById('panel-resultados').style.display = 'block';
-        document.getElementById('lbl-mes').innerText = mesActual;
-        const lista = document.getElementById('lista-oas');
-        lista.innerHTML = "";
+        divDigital.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Buscando planificación digital...</div>';
 
-        const oasMap = new Map();
+        try {
+            const q = dbPlanif.collection('planificaciones_digitales')
+                .where("docente", "==", docenteReal)
+                .where("nivel", "==", cursoData.nivel)
+                .where("asignatura", "==", cursoData.nombre) 
+                .limit(5);
 
-        if (curso.real) {
-            curso.real.forEach(r => {
-                if (r.meses && r.meses.includes(mesActual)) {
-                    const planInfo = (curso.plan || []).find(p => p.codigo === r.codigo);
-                    const desc = planInfo ? planInfo.desc : (r.desc || "Actividad registrada");
-                    const tipo = planInfo ? "realizado" : "extra";
-                    oasMap.set(r.codigo, { codigo: r.codigo, desc: desc, tipo: tipo });
-                }
+            const snapDigital = await q.get();
+            let planEncontrado = null;
+
+            snapDigital.forEach(doc => {
+                const data = doc.data();
+                if(data.mes_planificado === mesBusqueda) planEncontrado = data;
+                else if (data.monthly_distribution && Object.values(data.monthly_distribution).includes(mesBusqueda)) planEncontrado = data;
             });
+
+            if(planEncontrado && planEncontrado.detailed_planning && planEncontrado.detailed_planning[mesBusqueda]) {
+                const clases = planEncontrado.detailed_planning[mesBusqueda];
+                let htmlClases = "";
+                if(clases.length > 0) {
+                    clases.forEach((clase) => {
+                        htmlClases += `
+                        <div class="digital-plan-card">
+                            <div class="digital-plan-title">Clase N°${clase.number} <span class="float-end text-muted small fw-normal">OA: ${clase.oa_ref}</span></div>
+                            <div class="mb-2"><strong>Obj/Contenido:</strong> ${clase.contenido || "No especificado"}</div>
+                            <div class="d-flex gap-1 mb-1"><span class="secuencia-badge bg-inicio">Inicio</span><span class="text-muted fst-italic">${clase.actividad_inicio || "..."}</span></div>
+                            <div class="d-flex gap-1 mb-1"><span class="secuencia-badge bg-desarrollo">Desarrollo</span><span>${clase.actividad_desarrollo || "..."}</span></div>
+                            <div class="d-flex gap-1"><span class="secuencia-badge bg-cierre">Cierre</span><span class="text-muted fst-italic">${clase.actividad_cierre || "..."}</span></div>
+                        </div>`;
+                    });
+                    divDigital.innerHTML = htmlClases;
+                } else divDigital.innerHTML = `<div class="alert alert-warning">Carpeta de ${mesBusqueda} creada pero sin clases detalladas.</div>`;
+            } else divDigital.innerHTML = `<div class="alert alert-secondary"><i class="fas fa-info-circle"></i> No se encontró planificación digital para <strong>${mesBusqueda}</strong> de ${docenteReal}.</div>`;
+
+        } catch(e) {
+            console.error(e);
+            divDigital.innerHTML = `<div class="alert alert-danger">Error técnico: ${e.message}</div>`;
         }
 
-        if (curso.plan) {
-            curso.plan.forEach(p => {
-                if ((p.mes === mesActual || p.mes === "Anual")) {
-                    if (!oasMap.has(p.codigo)) {
-                        oasMap.set(p.codigo, { codigo: p.codigo, desc: p.desc, tipo: "planificado" });
-                    }
-                }
+        const divBitacora = document.getElementById('bitacora-content');
+        divBitacora.innerHTML = "";
+        const planAnual = cursoData.plan || [];
+        const realData = cursoData.real || [];
+        let oasDelMes = planAnual.filter(p => p.mes === mesBusqueda || p.mes === "Anual");
+        
+        if(oasDelMes.length > 0) {
+            oasDelMes.forEach(oa => {
+                const isReal = realData.find(r => r.codigo === oa.codigo && r.meses && r.meses.includes(mesBusqueda));
+                const icono = isReal ? '<i class="fas fa-check-circle text-success"></i>' : '<i class="far fa-circle text-primary"></i>';
+                divBitacora.innerHTML += `<div class="oa-card ${isReal ? "realizado" : "planificado"}"><div class="fw-bold d-flex justify-content-between"><span>${icono} ${oa.codigo}</span><span class="badge bg-light text-dark border">${oa.mes}</span></div><div class="text-muted fst-italic">${oa.desc.substring(0, 80)}...</div></div>`;
             });
-        }
-
-        const itemsOrdenados = Array.from(oasMap.values());
-
-        if (itemsOrdenados.length > 0) {
-            itemsOrdenados.forEach(item => {
-                const icono = item.tipo === 'realizado' ? '✅' : (item.tipo === 'extra' ? '⭐' : '📅');
-                const badge = item.tipo === 'extra' ? '<span class="badge bg-warning text-dark">Extra</span>' : '';
-                
-                lista.innerHTML += `
-                <div class="oa-card ${item.tipo}">
-                    <div class="d-flex justify-content-between">
-                        <strong>${icono} ${item.codigo}</strong>
-                        ${badge}
-                    </div>
-                    <div class="small text-muted">${item.desc}</div>
-                </div>`;
-            });
-        } else {
-            lista.innerHTML = `<div class="alert alert-warning small"><i class="fas fa-exclamation-circle"></i> Sin registros para ${mesActual}. Mostrando Plan Anual completo:</div>`;
-            if (curso.plan) {
-                const planMap = new Map();
-                curso.plan.forEach(p => planMap.set(p.codigo, p));
-                planMap.forEach(p => {
-                    lista.innerHTML += `<div class="oa-card planificado"><small><strong>${p.codigo}:</strong> ${p.desc}</small></div>`;
-                });
-            }
-        }
+        } else divBitacora.innerHTML = `<div class="alert alert-light border">No hay OAs asignados a ${mesBusqueda}.</div>`;
     };
 
     function renderCriterios() {
@@ -202,37 +278,25 @@
         c.innerHTML = "";
         criterios.forEach((cr, i) => {
             c.innerHTML += `
-            <div class="criteria-box">
+            <div class="criteria-box page-break">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="criteria-title">${cr.t}</div>
-                    <select id="sel-${i}" class="form-select form-select-sm w-auto fw-bold" onchange="setSug(${i})">
-                        <option value="">- Evaluar -</option><option value="Logrado">Logrado</option><option value="Medianamente Logrado">Medianamente Logrado</option><option value="Por Mejorar">Por Mejorar</option>
+                    <select id="sel-${i}" class="form-select form-select-sm w-auto fw-bold border-success text-success" onchange="setSug(${i})">
+                        <option value="">- Evaluar -</option><option value="L">Logrado</option><option value="ML">Medianamente L.</option><option value="PM">Por Mejorar</option>
                     </select>
                 </div>
-                <p class="criteria-desc">${cr.d}</p>
-                <textarea id="obs-${i}" class="form-control obs-box" rows="2" placeholder="Observaciones..."></textarea>
+                <p class="text-muted fst-italic mb-2 small">${cr.d}</p>
+                <textarea id="obs-${i}" class="form-control bg-light" rows="2" placeholder="Evidencia observada..."></textarea>
             </div>`;
         });
     }
 
     window.setSug = (i) => {
         const val = document.getElementById(`sel-${i}`).value;
-        if(val && criterios[i].s[val]) document.getElementById(`obs-${i}`).value = criterios[i].s[val];
-    };
-
-    window.guardarTodo = async () => {
-        const docente = document.getElementById('docente').value;
-        const cursoId = document.getElementById('select-curso').value;
-        if(!docente || !cursoId) return alert("Falta seleccionar curso o docente.");
-        const resultados = criterios.map((_, i) => document.getElementById(`sel-${i}`).value || "No observado");
-        try {
-            const idUnico = `${docente}_${Date.now()}`;
-            await setDoc(doc(db, "acompanamientos", idUnico), {
-                docente, cursoId, fecha: document.getElementById('fecha').value, resultados, timestamp: new Date()
-            });
-            alert("✅ Guardado correctamente.");
-            window.print();
-        } catch (e) { alert("Error al guardar: " + e.message); }
+        if(val && criterios[i].s[val]) {
+            const box = document.getElementById(`obs-${i}`);
+            if(!box.value) box.value = criterios[i].s[val];
+        }
     };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
