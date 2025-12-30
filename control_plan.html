@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Control UTP Integrado (Detección Digital)</title>
+  <title>Control UTP Integrado - ProfeAle</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@300;400;700&display=swap');
-    body { font-family: 'Inter', sans-serif; background:#f3f4f6; min-height: 100vh; }
+    body { font-family: 'Inter', sans-serif; background:#f3f4f6; min-height: 100vh; display: flex; flex-direction: column; }
+    .content-wrapper { flex: 1; }
     .container-card { background:#fff; padding:1.25rem; border-radius:1rem; box-shadow:0 4px 6px rgba(0,0,0,0.08); }
     .button-primary { background:#4f46e5; color:#fff; padding:0.5rem 1rem; border-radius:0.5rem; font-weight:600; cursor: pointer; }
     .button-secondary { background:#3b82f6; color:#fff; padding:0.5rem 1rem; border-radius:0.5rem; font-weight:600; cursor: pointer; }
@@ -18,132 +19,239 @@
     .badge { padding:0.25rem 0.5rem; border-radius:9999px; font-size:0.7rem; font-weight:700; text-transform: uppercase; display: inline-block; }
     .badge-ok { background:#d1fae5; color:#065f46; } .badge-warn { background:#fef3c7; color:#92400e; } .badge-err { background:#fee2e2; color:#991b1b; } .badge-digital { background:#e0e7ff; color:#3730a3; border: 1px solid #c7d2fe; }
     .hidden { display: none; }
-    @media print { body * { visibility: hidden; } .printable, .printable * { visibility: visible; } .printable { position: absolute; top:0; left:0; width:100%; } .no-print { display: none !important; } }
+    
+    .footer-credits { text-align: center; font-size: 0.75rem; color: #9ca3af; padding: 1.5rem; margin-top: auto; }
+
+    @media print { 
+        body * { visibility: hidden; } 
+        .printable, .printable * { visibility: visible; } 
+        .printable { position: absolute; top:0; left:0; width:100%; } 
+        .no-print { display: none !important; } 
+        .footer-credits { display: none; } 
+    }
+    
+    /* Ventanas emergentes de reporte (Fondo blanco forzado) */
+    .feedback-print-mode #feedback-container, 
+    .voucher-print-mode #voucher-container, 
+    .memo-print-mode #memo-container { 
+        visibility: visible; 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background-color: white !important; 
+        z-index: 9999; 
+        overflow-y: auto;
+    }
+    .feedback-print-mode #feedback-container *, 
+    .voucher-print-mode #voucher-container *, 
+    .memo-print-mode #memo-container * { visibility: visible; }
+    
+    .feedback-print-mode .printable, 
+    .voucher-print-mode .printable, 
+    .memo-print-mode .printable { display: none; }
   </style>
 </head>
 <body class="p-6 md:p-10">
-  <div class="max-w-7xl mx-auto mb-6 no-print">
-    <header class="flex items-center justify-between flex-wrap gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-      <div class="flex items-center gap-3"><img src="logo.jpg" class="h-12 w-auto object-contain rounded-full shadow-sm bg-white p-1" onerror="this.style.display='none'"><div><h1 class="text-2xl font-bold text-gray-800">Control de Planificaciones</h1><p class="text-xs text-gray-500">Gestión UTP</p></div></div>
-      <div class="flex items-center gap-3">
-        <select id="yearSelector" class="bg-white border rounded py-1 px-2"><option value="2025" selected>2025</option><option value="2026">2026</option></select>
-        <button onclick="window.print()" class="button-primary text-sm"><i class="fa-solid fa-print mr-2"></i>Imprimir</button>
+  <div class="content-wrapper">
+      <div class="max-w-7xl mx-auto mb-6 no-print">
+        <header class="flex items-center justify-between flex-wrap gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <div class="flex items-center gap-3"><img src="logo.jpg" class="h-12 w-auto object-contain rounded-full shadow-sm bg-white p-1" onerror="this.style.display='none'"><div><h1 class="text-2xl font-bold text-gray-800">Control de Planificaciones</h1><p class="text-xs text-gray-500">Gestión UTP</p></div></div>
+          <div class="flex items-center gap-3">
+            <select id="yearSelector" class="bg-white border rounded py-1 px-2"><option value="2025" selected>2025</option><option value="2026">2026</option></select>
+            <button onclick="window.print()" class="button-primary text-sm"><i class="fa-solid fa-print mr-2"></i>Imprimir</button>
+          </div>
+        </header>
       </div>
-    </header>
-  </div>
 
-  <div class="max-w-7xl mx-auto space-y-8 mb-8 no-print">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="container-card border-t-4 border-indigo-500"><h2 class="text-lg font-bold text-gray-800 mb-2 flex justify-between"><span>Profesores</span><span class="text-xs bg-gray-100 px-2 py-1 rounded" id="countProf">0</span></h2><div class="flex gap-2 mb-3"><input id="profesorInput" class="flex-grow rounded border p-2 text-sm" placeholder="Nuevo..."><button id="addProfesorBtn" class="button-primary px-3">+</button></div><ul id="profesorList" class="space-y-1 text-sm h-32 overflow-y-auto"></ul></div>
-      <div class="container-card border-t-4 border-teal-500"><h2 class="text-lg font-bold text-gray-800 mb-2 flex justify-between"><span>Cursos</span><span class="text-xs bg-gray-100 px-2 py-1 rounded" id="countCur">0</span></h2><div class="flex gap-2 mb-3"><input id="cursoInput" class="flex-grow rounded border p-2 text-sm" placeholder="Nuevo..."><button id="addCursoBtn" class="button-primary bg-teal-600 px-3">+</button></div><ul id="cursoList" class="space-y-1 text-sm h-32 overflow-y-auto"></ul></div>
-      <div class="container-card border-t-4 border-purple-500"><h2 class="text-lg font-bold text-gray-800 mb-2 flex justify-between"><span>Asignaturas</span><span class="text-xs bg-gray-100 px-2 py-1 rounded" id="countAsig">0</span></h2><div class="flex gap-2 mb-3"><input id="asignaturaInput" class="flex-grow rounded border p-2 text-sm" placeholder="Nueva..."><button id="addAsignaturaBtn" class="button-primary bg-purple-600 px-3">+</button></div><ul id="asignaturaList" class="space-y-1 text-sm h-32 overflow-y-auto"></ul></div>
-    </div>
-
-    <div class="container-card bg-gray-50 border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-3"><i class="fa-solid fa-pen-to-square mr-2 text-gray-600"></i>Ingreso Manual</h2>
-        <form id="planificacionForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 items-end">
-            <div class="md:col-span-1 lg:col-span-1"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Título</label><input id="titulo" class="w-full rounded border p-2 text-sm" required></div>
-            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Profesor</label><select id="profesor" class="w-full rounded border p-2 text-sm" required></select></div>
-            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Curso</label><select id="curso" class="w-full rounded border p-2 text-sm" required></select></div>
-            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Asignatura</label><select id="asignaturaForm" class="w-full rounded border p-2 text-sm" required></select></div>
-            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Plazo</label><input type="date" id="fechaEntrega" class="w-full rounded border p-2 text-sm" required></div>
-            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Recepción</label><input type="date" id="fechaReal" class="w-full rounded border p-2 text-sm"></div>
-            <div class="md:col-span-2 lg:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Estado</label><select id="estadoRevision" class="w-full rounded border-2 border-indigo-100 p-2 text-sm font-bold text-indigo-700"><option value="pendiente">Pendiente</option><option value="revisado">Revisado OK</option><option value="observado">Con Observaciones</option></select></div>
-            <div class="md:col-span-1 lg:col-span-1"><button type="submit" class="button-primary w-full h-10 shadow-sm">Guardar</button></div>
-        </form>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="container-card bg-white border-l-4 border-gray-400">
-            <h2 class="text-lg font-bold text-gray-800 mb-3">Filtros de Visualización</h2>
-            <div class="grid grid-cols-2 gap-3">
-                <select id="filterProfesor" class="rounded border p-2 text-sm w-full"></select>
-                <select id="filterCurso" class="rounded border p-2 text-sm w-full"></select>
-                <input type="date" id="dateStart" class="rounded border p-2 text-sm w-full">
-                <input type="date" id="dateEnd" class="rounded border p-2 text-sm w-full">
-            </div>
-            <div class="mt-3 flex gap-2 justify-end flex-wrap">
-                <button id="sendEmailBtn" class="button-secondary text-sm"><i class="fa-solid fa-envelope mr-1"></i> Email</button>
-                <button id="generateVoucherBtn" class="button-primary bg-green-600 hover:bg-green-700 text-sm"><i class="fa-solid fa-file-pdf mr-1"></i> Voucher</button>
-            </div>
+      <div class="max-w-7xl mx-auto space-y-8 mb-8 no-print">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="container-card border-t-4 border-indigo-500"><h2 class="text-lg font-bold text-gray-800 mb-2 flex justify-between"><span>Profesores</span><span class="text-xs bg-gray-100 px-2 py-1 rounded" id="countProf">0</span></h2><div class="flex gap-2 mb-3"><input id="profesorInput" class="flex-grow rounded border p-2 text-sm" placeholder="Nuevo..."><button id="addProfesorBtn" class="button-primary px-3">+</button></div><ul id="profesorList" class="space-y-1 text-sm h-32 overflow-y-auto"></ul></div>
+          <div class="container-card border-t-4 border-teal-500"><h2 class="text-lg font-bold text-gray-800 mb-2 flex justify-between"><span>Cursos</span><span class="text-xs bg-gray-100 px-2 py-1 rounded" id="countCur">0</span></h2><div class="flex gap-2 mb-3"><input id="cursoInput" class="flex-grow rounded border p-2 text-sm" placeholder="Nuevo..."><button id="addCursoBtn" class="button-primary bg-teal-600 px-3">+</button></div><ul id="cursoList" class="space-y-1 text-sm h-32 overflow-y-auto"></ul></div>
+          <div class="container-card border-t-4 border-purple-500"><h2 class="text-lg font-bold text-gray-800 mb-2 flex justify-between"><span>Asignaturas</span><span class="text-xs bg-gray-100 px-2 py-1 rounded" id="countAsig">0</span></h2><div class="flex gap-2 mb-3"><input id="asignaturaInput" class="flex-grow rounded border p-2 text-sm" placeholder="Nueva..."><button id="addAsignaturaBtn" class="button-primary bg-purple-600 px-3">+</button></div><ul id="asignaturaList" class="space-y-1 text-sm h-32 overflow-y-auto"></ul></div>
         </div>
-        <div class="container-card bg-amber-50 border-l-4 border-amber-500">
-            <h2 class="text-lg font-bold text-gray-800 mb-2"><i class="fa-solid fa-comment-dots mr-2 text-amber-600"></i>Retroalimentación</h2>
-            <div class="space-y-3">
-                <div class="bg-white rounded border overflow-hidden">
-                    <table class="w-full text-xs" id="tablaCoberturas"><thead class="bg-amber-100"><tr><th class="p-1">Curso/Asig</th><th class="p-1 text-center">% Cob.</th><th class="p-1"></th></tr></thead><tbody id="bodyCoberturas"></tbody></table>
-                    <button onclick="agregarFilaCobertura()" class="w-full text-center text-xs text-amber-600 font-bold p-1 hover:bg-amber-50">+ Agregar Asignatura</button>
+
+        <div class="container-card bg-gray-50 border border-gray-200">
+            <h2 class="text-lg font-bold text-gray-800 mb-3"><i class="fa-solid fa-pen-to-square mr-2 text-gray-600"></i>Ingreso Manual</h2>
+            <form id="planificacionForm" class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 items-end">
+                <div class="md:col-span-1 lg:col-span-1"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Título</label><input id="titulo" class="w-full rounded border p-2 text-sm" required></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Profesor</label><select id="profesor" class="w-full rounded border p-2 text-sm" required></select></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Curso</label><select id="curso" class="w-full rounded border p-2 text-sm" required></select></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Asignatura</label><select id="asignaturaForm" class="w-full rounded border p-2 text-sm" required></select></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Plazo</label><input type="date" id="fechaEntrega" class="w-full rounded border p-2 text-sm" required></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Recepción</label><input type="date" id="fechaReal" class="w-full rounded border p-2 text-sm"></div>
+                <div class="md:col-span-2 lg:col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Estado</label><select id="estadoRevision" class="w-full rounded border-2 border-indigo-100 p-2 text-sm font-bold text-indigo-700"><option value="pendiente">Pendiente</option><option value="revisado">Revisado OK</option><option value="observado">Con Observaciones</option></select></div>
+                <div class="md:col-span-1 lg:col-span-1"><button type="submit" class="button-primary w-full h-10 shadow-sm">Guardar</button></div>
+            </form>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="container-card bg-white border-l-4 border-gray-400">
+                <h2 class="text-lg font-bold text-gray-800 mb-3">Filtros de Visualización</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="filterProfesor" class="rounded border p-2 text-sm w-full"></select>
+                    <select id="filterCurso" class="rounded border p-2 text-sm w-full"></select>
+                    <input type="date" id="dateStart" class="rounded border p-2 text-sm w-full">
+                    <input type="date" id="dateEnd" class="rounded border p-2 text-sm w-full">
                 </div>
-                <div class="flex gap-2"><select id="frasesRapidas" class="w-1/3 text-xs border rounded"><option value="">+ Frase</option><option value="Avance curricular adecuado.">Avance OK</option><option value="Se requiere priorizar OA basales.">Priorizar</option></select><textarea id="inputObservaciones" rows="1" class="w-2/3 text-xs border rounded p-1" placeholder="Observaciones..."></textarea></div>
-                <button id="btnFeedbackReport" class="button-success w-full text-sm shadow-sm">Generar Informe Gestión</button>
+                <div class="mt-3 flex gap-2 justify-end flex-wrap">
+                    <button id="sendEmailBtn" class="button-secondary text-sm"><i class="fa-solid fa-envelope mr-1"></i> Email</button>
+                    <button id="generateVoucherBtn" class="button-primary bg-green-600 hover:bg-green-700 text-sm"><i class="fa-solid fa-file-pdf mr-1"></i> Voucher</button>
+                </div>
+            </div>
+
+            <div class="container-card bg-amber-50 border-l-4 border-amber-500">
+                <h2 class="text-lg font-bold text-gray-800 mb-2"><i class="fa-solid fa-comment-dots mr-2 text-amber-600"></i>Retroalimentación</h2>
+                <div class="space-y-3">
+                    <div class="bg-white rounded border overflow-hidden">
+                        <table class="w-full text-xs" id="tablaCoberturas">
+                            <thead class="bg-amber-100">
+                                <tr>
+                                    <th class="p-1 text-left pl-2">Curso/Asig</th>
+                                    <th class="p-1 text-center w-20">% Cob.</th>
+                                    <th class="p-1 w-8"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyCoberturas"></tbody>
+                        </table>
+                        <button id="btnAddCob" class="w-full text-center text-xs text-amber-600 font-bold p-1 hover:bg-amber-50">+ Agregar Asignatura</button>
+                    </div>
+                    <div class="flex gap-2"><select id="frasesRapidas" class="w-1/3 text-xs border rounded"><option value="">+ Frase</option><option value="Avance curricular adecuado.">Avance OK</option><option value="Se requiere priorizar OA basales.">Priorizar</option></select><textarea id="inputObservaciones" rows="1" class="w-2/3 text-xs border rounded p-1" placeholder="Observaciones..."></textarea></div>
+                    <button id="btnFeedbackReport" class="button-success w-full text-sm shadow-sm">Generar Informe Gestión</button>
+                </div>
             </div>
         </div>
-    </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto space-y-6 printable">
+        <div id="reportHeader" class="items-center" style="display: flex; border-bottom: 2px solid #4f46e5; padding-bottom: 15px; margin-bottom: 20px;">
+          <div class="mr-6"><img src="logo.jpg" style="height: 80px; width: auto;" class="object-contain" onerror="this.src='https://via.placeholder.com/80'"></div>
+          <div class="flex-grow flex justify-between items-end"><div><h1 class="text-2xl font-bold text-gray-900 uppercase">Reporte de Estado Curricular</h1><p class="text-sm text-gray-500 mt-1">Escuela Agrícola Sagrados Corazones - UTP</p></div><div class="text-right"><p class="text-lg font-bold text-indigo-700" id="printDocenteName">VISTA GENERAL</p><p class="text-xs text-gray-400" id="printDate">Fecha: --/--/----</p></div></div>
+        </div>
+
+        <div class="container-card mb-6 border border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2 flex items-center">Resumen de Gestión <span id="yearDisplayBadge" class="ml-2 text-sm bg-indigo-100 text-indigo-800 px-2 py-1 rounded">2025</span></h2>
+            <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 text-center">
+                <div class="bg-blue-50 p-4 rounded"><p class="text-sm text-blue-600 font-bold">Total</p><p id="totalCount" class="text-3xl font-bold text-gray-900">0</p></div>
+                <div class="bg-red-50 p-4 rounded"><p class="text-sm text-red-600 font-bold">Atrasadas</p><p id="delayedCount" class="text-3xl font-bold text-red-600">0</p></div>
+                <div class="bg-indigo-50 p-4 rounded"><p class="text-sm text-indigo-700 font-bold">Digitales</p><p id="digitalCount" class="text-3xl font-bold text-indigo-800">0</p></div>
+                <div class="bg-amber-50 p-4 rounded"><p class="text-sm text-amber-700 font-bold">Días Acumul.</p><p id="totalDaysDelayed" class="text-3xl font-bold text-amber-800">0</p></div>
+                <div class="bg-slate-100 p-4 rounded border border-slate-300"><p class="text-sm text-slate-700 font-bold">Días Efectiv.</p><p id="effectiveDaysDelayed" class="text-3xl font-bold text-slate-800">0</p></div>
+                
+                <div class="bg-green-50 p-4 rounded"><p class="text-sm text-green-700 font-bold">% Cumplimiento</p><p id="schoolCompliance" class="text-3xl font-bold text-green-800">0%</p></div>
+            </div>
+        </div>
+
+        <div class="mb-8 p-4 border rounded-lg bg-gray-50 container-card">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-2 rounded shadow-sm border chart-container"><canvas id="chartStatus"></canvas></div>
+                <div class="bg-white p-2 rounded shadow-sm border chart-container"><canvas id="chartDelays"></canvas></div>
+            </div>
+        </div>
+
+        <div class="container-card">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Detalle de Registros</h2>
+            <div class="overflow-x-auto"><table class="w-full text-sm text-left border rounded-lg overflow-hidden"><thead class="bg-gray-100 text-gray-600 font-bold uppercase text-xs"><tr><th class="p-3 border-b">Actividad</th><th class="p-3 border-b">Profesor</th><th class="p-3 border-b">Curso/Asig</th><th class="p-3 border-b text-center">Plazo / Entrega</th><th class="p-3 border-b text-center">Días</th><th class="p-3 border-b text-center">Est</th><th class="p-3 border-b text-center">Origen</th><th class="p-3 border-b text-center no-print">Acciones</th></tr></thead><tbody id="planificacionesList" class="divide-y divide-gray-200 bg-white"></tbody></table></div>
+        </div>
+      </div>
   </div>
 
-  <div class="max-w-7xl mx-auto space-y-6 printable">
-    <div id="reportHeader" class="items-center" style="display: flex; border-bottom: 2px solid #4f46e5; padding-bottom: 15px; margin-bottom: 20px;">
-      <div class="mr-6"><img src="logo.jpg" style="height: 80px; width: auto;" class="object-contain" onerror="this.src='https://via.placeholder.com/80'"></div>
-      <div class="flex-grow flex justify-between items-end"><div><h1 class="text-2xl font-bold text-gray-900 uppercase">Reporte de Estado Curricular</h1><p class="text-sm text-gray-500 mt-1">Escuela Agrícola Sagrados Corazones - UTP</p></div><div class="text-right"><p class="text-lg font-bold text-indigo-700" id="printDocenteName">VISTA GENERAL</p><p class="text-xs text-gray-400" id="printDate">Fecha: --/--/----</p></div></div>
-    </div>
+  <footer class="footer-credits">Desarrollado por ProfeAle</footer>
 
-    <div class="container-card mb-6 border border-gray-200">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2 flex items-center">Resumen de Gestión <span id="yearDisplayBadge" class="ml-2 text-sm bg-indigo-100 text-indigo-800 px-2 py-1 rounded">2025</span></h2>
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 text-center">
-            <div class="bg-blue-50 p-4 rounded"><p class="text-sm text-blue-600 font-bold">Total</p><p id="totalCount" class="text-3xl font-bold text-gray-900">0</p></div>
-            <div class="bg-red-50 p-4 rounded"><p class="text-sm text-red-600 font-bold">Atrasadas</p><p id="delayedCount" class="text-3xl font-bold text-red-600">0</p></div>
-            <div class="bg-indigo-50 p-4 rounded"><p class="text-sm text-indigo-700 font-bold">Digitales</p><p id="digitalCount" class="text-3xl font-bold text-indigo-800">0</p></div>
-            <div class="bg-amber-50 p-4 rounded"><p class="text-sm text-amber-700 font-bold">Días Atraso</p><p id="totalDaysDelayed" class="text-3xl font-bold text-amber-800">0</p></div>
-            <div class="bg-green-50 p-4 rounded"><p class="text-sm text-green-700 font-bold">% Cumplimiento</p><p id="schoolCompliance" class="text-3xl font-bold text-green-800">0%</p></div>
-        </div>
-    </div>
-
-    <div class="mb-8 p-4 border rounded-lg bg-gray-50 container-card">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="bg-white p-2 rounded shadow-sm border chart-container"><canvas id="chartStatus"></canvas></div>
-            <div class="bg-white p-2 rounded shadow-sm border chart-container"><canvas id="chartDelays"></canvas></div>
-        </div>
-    </div>
-
-    <div class="container-card">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">Detalle de Registros</h2>
-        <div class="overflow-x-auto"><table class="w-full text-sm text-left border rounded-lg overflow-hidden"><thead class="bg-gray-100 text-gray-600 font-bold uppercase text-xs"><tr><th class="p-3 border-b">Actividad</th><th class="p-3 border-b">Profesor</th><th class="p-3 border-b">Curso/Asig</th><th class="p-3 border-b text-center">Plazo / Entrega</th><th class="p-3 border-b text-center">Días</th><th class="p-3 border-b text-center">Est</th><th class="p-3 border-b text-center">Origen</th><th class="p-3 border-b text-center no-print">Acciones</th></tr></thead><tbody id="planificacionesList" class="divide-y divide-gray-200 bg-white"></tbody></table></div>
-    </div>
-  </div>
-
-  <div id="voucher-container" class="hidden"></div>
-  <div id="feedback-container" class="hidden bg-white p-10 max-w-4xl mx-auto"></div>
-  <div id="memo-container" class="hidden bg-white max-w-4xl mx-auto relative font-serif text-gray-900"></div>
+  <div id="voucher-container" class="hidden bg-white min-h-screen"></div>
+  <div id="feedback-container" class="hidden bg-white min-h-screen p-10 max-w-4xl mx-auto"></div>
+  <div id="memo-container" class="hidden bg-white min-h-screen max-w-4xl mx-auto relative font-serif text-gray-900"></div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
     const $ = (id)=>document.getElementById(id);
     const cfg = {apiKey:"AIzaSyDJnJlpsqR76z_lBnTNEULYcGoQGIi23VU",authDomain:"planificaciones-18b94.firebaseapp.com",projectId:"planificaciones-18b94",storageBucket:"planificaciones-18b94.appspot.com",messagingSenderId:"268119843295",appId:"1:268119843295:web:bb2bdbcb0affe4ecf3646a"};
     const ARTIFACTS_PATH = "artifacts/planificaciones-18b94/users/planificaciones-18b94";
-    const app=initializeApp(cfg); const db=getFirestore(app);
+    
+    let app, db;
+    try { app=initializeApp(cfg); db=getFirestore(app); } catch(e) { console.error("Error Firebase:", e); }
 
     let planificacionesData=[], listsData={profesores:[],cursos:[],asignaturas:[]};
     let digitalCourses = new Set(), digitalTeachers = new Set();
     let chartStatus=null, chartDelays=null;
 
     function toDate(v) { if(!v) return null; if(v instanceof Date) return v; if(v.seconds) return new Date(v.seconds*1000); if(typeof v==='number') return new Date(v); if(typeof v==='string'){if(v.includes('-')){const p=v.split('-'); return new Date(p[0],p[1]-1,p[2]);} const d=new Date(v); return isNaN(d)?null:d;} return null; }
-    function daysDelay(e,a){ const E=toDate(e),A=toDate(a); if(!E||!A)return 0; E.setHours(0,0,0,0); A.setHours(0,0,0,0); const d=Math.ceil((A-E)/86400000); return d>0?d:0; }
-    function status(e,a){ if(!a) return 'pending'; return daysDelay(e,a)>0?'delayed':'completed'; }
     function fmt(d){ const x=toDate(d); return x?x.toLocaleDateString('es-CL'):'-'; }
+
+    // Calcula atraso simple por ítem
+    function daysDelay(fechaPlazo, fechaReal) { 
+        const P = toDate(fechaPlazo);
+        if(!P) return 0;
+        const R = fechaReal ? toDate(fechaReal) : new Date(); 
+        P.setHours(0,0,0,0); R.setHours(0,0,0,0); 
+        const diff = Math.ceil((R - P)/86400000);
+        return diff > 0 ? diff : 0; 
+    }
+
+    // NUEVA FUNCIÓN: Calcula Días Efectivos (cronológicos) fusionando periodos superpuestos
+    function calculateEffectiveDays(items) {
+        // 1. Crear intervalos de atraso [inicio, fin]
+        let intervals = items
+            .filter(p => p.fechaEntrega) // Solo si tiene fecha entrega
+            .map(p => {
+                let start = toDate(p.fechaEntrega);
+                let end = p.fechaReal ? toDate(p.fechaReal) : new Date(); // Si no ha entregado, hasta hoy
+                
+                start.setHours(0,0,0,0);
+                end.setHours(0,0,0,0);
+                
+                // Si la fecha real es <= fecha entrega, no hay atraso
+                if (end <= start) return null;
+                
+                // El atraso empieza el día siguiente al plazo
+                // start.setDate(start.getDate() + 1); 
+                
+                return { start: start.getTime(), end: end.getTime() };
+            })
+            .filter(i => i !== null)
+            .sort((a, b) => a.start - b.start); // Ordenar por fecha inicio
+
+        if (intervals.length === 0) return 0;
+
+        // 2. Fusionar intervalos superpuestos
+        let merged = [];
+        let current = intervals[0];
+
+        for (let i = 1; i < intervals.length; i++) {
+            let next = intervals[i];
+            
+            if (next.start < current.end) { // Se superponen
+                // Extender el final del actual al máximo de los dos
+                current.end = Math.max(current.end, next.end);
+            } else {
+                merged.push(current);
+                current = next;
+            }
+        }
+        merged.push(current);
+
+        // 3. Sumar días de los intervalos fusionados
+        let totalMs = merged.reduce((acc, curr) => acc + (curr.end - curr.start), 0);
+        return Math.ceil(totalMs / 86400000);
+    }
+
+    function status(fechaPlazo, fechaReal) { 
+        if(!fechaPlazo) return 'pending';
+        const atraso = daysDelay(fechaPlazo, fechaReal);
+        if(fechaReal) return atraso > 0 ? 'delayed' : 'completed';
+        else return atraso > 0 ? 'delayed' : 'pending';
+    }
 
     function loadData() {
         let dMan=[], dArt=[], dDig=[], l1=false, l2=false, l3=false;
         const merge = () => {
             if(l1 && l2 && l3) {
-                planificacionesData = [...dMan, ...dArt, ...dDig].sort((a,b)=>(toDate(b.fechaReal)||0)-(toDate(a.fechaReal)||0));
+                planificacionesData = [...dMan, ...dArt, ...dDig].sort((a,b)=>(toDate(b.fechaEntrega)||0)-(toDate(a.fechaEntrega)||0));
                 digitalCourses.forEach(c => { if(!listsData.cursos.find(x => x.nombre === c)) listsData.cursos.push({id:'auto-'+c, nombre:c, origin:'auto'}); });
                 digitalTeachers.forEach(t => { if(!listsData.profesores.find(x => x.nombre === t)) listsData.profesores.push({id:'auto-'+t, nombre:t, origin:'auto'}); });
                 updateSelectors(); renderDashboard();
             }
         };
-
+        // Carga de datos (sin cambios)
         onSnapshot(collection(db,'planificaciones'), s=>{ dMan=[]; s.forEach(d=>dMan.push({id:d.id, ...d.data(), origen:'manual'})); l1=true; merge(); });
         onSnapshot(collection(db,`${ARTIFACTS_PATH}/planificaciones`), s=>{ dArt=[]; s.forEach(d=>dArt.push({id:d.id, ...d.data(), origen:'manual'})); l2=true; merge(); });
         onSnapshot(collection(db, 'planificaciones_digitales'), s => {
@@ -154,15 +262,9 @@
                     const fechaReal = data.timestamp || Date.now();
                     const dObj = new Date(fechaReal);
                     const deadline = new Date(dObj.getFullYear(), dObj.getMonth() + 1, 0); 
-                    const cName = data.nivel || data.curso;
-                    const tName = data.docente;
-                    
-                    if(cName) digitalCourses.add(cName);
-                    if(tName) digitalTeachers.add(tName);
-                    
-                    // CORRECCIÓN CLAVE: LEER 'mes_planificado' O PROBAR 'monthly_distribution'
+                    const cName = data.nivel || data.curso; const tName = data.docente;
+                    if(cName) digitalCourses.add(cName); if(tName) digitalTeachers.add(tName);
                     const mesDisplay = data.mes_planificado || Object.values(data.monthly_distribution||{})[0] || 'Mes';
-
                     dDig.push({
                         id: doc.id, titulo: `Planif. Digital (${mesDisplay})`,
                         profesor: tName, curso: cName, asignatura: data.asignatura,
@@ -232,7 +334,7 @@
         $('yearDisplayBadge').innerText = selectedYear;
 
         const filtered=planificacionesData.filter(p=>{
-            let ok=true; const d=toDate(p.fechaEntrega)||toDate(p.fechaReal);
+            let ok=true; const d=toDate(p.fechaEntrega); 
             if(d && d.getFullYear().toString() !== selectedYear) ok=false;
             if(fP&&p.profesor!==fP)ok=false; 
             if(fC&&p.curso!==fC)ok=false;
@@ -243,38 +345,60 @@
         const tb=$('planificacionesList'); tb.innerHTML='';
         let tot=0, comp=0, del=0, sumDel=0, digitalCount=0;
 
+        // Calcular días efectivos (cronológicos sin duplicar)
+        const effectiveDays = calculateEffectiveDays(filtered);
+
         filtered.forEach(p=>{
             const st=status(p.fechaEntrega,p.fechaReal);
             const dd=daysDelay(p.fechaEntrega,p.fechaReal);
-            tot++; if(p.origen==='digital') digitalCount++;
-            if(st==='completed') comp++; if(st==='delayed'){ del++; sumDel+=dd; }
+            
+            tot++; 
+            if(p.origen==='digital') digitalCount++;
+            if(st==='completed') comp++;
+            if(st==='delayed') del++;
+            sumDel += dd;
 
             let badge = p.origen==='digital' ? '<span class="badge badge-digital"><i class="fa-solid fa-laptop mr-1"></i>Digital</span>' : '<span class="badge bg-gray-100 text-gray-600">Manual</span>';
-            let stBadge = st==='completed'?'<span class="badge badge-ok">A Tiempo</span>':(st==='delayed'?'<span class="badge badge-err">Atraso</span>':'<span class="badge badge-warn">Pendiente</span>');
+            let stBadge = '';
+            if(st==='completed') stBadge='<span class="badge badge-ok">A Tiempo</span>';
+            else if(st==='delayed' && p.fechaReal) stBadge='<span class="badge badge-err">Entregado Tarde</span>'; 
+            else if(st==='delayed' && !p.fechaReal) stBadge='<span class="badge badge-err">Atrasado</span>';
+            else stBadge='<span class="badge badge-warn">Pendiente</span>';
 
             let actions = '';
-            if(st==='delayed' || st==='pending') {
-                actions += `<button onclick="window.sendAlert('${p.profesor}','${p.titulo}','${fmt(p.fechaEntrega)}')" class="text-blue-600 hover:text-blue-800 mx-1" title="Email"><i class="fa-solid fa-envelope"></i></button>`;
+            // Email: Aparece si hay atraso >= 5 días (PENDIENTE O ENTREGADO)
+            if(dd >= 5) {
+                actions += `<button onclick="window.sendAlert('${p.profesor}','${p.titulo}','${fmt(p.fechaEntrega)}', ${!!p.fechaReal}, ${dd})" class="text-blue-600 hover:text-blue-800 mx-1" title="Notificar Atraso (+5 días)"><i class="fa-solid fa-envelope"></i></button>`;
             }
-            if(parseInt(dd) >= 10 && p.origen !== 'digital') { 
-                actions += `<button onclick="window.generateMemo('${p.profesor}', '${p.titulo}', '${fmt(p.fechaEntrega)}', '${fmt(p.fechaReal)}', ${dd})" class="text-red-600 hover:text-red-800 mx-1" title="Generar Memo"><i class="fa-solid fa-file-pdf"></i></button>`;
+            // Memo: Aparece si hay atraso >= 10 días
+            if(dd >= 10) { 
+                actions += `<button onclick="window.generateMemo('${p.profesor}', '${p.titulo}', '${fmt(p.fechaEntrega)}', '${p.fechaReal ? fmt(p.fechaReal) : "Pendiente"}', ${dd})" class="text-red-600 hover:text-red-800 mx-1" title="Generar Memo (+10 días)"><i class="fa-solid fa-file-pdf"></i></button>`;
             }
+
+            const delayColor = dd > 0 ? 'text-red-600 font-bold' : 'text-gray-400';
 
             tb.innerHTML+=`
             <tr class="border-b hover:bg-gray-50">
                 <td class="p-3 font-bold">${p.titulo}</td>
                 <td class="p-3 text-xs">${p.profesor}</td>
                 <td class="p-3 text-xs text-gray-500">${p.curso}<br>${p.asignatura}</td>
-                <td class="p-3 text-center text-xs">P: ${fmt(p.fechaEntrega)}<br>E: ${fmt(p.fechaReal)}</td>
-                <td class="p-3 text-center font-bold ${dd>0?'text-red-600':''}">${dd>0?dd:'-'}</td>
+                <td class="p-3 text-center text-xs">Plazo: ${fmt(p.fechaEntrega)}<br>${p.fechaReal ? 'Entregado: '+fmt(p.fechaReal) : '<span class="text-amber-600 font-bold">Sin Entrega</span>'}</td>
+                <td class="p-3 text-center ${delayColor}">${dd>0?dd+' días':'-'}</td>
                 <td class="p-3 text-center">${stBadge}</td>
                 <td class="p-3 text-center">${badge}</td>
                 <td class="p-3 text-center no-print">${actions}</td>
             </tr>`;
         });
 
-        $('totalCount').innerText=tot; $('delayedCount').innerText=del; $('digitalCount').innerText=digitalCount;
-        $('totalDaysDelayed').innerText=sumDel; $('schoolCompliance').innerText=(tot>0?Math.round(((tot-del)/tot)*100):0)+"%";
+        $('totalCount').innerText=tot; 
+        $('delayedCount').innerText=del;
+        $('digitalCount').innerText=digitalCount;
+        $('totalDaysDelayed').innerText=sumDel; 
+        
+        // Asignar el nuevo valor de Días Efectivos
+        $('effectiveDaysDelayed').innerText = effectiveDays;
+
+        $('schoolCompliance').innerText=(tot>0?Math.round(((tot-del)/tot)*100):0)+"%";
         
         renderCharts(filtered, selectedYear);
     }
@@ -282,44 +406,99 @@
     function renderCharts(d, year){
         if(chartStatus)chartStatus.destroy(); if(chartDelays)chartDelays.destroy();
         const m=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'], s=m.map(()=>({ok:0,late:0,days:0}));
-        d.forEach(p=>{const f=toDate(p.fechaEntrega)||toDate(p.fechaReal); if(f&&f.getFullYear().toString()===year){const i=f.getMonth(); if(status(p.fechaEntrega,p.fechaReal)==='completed')s[i].ok++; else if(status(p.fechaEntrega,p.fechaReal)==='delayed'){s[i].late++;s[i].days+=daysDelay(p.fechaEntrega,p.fechaReal);}}});
-        chartStatus=new Chart($('chartStatus'),{type:'bar',data:{labels:m,datasets:[{label:'A Tiempo',data:s.map(x=>x.ok),backgroundColor:'#34d399'},{label:'Atraso',data:s.map(x=>x.late),backgroundColor:'#f87171'}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true}}}});
-        chartDelays=new Chart($('chartDelays'),{type:'line',data:{labels:m,datasets:[{label:'Días Atraso (Acum)',data:s.map(x=>x.days),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.2)',fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false}});
+        d.forEach(p=>{
+            const f=toDate(p.fechaEntrega); 
+            if(f&&f.getFullYear().toString()===year){
+                const i=f.getMonth(); 
+                const st = status(p.fechaEntrega, p.fechaReal);
+                const dd = daysDelay(p.fechaEntrega, p.fechaReal);
+                if(st==='completed') s[i].ok++; 
+                else if(st==='delayed') s[i].late++;
+                s[i].days += dd;
+            }
+        });
+        chartStatus=new Chart($('chartStatus'),{type:'bar',data:{labels:m,datasets:[{label:'A Tiempo',data:s.map(x=>x.ok),backgroundColor:'#34d399'},{label:'Con Atraso',data:s.map(x=>x.late),backgroundColor:'#f87171'}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true}}}});
+        chartDelays=new Chart($('chartDelays'),{type:'line',data:{labels:m,datasets:[{label:'Días Atraso (Suma Mensual)',data:s.map(x=>x.days),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.2)',fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false}});
     }
 
-    window.sendAlert=(p,t,d)=>{const m=prompt(`Correo para ${p}:`,"profe@colegio.cl");if(m)window.location.href=`mailto:${m}?subject=Alerta Atraso&body=Pendiente: ${t} (Vence: ${d})`;};
-    $('printListBtn').onclick=()=>window.print();
+    window.sendAlert=(p,t,d, delivered, days)=>{
+        let subject = delivered ? "Registro de Atraso" : "Alerta de Pendiente";
+        let body = delivered ? 
+            `Estimado docente, se registra un atraso de ${days} días en la entrega de: ${t}. (Plazo era: ${d})` : 
+            `Estimado docente, tiene pendiente: ${t} (Plazo venció: ${d}). Atraso actual: ${days} días.`;
+        
+        const m=prompt(`Correo para ${p}:`,"profe@colegio.cl");
+        if(m) window.location.href=`mailto:${m}?subject=${subject}&body=${body}`;
+    };
     
-    // RETROALIMENTACIÓN
-    window.agregarFilaCobertura = () => { 
-        const tr = document.createElement('tr'); tr.className = 'border-b'; 
-        tr.innerHTML = `<td class="p-1"><input type="text" class="w-full border rounded input-desc" placeholder="Desc. Asig"></td><td class="p-1"><input type="number" class="w-full border rounded text-center input-pct" placeholder="%"></td><td class="p-1 text-center"><button onclick="this.closest('tr').remove()" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td>`; 
+    // --- RETROALIMENTACIÓN ---
+    $('btnAddCob').onclick = () => { 
+        const tr = document.createElement('tr'); 
+        tr.className = 'border-b'; 
+        tr.innerHTML = `
+            <td class="p-1"><input type="text" class="w-full border rounded text-xs p-1 input-desc" placeholder="Desc. Asig"></td>
+            <td class="p-1"><input type="number" class="w-full border rounded text-center text-xs p-1 input-pct" placeholder="%"></td>
+            <td class="p-1 text-center"><button type="button" class="text-red-400 hover:text-red-600 btn-del-row"><i class="fa-solid fa-trash"></i></button></td>
+        `; 
+        tr.querySelector('.btn-del-row').onclick = function() { this.closest('tr').remove(); };
         $('bodyCoberturas').appendChild(tr); 
     };
+
     $('frasesRapidas').addEventListener('change', function() { if(this.value) { $('inputObservaciones').value += ($('inputObservaciones').value.length > 0 ? " " : "") + this.value; this.value = ""; } });
 
     $('btnFeedbackReport').onclick = () => {
-        const prof = $('filterProfesor').value; const dE = $('dateEnd').value;
-        if(!prof || !dE) { alert("⚠️ Para generar este informe DEBE seleccionar un Profesor y una Fecha de Corte (Hasta)."); return; }
+        const prof = $('filterProfesor').value; 
+        let dE = $('dateEnd').value;
+        if(!dE) { dE = new Date().toISOString().split('T')[0]; $('dateEnd').value = dE; }
+
+        if(!prof) { alert("⚠️ Seleccione un Profesor para generar el informe."); return; }
         
         let tablaCob = '<table class="w-full border text-sm mb-4"><thead class="bg-gray-100"><tr><th class="border p-2">Asignatura</th><th class="border p-2">% Cobertura</th></tr></thead><tbody>';
+        let rowCount = 0;
         document.querySelectorAll('#bodyCoberturas tr').forEach(r => {
-            const d = r.querySelector('.input-desc').value; const p = r.querySelector('.input-pct').value;
-            if(d || p) tablaCob += `<tr><td class="border p-2">${d}</td><td class="border p-2 text-center font-bold">${p}%</td></tr>`;
+            const d = r.querySelector('.input-desc').value;
+            const p = r.querySelector('.input-pct').value;
+            if(d || p) {
+                tablaCob += `<tr><td class="border p-2">${d || '-'}</td><td class="border p-2 text-center font-bold">${p || '0'}%</td></tr>`;
+                rowCount++;
+            }
         });
+        if(rowCount === 0) tablaCob += '<tr><td colspan="2" class="border p-2 text-center text-gray-500 italic">No se ingresaron detalles.</td></tr>';
         tablaCob += '</tbody></table>';
 
         const pData = planificacionesData.filter(p => p.profesor === prof);
-        const total = pData.length; const entregadas = pData.filter(p => p.fechaReal).length;
+        const total = pData.length; 
+        const entregadas = pData.filter(p => p.fechaReal && status(p.fechaEntrega, p.fechaReal) === 'completed').length;
         const pctCump = total > 0 ? Math.round((entregadas/total)*100) : 0;
+        
+        // Días Efectivos para el reporte
+        const effectiveDays = calculateEffectiveDays(pData);
+        // Días Acumulados para el reporte
+        const sumDelays = pData.reduce((acc, curr) => acc + daysDelay(curr.fechaEntrega, curr.fechaReal), 0);
 
         $('feedback-container').innerHTML = `
             <div class="font-sans text-gray-800 border-4 border-double border-gray-300 p-10 h-full">
-                <div class="flex items-center justify-between border-b-2 border-indigo-700 pb-4 mb-6"><img src="logo.jpg" style="height: 70px;"><div class="text-right"><h1 class="text-xl font-bold uppercase text-indigo-900">Informe de Gestión Curricular</h1><p class="text-sm text-gray-500">UTP</p></div></div>
+                <div class="flex items-center justify-between border-b-2 border-indigo-700 pb-4 mb-6"><img src="logo.jpg" style="height: 70px;" onerror="this.style.display='none'"><div class="text-right"><h1 class="text-xl font-bold uppercase text-indigo-900">Informe de Gestión Curricular</h1><p class="text-sm text-gray-500">UTP</p></div></div>
                 <div class="bg-gray-100 p-4 rounded mb-6 flex justify-between"><div><span class="font-bold text-gray-600 block text-xs">DOCENTE</span><span class="text-lg font-bold">${prof}</span></div><div class="text-right"><span class="font-bold text-gray-600 block text-xs">FECHA CORTE</span><span>${fmt(dE)}</span></div></div>
-                <h3 class="font-bold text-indigo-800 uppercase text-sm mb-2 border-b">I. Cumplimiento</h3><div class="mb-6 p-4 border rounded text-center"><span class="text-4xl font-bold ${pctCump>=80?'text-green-600':'text-red-600'}">${pctCump}%</span><div class="text-xs uppercase font-bold text-gray-500">Global</div></div>
-                <h3 class="font-bold text-indigo-800 uppercase text-sm mb-2 border-b">II. Cobertura</h3>${tablaCob}
-                <h3 class="font-bold text-indigo-800 uppercase text-sm mb-2 border-b">III. Observaciones</h3><div class="border rounded p-4 bg-white min-h-[100px] text-sm mb-8">${($('inputObservaciones').value||"Sin observaciones.").replace(/\n/g,'<br>')}</div>
+                
+                <h3 class="font-bold text-indigo-800 uppercase text-sm mb-2 border-b">I. Cumplimiento & Atrasos</h3>
+                <div class="mb-6 grid grid-cols-3 gap-4">
+                     <div class="p-4 border rounded text-center bg-gray-50">
+                         <span class="text-4xl font-bold ${pctCump>=80?'text-green-600':'text-red-600'}">${pctCump}%</span>
+                         <div class="text-xs uppercase font-bold text-gray-500">Cumplimiento</div>
+                     </div>
+                     <div class="p-4 border rounded text-center bg-amber-50 border-amber-200">
+                         <span class="text-4xl font-bold text-amber-700">${sumDelays}</span>
+                         <div class="text-xs uppercase font-bold text-amber-800">Días Acumulados</div>
+                     </div>
+                     <div class="p-4 border rounded text-center bg-slate-50 border-slate-200">
+                         <span class="text-4xl font-bold text-slate-700">${effectiveDays}</span>
+                         <div class="text-xs uppercase font-bold text-slate-600">Días Efectivos</div>
+                     </div>
+                </div>
+
+                <h3 class="font-bold text-indigo-800 uppercase text-sm mb-2 border-b">II. Cobertura Curricular</h3>${tablaCob}
+                <h3 class="font-bold text-indigo-800 uppercase text-sm mb-2 border-b">III. Observaciones UTP</h3><div class="border rounded p-4 bg-white min-h-[100px] text-sm mb-8">${($('inputObservaciones').value||"Sin observaciones registradas.").replace(/\n/g,'<br>')}</div>
                 <div class="flex justify-between mt-16 px-10"><div class="text-center w-1/3 border-t border-black pt-2"><p class="font-bold text-sm">${prof}</p><p class="text-xs">Docente</p></div><div class="text-center w-1/3 border-t border-black pt-2"><p class="font-bold text-sm">JEFA UTP</p></div></div>
             </div>`;
         $('feedback-container').classList.remove('hidden'); document.body.classList.add('feedback-print-mode');
@@ -329,20 +508,20 @@
     $('generateVoucherBtn').onclick=()=>{
         const prof=$('filterProfesor').value; if(!prof)return alert("Seleccione Profesor");
         const pData=planificacionesData.filter(p=>p.profesor===prof);
-        const rows=pData.map(p=>`<tr class="border-b text-xs"><td class="p-2">${p.titulo}</td><td class="p-2">${p.curso}</td><td class="p-2">${fmt(p.fechaReal)}</td><td class="p-2">${p.origen}</td></tr>`).join('');
+        const rows=pData.map(p=>`<tr class="border-b text-xs"><td class="p-2">${p.titulo}</td><td class="p-2">${p.curso}</td><td class="p-2">${p.fechaReal ? fmt(p.fechaReal) : 'Pendiente'}</td><td class="p-2">${p.origen}</td></tr>`).join('');
         $('voucher-container').innerHTML=`<div class="p-8"><h1 class="font-bold text-xl mb-4">Comprobante Entregas: ${prof}</h1><table class="w-full text-left">${rows}</table></div>`;
         $('voucher-container').classList.remove('hidden'); document.body.classList.add('voucher-print-mode');
         setTimeout(()=>{window.print();setTimeout(()=>{document.body.classList.remove('voucher-print-mode');$('voucher-container').classList.add('hidden');},500);},500);
     };
 
-    window.generateMemo = (profesor, titulo, fechaPlazo, fechaReal, diasAtraso) => {
+    window.generateMemo = (profesor, titulo, fechaPlazo, fechaEntregaTexto, diasAtraso) => {
         const container = $('memo-container');
         container.innerHTML = `
             <div class="h-full flex flex-col relative font-serif text-gray-900 leading-snug p-10">
-                <div class="flex items-end justify-between mb-8 border-b-2 border-black pb-4"><img src="logo.jpg" style="height: 70px;"><div class="text-right"><h2 class="text-2xl font-bold uppercase">Memorándum</h2><p class="text-sm font-bold text-gray-600">UNIDAD TÉCNICO PEDAGÓGICA</p></div></div>
-                <div class="grid grid-cols-[80px_1fr] gap-4 mb-10 text-lg"><div class="font-bold uppercase">Para:</div><div class="uppercase font-semibold">${profesor}</div><div class="font-bold uppercase">Mat:</div><div class="uppercase font-bold underline">ATRASO EN ENTREGA</div></div>
-                <div class="text-justify text-lg space-y-6"><p>Se informa el incumplimiento en la entrega de: <strong>${titulo}</strong>.</p><ul class="list-disc pl-5"><li>Plazo: ${fechaPlazo}</li><li>Entrega Real: ${fechaReal}</li><li>Días Atraso: ${diasAtraso}</li></ul></div>
-                <div class="flex justify-between mt-24 px-10"><div class="text-center w-5/12 pt-4 border-t border-black"><p class="font-bold uppercase">${profesor}</p><p class="text-xs uppercase">Recibí Conforme</p></div><div class="text-center w-5/12 pt-4 border-t border-black"><p class="font-bold uppercase">ALEJANDRA MORALES G.</p><p class="text-xs uppercase">Jefa UTP</p></div></div>
+                <div class="flex items-end justify-between mb-8 border-b-2 border-black pb-4"><img src="logo.jpg" style="height: 70px;"><div class="text-right"><h2 class="text-2xl font-bold uppercase">Memorándum</h2><p class="text-sm font-bold text-gray-600">ALEJANDRA MPORALES UNIDAD TÉCNICO PEDAGÓGICA</p></div></div>
+                <div class="grid grid-cols-[80px_1fr] gap-4 mb-10 text-lg"><div class="font-bold uppercase">Para:</div><div class="uppercase font-semibold">${profesor}</div><div class="font-bold uppercase">Mat:</div><div class="uppercase font-bold underline">INCUMPLIMIENTO DE PLAZO</div></div>
+                <div class="text-justify text-lg space-y-6"><p>Por medio de la presente, se informa el atraso registrado en la entrega del instrumento: <strong>${titulo}</strong>.</p><ul class="list-disc pl-5"><li>Fecha de Plazo: ${fechaPlazo}</li><li>Estado Actual: ${fechaEntregaTexto}</li><li>Días de Atraso acumulados: <span class="font-bold">${diasAtraso}</span></li></ul></div>
+                <div class="flex justify-between mt-24 px-10"><div class="text-center w-5/12 pt-4 border-t border-black"><p class="font-bold uppercase">${profesor}</p><p class="text-xs uppercase">Recibí Conforme</p></div><div class="text-center w-5/12 pt-4 border-t border-black"><p class="font-bold uppercase">ALEJANDRA MORALES JEFA UTP</p><p class="text-xs uppercase">Firma</p></div></div>
             </div>`;
         container.classList.remove('hidden'); document.body.classList.add('memo-print-mode');
         setTimeout(()=>{window.print();setTimeout(()=>{document.body.classList.remove('memo-print-mode');container.classList.add('hidden');},500);},500);
