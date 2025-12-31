@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Privado - ProfeAle Admin v8.6 (Fix)</title>
+    <title>Panel Privado - ProfeAle Admin v9.0 (Import)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
@@ -29,7 +29,7 @@
     <div id="loginOverlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center border-t-4 border-indigo-600">
             <h1 class="text-3xl font-bold text-slate-800 tracking-tight">ProfeAle Admin</h1>
-            <p class="text-slate-500 text-sm mt-1 mb-6">Acceso Privado con Evidencia</p>
+            <p class="text-slate-500 text-sm mt-1 mb-6">Acceso Privado + Importador</p>
             <form id="loginForm" class="space-y-4 text-left">
                 <input type="email" id="emailInput" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="admin@profeale.cl" required>
                 <input type="password" id="passwordInput" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="••••••••" required>
@@ -55,12 +55,15 @@
                 <div>
                     <h1 class="text-2xl font-bold text-slate-800">Panel de Control</h1>
                     <div class="flex items-center gap-2 text-xs">
-                        <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">Admin + Evidencia</span>
+                        <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">Admin v9.0</span>
                         <span id="userIdDisplay" class="text-slate-400">...</span>
                     </div>
                 </div>
             </div>
             <div class="flex flex-col items-end gap-2">
+                <input type="file" id="csvInput" accept=".csv" class="hidden">
+                <button id="importBtn" class="bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs font-bold py-1 px-3 rounded border border-blue-200 transition flex items-center gap-1">📂 Importar Nómina CSV</button>
+                
                 <button id="backupBtn" class="bg-rose-100 text-rose-700 hover:bg-rose-200 text-xs font-bold py-1 px-3 rounded border border-rose-200 transition">💾 Descargar Respaldo JSON</button>
                 <button id="btnLogout" class="text-xs font-bold text-slate-400 hover:text-slate-600 underline">Cerrar Sesión</button>
             </div>
@@ -85,7 +88,7 @@
             <div id="loadingIndicator" class="text-center py-12">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
                 <p class="text-slate-400 font-medium">Cargando base de datos...</p>
-                <p id="loadingError" class="text-red-500 text-xs mt-2 hidden">Si esto tarda mucho, verifica tu conexión.</p>
+                <p id="loadingError" class="text-red-500 text-xs mt-2 hidden">Error de conexión.</p>
             </div>
             <table id="mainTable" class="w-full hidden border-collapse text-sm">
                 <thead id="tableHeader" class="bg-slate-100 text-slate-500 uppercase text-xs font-bold border-b-2 border-slate-200"></thead>
@@ -100,7 +103,6 @@
             <button id="showReportBtn" class="px-5 py-2 bg-white border border-slate-300 rounded-full text-slate-700 font-bold shadow-sm hover:bg-slate-50 transition text-sm">📊 Resumen</button>
             <button id="showDetailedReportBtn" class="px-5 py-2 bg-white border border-slate-300 rounded-full text-slate-700 font-bold shadow-sm hover:bg-slate-50 transition text-sm">📋 Detallado</button>
             <button id="printReportBtn" class="px-5 py-2 bg-slate-800 text-white rounded-full font-bold shadow-md hover:bg-slate-900 transition text-sm flex items-center gap-2">🖨️ Imprimir</button>
-            <div class="w-full flex justify-center mt-2"><button id="resetCoursesBtn" class="text-xs text-slate-400 hover:text-indigo-500 underline">📥 Cargar Nómina Inicial 2025</button></div>
         </div>
 
         <div id="observationModal" class="no-print fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
@@ -111,14 +113,11 @@
                 </div>
                 <div class="p-4 overflow-y-auto bg-slate-50 flex-1">
                     <div id="observationHistory" class="space-y-3 mb-4"></div>
-                    
                     <div class="bg-white p-3 rounded border border-slate-200 shadow-sm relative">
                         <label class="text-xs font-bold text-slate-400 uppercase mb-1 block">Fecha</label>
                         <input type="date" id="obsDateInput" class="w-full mb-2 p-1.5 border border-slate-300 rounded text-sm font-bold text-slate-700">
-                        
                         <label class="text-xs font-bold text-slate-400 uppercase mb-1 block">Observación</label>
                         <textarea id="newObservationText" class="w-full text-sm text-slate-700 border border-slate-200 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-20 placeholder:text-slate-300 mb-2" placeholder="Escribe el detalle..."></textarea>
-                        
                         <div class="flex items-center gap-2 border-t border-slate-100 pt-2">
                             <label class="cursor-pointer bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200 rounded px-3 py-1.5 flex items-center gap-2 text-xs font-bold transition">
                                 <span>📷</span> Adjuntar Foto
@@ -155,17 +154,6 @@
 
         const firebaseConfig = { apiKey: "AIzaSyAFp6biz1UTr9Ehaudkpe7QyTFVbdQz5Sc", authDomain: "asistencia-mi-clase.firebaseapp.com", projectId: "asistencia-mi-clase", storageBucket: "asistencia-mi-clase.appspot.com", messagingSenderId: "552398254230", appId: "1:552398254230:web:c58dd07e5ceeb67e0912b7", measurementId: "G-MYR01HM1YE" };
         const appId = firebaseConfig.appId;
-        
-        // NÓMINA COMPLETA
-        const fullDefaultClasses = {
-            "1° Medio A": ["ALBURQUENQUE DEL GRECCO EMILYA ANTONIA", "ANABALÓN BELTRÁN BENJAMÍN NICOLÁS", "CONTRERAS SALGADO HADEEY ALEJANDRA", "FERRADA ALBORNOZ AGUSTÍN ALEXIS", "HERNÁNDEZ FERNÁNDEZ DHARIEN ALEXSANDER", "IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA", "LAGOS LASTRA ALEXANDRA DANAE", "LÓPEZ LÓPEZ LUCIANO ANTONIO", "MALDONADO FLORES ANTONELLA BELÉN", "MONTECINO DÍAZ VALESKA BELÉN", "MUÑOZ CONTRERAS LUIS GABRIEL", "MUÑOZ LUNA ROGER JOEL", "NAVARRO VILLANUEVA KARLA PAZ", "ORELLANA ARRIAGADA SEBASTIÁN ANDRÉS", "QUEZADA NARANJO FELIPE ALONSO", "QUINTEROS VERGARA FERNANDA FLORENCIA", "RAMÍREZ VILLALOBOS DUVAN EMILIO", "SANTANDER LÓPEZ MARÍA JOSÉ", "TAPIA CASTILLA JEANFRANCO PATRICK", "URBINA CÁCERES FRANCHESCA POULETTE", "VÁSQUEZ ZALDUENDO AMANDA ISABEL", "ZABALAGA COFRÉ DAMIÁN ANDRÉS", "BAEZ DONOSO LUKAS ALFONSO", "MESA DÍAZ GONZALO IGNACIO"],
-            "1° Medio B": ["ARAVENA ZÚÑIGA NOEMÍ JESÚS DE LAS ESTRELLAS", "ASTUDILLO CAMPOS CRISTÓBAL ANTONIO", "ASTUDILLO VÁSQUEZ BRUNO FERNANDO LEÓN", "CUMINAO VIDAL CATALINA ANDREA", "DÍAZ MALUENDA MIGUEL ALBERTO", "KILTAN GONZÁLEZ DIDIER EZEQUIEL", "LÓPEZ ACUÑA MARCO EMILIO", "LÓPEZ NOVOA EYDAN DAMIÁN", "MÉNDEZ SUAZO FABIÁN FELIPE", "MOYA REYES MATEO ANTONIO BENJAMÍN", "OSES CAMPOS VALENTINA ABIGAIL", "PALMA ORELLANA ANTONELLA FRANCISCA", "PEREIRA ORELLANA MONSERRAT ALAMIRA", "PÉREZ ORMAZÁBAL ZADKA ALEJANDRA", "ROJAS GONZÁLEZ FLORENCIA TRINIDAD", "ROJAS LEIVA EDUARDO JAVIER", "VÁSQUEZ AGUILERA SCARLET NICOLE", "YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN", "VARGAS MORAGA MARTINA SAYEN", "SALAZAR SALAS PEDRO JOSÉ", "VERA BRAVO FLORENCIA ANTONIA", "PÉREZ QUEVEDO CONSTANZA TRINIDAD", "RIQUELME SANTOS BENJAMÍN ALONSO"],
-            "2° Medio A": ["AHUMADA ROJAS TRINIDAD BELÉN", "ESPINOSA TORRES FERNANDA ELENA", "ESPINOZA PEÑALILLO BRAYAN JESÚS", "GONZÁLEZ SALAZAR EMILIA CATALINA", "MEDEL OJEDA LEÓN IGNACIO", "MORALES REIMÁN ALFONSO TOMÁS", "PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO", "PINTO TOBAR JORDÁN AMARO", "RECABAL YÁÑEZ KEVIN ANDRÉS", "RIQUELME CASTILLO MATÍAS EDUARDO ANTONIO", "RIVERA ABARZA CONSTANZA VICTORIA", "SANTIS CASSEUS TEIVA SCARLETT", "SOBARZO YÉVENES KATHERINNE ALEXIA BELÉN", "TOLEDO ALBORNOZ ANTONELLA INES", "VENEGAS ARRIAGADA ANTONIA EDITH", "VIELMA ZABALAGA JOAN MANUEL", "MEZA COLIMÁN ANGEL BLAS", "SAAVEDRA BRAVO FLORENCIA ALEJANDRA"],
-            "2° Medio B": ["ARAYA DOMÍNGUEZ ALEX FABIÁN", "BRAVO MENARES ALEX JOHAN", "CARRASCO LEIVA BENJAMÍN IGNACIO", "CARVAJAL URRUTIA CONSTANZA PRISILA (DANIEL)", "ENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER", "FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO", "JARAMILLO VILLAR EMILIO SCOTT", "LÓPEZ VILLAR MARTÍN ALONSO", "MIRANDA MUÑOZ ALEXANDRA JAVIERA", "MUÑOZ TRONCOSO HÉCTOR ANTONIO", "OLIVARES VALENZUELA ALONSO IGNACIO", "OLIVARES VALENZUELA ANTONELLA DANAE IGNACIA", "ORELLANA GARRIDO MATÍAS LEANDRO", "PUNOY MEDEL MILLARAY ANGÉLICA", "QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO", "RIQUELME COLOMA DALIA CONSTANZA", "SALGADO ROJAS VICENTE MOISÉS", "SANDOVAL CERPA VICENTE ESTEBAN", "SOTO NARANJO CHRISTOPHER", "VEKARIC VERDEJO MARTÍN"],
-            "3° Medio A": ["ALCÁNTAR GARCÍA MARTINA ALEJANDRA", "BAHAMONDE MUÑOZ ARIEL LEON", "CAMPOS MUÑOZ CRISTOPHER JESÚS", "CANCINO ORÓSTICA VICENTE GASPAR", "CARRASCO GONZÁLEZ CAMILA ANDREA", "COFRÉ CASTILLO ANTONIO ANDRÉS", "CONTRERAS VENEGAS BELÉN ALEJANDRA", "GALDAMES VERGARA FELIPE ESTEBAN", "GARCÍA GONZÁLEZ SANTIAGO HUMBERTO", "GONZÁLEZ AMIGO FRANCISCA IGNACIA", "GONZÁLEZ SALAZAR JOAQUÍN ALONSO", "GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN", "JARA SEPÚLVEDA KATRINA DARINKA", "MARTÍNEZ LIZANA AARON ALEJANDRO", "MEZA CARRASCO BENJAMÍN INTI", "MIÑO GONZALEZ CATALINA ANDREA", "MORAGA PACHECO RENATO IGNACIO", "PÉREZ CORÓN MANUEL IGNACIO", "SAMANIEGO CORTEZ JAKSON FERGIE", "SEPÚLVEDA SALAZAR SOFÍA ANTONIA", "TAPIA ACUÑA GABRIEL ANTONIO", "VEGA VIVANCO CRISTÓBAL ANTONIO", "VERA NAVARRETE DANIELA ELIZABETH", "VILLALOBOS ARAVENA KARINA ANGELINA", "VILLALOBOS VILLALOBOS SAMIR LUCIAN JESÚS", "HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO", "TORREALBA MOYA FLORVELIS DE LOS ANGELES", "CARO URRUTIA CONSUELO ANTONIA", "LOBOS CÁCERES ANTONIA PAZ"],
-            "3° Medio C": ["ARELLANO ACUÑA MARTÍN ANTONIO", "AROS ÁVILA DAYANA IGNACIA", "CABRERA COLOMBINO MARÍA GRACIA", "FUENTES CARRASCO YARIXA ALEJANDRA", "GÓMEZ CANCINO DANIELA ALEJANDRA", "GUTIÉRREZ CARRIÓN MILLARAY CAROLINA", "HONORATO TAPIA GLORIA JAVIERA", "LARA RIVERA BENJAMÍN ESTEBAN", "PALACIOS SOTO JOSÉ TOMÁS", "PEZO SANTANDER JOSÉ CRISTÓBAL", "ROCHA ROJAS JOSÉ PABLO WILLIAMS", "ROJAS YÉVENES FABIANA ISIDORA", "SÁNCHEZ PAREJA ANDY ANTONIO", "SANTANDER LÓPEZ SIMÓN ESTEBAN", "TRONCOSO LIZAMA SIOMARA IGNACIA", "WARNKEN ROJAS LUCIANA BERNABELA", "DE LA HOZ VALENZUELA FRANCO SEBASTIÁN", "COLLAO MEDINA ANAÍS VALENTINA"],
-            "4° Medio A": [], "4° Medio B": [], "4° Medio C": []
-        };
 
         let app, db, auth, userId = null;
         let masterData = {}; 
@@ -183,12 +171,12 @@
             mainTable: getEl('mainTable'), tableHeader: getEl('tableHeader'), tableBody: getEl('tableBody'), tableContainer: getEl('studentsTableContainer'),
             yearSel: getEl('yearSelector'), classSel: getEl('classSelector'), dateSel: getEl('dateSelector'), evalName: getEl('evalNameInput'),
             saveBtn: getEl('saveDataBtn'), addStudentBtn: getEl('addStudentBtn'), addClassBtn: getEl('addClassBtn'), backupBtn: getEl('backupBtn'),
+            importBtn: getEl('importBtn'), csvInput: getEl('csvInput'), // IMPORT ELEMENTS
             reportSummary: getEl('classReportContainer'), reportDetail: getEl('classDetailsContainer'), backNav: getEl('backToTableContainer'), controls: getEl('controlsContainer'), reportBtns: getEl('reportButtons'),
             modal: { el: getEl('observationModal'), title: getEl('modalTitle'), history: getEl('observationHistory'), input: getEl('newObservationText'), date: getEl('obsDateInput'), save: getEl('saveObservationBtn'), close: getEl('closeObservationModalBtn'), photoInput: getEl('photoInput'), photoPreview: getEl('photoPreviewImg'), photoText: getEl('photoPreviewText'), clearPhoto: getEl('clearPhotoBtn') },
             photoViewer: { el: getEl('photoViewerModal'), img: getEl('fullSizeImage'), caption: getEl('photoCaption'), close: getEl('closePhotoViewer') }
         };
 
-        // --- RUTA ORIGINAL RESTAURADA ---
         function getMyPrivateDocRef() { 
             return doc(db, `artifacts/${appId}/public/data/calificaciones/master_data`); 
         }
@@ -210,7 +198,6 @@
         async function handleLogin(e) { e.preventDefault(); els.authError.classList.add('hidden'); try { await signInWithEmailAndPassword(auth, els.email.value, els.pass.value); } catch (error) { els.authError.textContent = "Error: " + error.message; els.authError.classList.remove('hidden'); } }
 
         function loadData() {
-            // Se agrega manejador de errores al onSnapshot
             onSnapshot(getMyPrivateDocRef(), (docSnap) => {
                 getEl('loadingIndicator').style.display = 'none';
                 let raw = docSnap.exists() ? docSnap.data() : null;
@@ -221,7 +208,6 @@
                 if(!masterData["2026"]) masterData["2026"] = { classes: {} };
                 loadYearData(currentYear);
             }, (error) => {
-                // Si falla la carga, mostramos el error
                 console.error("Error cargando datos:", error);
                 getEl('loadingError').textContent = "Error de Permisos o Conexión: " + error.message;
                 getEl('loadingError').classList.remove('hidden');
@@ -231,9 +217,14 @@
         function loadYearData(year) {
             currentYear = year; allClassesData = masterData[currentYear].classes || {};
             const keys = Object.keys(allClassesData).sort();
+            // Mantener selección si existe
+            const prevSel = els.classSel.value;
             els.classSel.innerHTML = keys.map(k => `<option value="${k}">${k}</option>`).join('');
-            if (!currentClass || !allClassesData[currentClass]) currentClass = keys[0] || null;
-            els.classSel.value = currentClass || "";
+            
+            if(keys.includes(prevSel)) els.classSel.value = prevSel;
+            else if (!currentClass || !allClassesData[currentClass]) currentClass = keys[0] || null;
+            
+            if(els.classSel.value) currentClass = els.classSel.value;
             refreshTable();
         }
 
@@ -336,10 +327,40 @@
             try { await setDoc(getMyPrivateDocRef(), masterData); els.saveBtn.innerHTML = "✅ Listo"; els.saveBtn.classList.add("bg-emerald-600"); setTimeout(() => { els.saveBtn.innerHTML = "💾 Guardar Todo"; els.saveBtn.classList.remove("bg-emerald-600"); }, 2000); } catch(e) { alert("Error al guardar: "+e.message); }
         }
 
-        function loadDefaultCourses() { if(confirm("Cargar cursos iniciales?")) { for(const k in fullDefaultClasses) { if(!allClassesData[k]) allClassesData[k]=fullDefaultClasses[k].map(n=>({name:n,grades:[],attendance:{},observations:[]})); } saveLoc(); saveCloud(); } }
         function downloadBackup() { const a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(masterData)); a.download=`Respaldo_${currentDateString}.json`; a.click(); }
         function calculateAverage(g) { if(!g.length) return '0.0'; return (g.reduce((a,b)=>a+b.value,0)/g.length).toFixed(1); }
         function updateDateDisplay() { const d=new Date(currentDateString+'T12:00:00'); getEl('currentDate').textContent = d.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
+
+        // --- LÓGICA IMPORTACIÓN CSV ---
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            let addedCount = 0;
+            lines.forEach(line => {
+                const parts = line.split(','); // Asume CSV simple separado por comas
+                if(parts.length >= 2) {
+                    const className = parts[0].trim();
+                    const studentName = parts[1].trim().toUpperCase();
+                    if(className && studentName) {
+                        // Crear clase si no existe
+                        if(!allClassesData[className]) allClassesData[className] = [];
+                        // Agregar estudiante si no existe
+                        const exists = allClassesData[className].find(s => s.name === studentName);
+                        if(!exists) {
+                            allClassesData[className].push({ name: studentName, grades: [], attendance: {}, observations: [] });
+                            addedCount++;
+                        }
+                    }
+                }
+            });
+            if(addedCount > 0) {
+                saveLoc();
+                saveCloud();
+                loadYearData(currentYear);
+                alert(`✅ Se importaron ${addedCount} estudiantes nuevos.`);
+            } else {
+                alert("ℹ️ No se encontraron estudiantes nuevos o el formato es incorrecto.");
+            }
+        }
 
         function setupEvents() {
             els.loginForm.onsubmit = handleLogin;
@@ -347,7 +368,19 @@
             els.saveBtn.onclick = saveCloud;
             els.addStudentBtn.onclick = () => { const n=getEl('studentNameInput').value.trim().toUpperCase(); if(n&&!students.find(s=>s.name===n)){ students.push({name:n,grades:[],attendance:{},observations:[]}); getEl('studentNameInput').value=''; saveLoc(); } };
             els.addClassBtn.onclick = () => { const n=prompt("Nombre curso:"); if(n&&!allClassesData[n]) { allClassesData[n]=[]; saveLoc(); saveCloud(); loadYearData(currentYear); } };
-            getEl('resetCoursesBtn').onclick = loadDefaultCourses;
+            
+            // IMPORT CSV
+            els.importBtn.onclick = () => els.csvInput.click();
+            els.csvInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if(file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => parseCSV(e.target.result);
+                    reader.readAsText(file); // Importante para CSV
+                }
+                els.csvInput.value = ''; // Reset
+            };
+
             els.backupBtn.onclick = downloadBackup;
             
             els.yearSel.onchange = (e) => loadYearData(e.target.value);
@@ -357,7 +390,6 @@
             els.modal.close.onclick = () => els.modal.el.classList.add('hidden');
             els.photoViewer.close.onclick = () => els.photoViewer.el.classList.add('hidden');
             
-            // LOGICA FOTO
             els.modal.photoInput.onchange = async (e) => {
                 if(e.target.files && e.target.files[0]) {
                     pendingPhotoBase64 = await compressImage(e.target.files[0]);
