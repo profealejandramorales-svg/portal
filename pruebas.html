@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador ProfeAle v5.9</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; height: 100vh; overflow: hidden; }
+        
+        /* Hoja A4 */
+        .hoja-a4 {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            color: #000;
+            position: relative;
+        }
+
+        .font-oficial { font-family: 'Lora', serif; }
+
+        .modo-pauta .opcion-correcta { background-color: #fee2e2; border: 1px solid #ef4444; border-radius: 4px; padding: 2px 5px; color: #b91c1c; font-weight: bold; }
+        .modo-pauta .desarrollo-profe { color: #dc2626; font-family: 'Inter', sans-serif; font-size: 0.9em; margin-top: 10px; border-left: 3px solid #dc2626; padding-left: 10px; background: #fef2f2; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #vista-previa, #vista-previa * { visibility: visible; }
+            #vista-previa { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20mm; box-shadow: none; }
+            .no-print { display: none !important; }
+        }
+
+        .input-field { width: 100%; padding: 0.4rem; border: 1px solid #d1d5db; rounded: 0.375rem; font-size: 0.85rem; }
+        .input-field:focus { outline: none; border-color: #15803d; ring: 2px solid #bbf7d0; }
+        
+        /* Toggle Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #16a34a; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #16a34a; }
+    </style>
+</head>
+<body class="flex h-screen">
+
+    <div class="w-1/3 bg-white border-r border-gray-200 flex flex-col h-full z-10 shadow-xl no-print">
+        
+        <div class="bg-gray-800 p-3 text-white shadow flex flex-col gap-3">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="font-bold text-lg">💾 Generador v5.9</h1>
+                    <p class="text-[10px] opacity-70">Encabezado Detallado</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-gray-400">PAUTA:</span>
+                    <div class="relative inline-block w-8 align-middle select-none">
+                        <input type="checkbox" name="toggle" id="toggle-pauta" onclick="togglePauta()" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 left-0 transition-all duration-300"/>
+                        <label for="toggle-pauta" class="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="descargarRespaldo()" class="flex-1 bg-blue-600 hover:bg-blue-500 py-1 px-2 rounded text-xs font-bold border border-blue-400 flex justify-center items-center gap-1">
+                    💾 Guardar
+                </button>
+                <label class="flex-1 bg-gray-600 hover:bg-gray-500 py-1 px-2 rounded text-xs font-bold border border-gray-500 cursor-pointer text-center flex justify-center items-center gap-1">
+                    📂 Cargar
+                    <input type="file" id="file-upload" accept=".json" onchange="cargarRespaldo(this)" class="hidden">
+                </label>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            
+            <div class="bg-white p-4 rounded-lg border shadow-sm space-y-3">
+                <h3 class="font-bold text-gray-700 text-xs uppercase border-b pb-1 mb-2">1. Datos Institucionales</h3>
+                
+                <div class="bg-blue-50 p-2 rounded border border-blue-100">
+                    <label class="text-[10px] font-bold text-blue-600 uppercase block mb-1">📸 Subir Logo</label>
+                    <input type="file" id="input-logo" accept="image/*" onchange="cargarLogo()" class="block w-full text-xs text-gray-500"/>
+                    <p class="text-[9px] text-gray-400 mt-1" id="msg-logo">*Si no aparece, usa una imagen más pequeña.</p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-2">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Nombre Colegio</label>
+                        <input type="text" id="edit-colegio" value="ESCUELA AGRÍCOLA SAGRADOS CORAZONES" class="input-field uppercase" oninput="actualizarGeneral()">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Asignatura</label>
+                        <input type="text" id="edit-asignatura" value="ED. TECNOLÓGICA" class="input-field uppercase" oninput="actualizarGeneral()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Docente</label>
+                        <input type="text" id="edit-docente" value="Prof. Alejandro" class="input-field uppercase" oninput="actualizarGeneral()">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Código</label>
+                        <input type="text" id="edit-codigo" value="EVAL-01-2025" class="input-field uppercase" oninput="actualizarGeneral()">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Título Evaluación</label>
+                    <input type="text" id="edit-titulo" value="EVALUACIÓN DIAGNÓSTICA" class="input-field font-bold uppercase" oninput="actualizarGeneral()">
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Objetivo</label>
+                    <textarea id="edit-objetivo" rows="2" class="input-field text-xs" placeholder="Objetivo de aprendizaje..." oninput="actualizarGeneral()"></textarea>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 uppercase">Instrucciones</label>
+                    <textarea id="edit-instrucciones" rows="3" class="input-field text-xs font-bold text-gray-700 bg-yellow-50 border-yellow-200" placeholder="Instrucciones generales..." oninput="actualizarGeneral()"></textarea>
+                </div>
+            </div>
+
+            <div id="contenedor-preguntas" class="space-y-4"></div>
+
+            <button onclick="agregarPregunta()" class="w-full py-3 border-2 border-dashed border-gray-300 text-gray-500 font-bold rounded-lg hover:border-green-500 hover:text-green-600 transition text-sm">
+                + Agregar Pregunta
+            </button>
+        </div>
+
+        <div class="p-4 border-t bg-white">
+            <button onclick="window.print()" class="w-full bg-green-700 text-white font-bold py-3 rounded-lg hover:bg-green-800 transition flex justify-center items-center gap-2 text-sm shadow">
+                🖨️ Imprimir PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="w-2/3 bg-gray-200 overflow-y-auto p-8 flex justify-center">
+        <div id="vista-previa" class="hoja-a4 text-sm leading-relaxed font-oficial">
+            
+            <div class="flex items-start justify-between border-b-2 border-black pb-2 mb-6">
+                <div class="flex items-center gap-4 w-2/3">
+                    <img id="view-logo" src="" class="hidden h-24 w-24 object-contain" alt="Logo">
+                    <div class="text-black">
+                        <h2 id="view-colegio" class="font-bold text-base leading-tight uppercase tracking-wide">ESCUELA AGRICOLA<br>SAGRADOS CORAZONES</h2>
+                        <p id="view-asignatura" class="text-sm mt-1 uppercase font-normal">ED. TECNOLÓGICA</p>
+                    </div>
+                </div>
+                <div class="w-1/3 text-right mt-1 text-xs space-y-1">
+                    <p><b>DOCENTE:</b> <span id="view-docente"></span></p>
+                    <p><b>CÓDIGO:</b> <span id="view-codigo"></span></p>
+                    <p><b>FECHA:</b> ___/___/___</p>
+                    <div id="badge-pauta" class="hidden text-red-600 font-bold border-2 border-red-600 px-1 rounded uppercase text-center mt-2">Pauta</div>
+                </div>
+            </div>
+
+            <div class="text-center mb-6">
+                <h1 id="view-titulo" class="text-xl font-bold mb-6 uppercase tracking-wider">EVALUACIÓN DIAGNÓSTICA</h1>
+                
+                <div class="border border-black rounded mb-6 font-sans text-xs">
+                    <div class="flex border-b border-black">
+                        <div class="flex-1 p-2 font-bold uppercase">
+                            NOMBRE: ___________________________________________________________
+                        </div>
+                        <div class="w-24 border-l border-black p-2 text-center bg-gray-100 font-bold text-gray-500 text-[10px] flex items-center justify-center">
+                            NOTA
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <div class="w-1/2 p-2 border-r border-black font-bold uppercase">
+                            CURSO: _______________
+                        </div>
+                        <div class="w-1/2 p-2 font-bold uppercase">
+                            FECHA: _______________
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bloque-objetivo" class="hidden mb-4 text-sm text-justify font-sans pl-1">
+                <span class="font-bold">Objetivo:</span> <span id="view-objetivo"></span>
+            </div>
+
+            <div id="bloque-instrucciones" class="hidden mb-6 text-sm text-justify font-sans font-bold pl-1 pt-2 border-t border-gray-200">
+                <span id="view-instrucciones"></span>
+            </div>
+
+            <div id="view-contenido" class="space-y-6 font-sans"></div>
+        </div>
+    </div>
+
+    <script>
+        let preguntas = [];
+        let modoPauta = false; 
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Valores por defecto
+            document.getElementById('edit-colegio').value = "ESCUELA AGRÍCOLA SAGRADOS CORAZONES";
+            document.getElementById('edit-asignatura').value = "ED. TECNOLÓGICA";
+            document.getElementById('edit-titulo').value = "EVALUACIÓN DIAGNÓSTICA";
+            document.getElementById('edit-docente').value = "Prof. Alejandro";
+            document.getElementById('edit-codigo').value = "EVAL-01";
+            
+            // Logo
+            try {
+                const savedLogo = localStorage.getItem('profeAleLogo');
+                if(savedLogo && savedLogo.startsWith('data:image')) {
+                    const img = document.getElementById('view-logo');
+                    img.src = savedLogo;
+                    img.classList.remove('hidden');
+                } else if (savedLogo) {
+                    localStorage.removeItem('profeAleLogo');
+                }
+            } catch (e) { console.log("Error memoria local", e); }
+
+            agregarPregunta();
+            actualizarGeneral();
+        });
+
+        // --- SISTEMA ARCHIVOS ---
+        function descargarRespaldo() {
+            const data = {
+                preguntas: preguntas,
+                config: {
+                    colegio: document.getElementById('edit-colegio').value,
+                    asignatura: document.getElementById('edit-asignatura').value,
+                    titulo: document.getElementById('edit-titulo').value,
+                    objetivo: document.getElementById('edit-objetivo').value,
+                    instrucciones: document.getElementById('edit-instrucciones').value,
+                    docente: document.getElementById('edit-docente').value,
+                    codigo: document.getElementById('edit-codigo').value,
+                    logo: document.getElementById('view-logo').src 
+                }
+            };
+            const jsonStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            const nombreArchivo = (data.config.titulo || "prueba").replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".json";
+            link.download = nombreArchivo;
+            link.click();
+        }
+
+        function cargarRespaldo(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if(data.config) {
+                        document.getElementById('edit-colegio').value = data.config.colegio || "";
+                        document.getElementById('edit-asignatura').value = data.config.asignatura || "";
+                        document.getElementById('edit-titulo').value = data.config.titulo || "";
+                        document.getElementById('edit-objetivo').value = data.config.objetivo || "";
+                        document.getElementById('edit-instrucciones').value = data.config.instrucciones || "";
+                        document.getElementById('edit-docente').value = data.config.docente || "";
+                        document.getElementById('edit-codigo').value = data.config.codigo || "";
+                        
+                        if(data.config.logo && data.config.logo.length > 100) {
+                            const img = document.getElementById('view-logo');
+                            img.src = data.config.logo;
+                            img.classList.remove('hidden');
+                        }
+                    }
+                    if(data.preguntas) {
+                        preguntas = data.preguntas;
+                        renderEditor();
+                        actualizarGeneral(); 
+                    }
+                    alert("✅ Respaldo cargado.");
+                } catch (err) { alert("Archivo inválido."); }
+            };
+            reader.readAsText(file);
+            input.value = ''; 
+        }
+
+        function cargarLogo() {
+            const input = document.getElementById('input-logo');
+            const imgView = document.getElementById('view-logo');
+            const msg = document.getElementById('msg-logo');
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (!file.type.startsWith('image/')) {
+                    alert('Solo imágenes (JPG, PNG).');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imgView.src = e.target.result;
+                    imgView.classList.remove('hidden');
+                    msg.innerText = "✅ Logo cargado.";
+                    msg.classList.add("text-green-600");
+                    try { localStorage.setItem('profeAleLogo', e.target.result); } 
+                    catch (err) { 
+                        msg.innerText = "⚠️ Logo visible (no guardado)."; 
+                        msg.classList.remove("text-green-600");
+                        msg.classList.add("text-orange-500");
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function togglePauta() {
+            modoPauta = document.getElementById('toggle-pauta').checked;
+            document.getElementById('badge-pauta').classList.toggle('hidden', !modoPauta);
+            document.getElementById('vista-previa').classList.toggle('modo-pauta', modoPauta);
+            renderVista();
+        }
+
+        function actualizarGeneral() {
+            const colText = document.getElementById('edit-colegio').value;
+            document.getElementById('view-colegio').innerHTML = colText.replace(/\n/g, "<br>");
+            document.getElementById('view-asignatura').innerText = document.getElementById('edit-asignatura').value;
+            document.getElementById('view-titulo').innerText = document.getElementById('edit-titulo').value;
+            document.getElementById('view-docente').innerText = document.getElementById('edit-docente').value;
+            document.getElementById('view-codigo').innerText = document.getElementById('edit-codigo').value;
+            
+            const objText = document.getElementById('edit-objetivo').value;
+            const objBlock = document.getElementById('bloque-objetivo');
+            document.getElementById('view-objetivo').innerText = objText;
+            if(objText.trim() !== "") objBlock.classList.remove('hidden');
+            else objBlock.classList.add('hidden');
+
+            const instrText = document.getElementById('edit-instrucciones').value;
+            const instrBlock = document.getElementById('bloque-instrucciones');
+            document.getElementById('view-instrucciones').innerText = instrText;
+            if(instrText.trim() !== "") instrBlock.classList.remove('hidden');
+            else instrBlock.classList.add('hidden');
+
+            renderVista();
+        }
+
+        function agregarPregunta() {
+            const id = Date.now();
+            preguntas.push({
+                id: id,
+                texto: "Pregunta nueva...",
+                tipo: 'alternativas',
+                solucion: "",
+                correctaIndex: 0,
+                opciones: ["Opción A", "Opción B", "Opción C", "Opción D", "Opción E"]
+            });
+            renderEditor();
+            renderVista();
+        }
+
+        function borrarPregunta(id) {
+            preguntas = preguntas.filter(p => p.id !== id);
+            renderEditor();
+            renderVista();
+        }
+
+        function actualizarDato(id, campo, valor) {
+            const p = preguntas.find(p => p.id === id);
+            if(p) { p[campo] = valor; renderVista(); }
+        }
+        function actualizarOpcion(id, indice, valor) {
+            const p = preguntas.find(p => p.id === id);
+            if(p) { p.opciones[indice] = valor; renderVista(); }
+        }
+        function agregarOpcion(id) {
+            const p = preguntas.find(p => p.id === id);
+            if(p) {
+                const letra = String.fromCharCode(65 + p.opciones.length);
+                p.opciones.push("Alternativa " + letra);
+                renderEditor(); renderVista();
+            }
+        }
+        function eliminarOpcion(id, index) {
+            const p = preguntas.find(p => p.id === id);
+            if(p) {
+                if(p.opciones.length <= 2) { alert("Mínimo 2 opciones."); return; }
+                p.opciones.splice(index, 1);
+                if(p.correctaIndex === index) p.correctaIndex = 0;
+                else if(p.correctaIndex > index) p.correctaIndex--;
+                renderEditor(); renderVista();
+            }
+        }
+
+        function renderEditor() {
+            const contenedor = document.getElementById('contenedor-preguntas');
+            contenedor.innerHTML = '';
+            preguntas.forEach((p, index) => {
+                const div = document.createElement('div');
+                div.className = "bg-white p-3 rounded-lg border border-gray-200 shadow-sm group relative";
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-white bg-gray-600 px-2 py-1 rounded">#${index + 1}</span>
+                        <div class="flex gap-2">
+                             <select onchange="actualizarDato(${p.id}, 'tipo', this.value); renderEditor();" class="text-xs border rounded p-1 bg-gray-50">
+                                <option value="desarrollo" ${p.tipo === 'desarrollo' ? 'selected' : ''}>📝 Desarrollo</option>
+                                <option value="alternativas" ${p.tipo === 'alternativas' ? 'selected' : ''}>🔠 Alternativas</option>
+                            </select>
+                            <button onclick="borrarPregunta(${p.id})" class="text-red-400 hover:text-red-600 font-bold text-xs">🗑️ Borrar</button>
+                        </div>
+                    </div>
+                    <textarea oninput="actualizarDato(${p.id}, 'texto', this.value)" class="input-field mb-2 text-sm" rows="2">${p.texto}</textarea>
+                    
+                    <div class="bg-red-50 p-2 rounded border border-red-100 mt-2">
+                        <div class="${p.tipo === 'alternativas' ? 'hidden' : 'block'}">
+                            <textarea oninput="actualizarDato(${p.id}, 'solucion', this.value)" class="w-full text-xs border border-red-200 p-1 rounded focus:outline-none text-red-700" rows="2" placeholder="Respuesta correcta...">${p.solucion || ''}</textarea>
+                        </div>
+                        <div class="${p.tipo === 'desarrollo' ? 'hidden' : 'block'} space-y-1">
+                            ${p.opciones.map((opt, i) => `
+                                <div class="flex items-center gap-1 group/opt">
+                                    <input type="radio" name="correcta-${p.id}" ${p.correctaIndex == i ? 'checked' : ''} onchange="actualizarDato(${p.id}, 'correctaIndex', ${i})" title="Marcar correcta">
+                                    <span class="text-[10px] font-bold text-gray-500 w-4">${String.fromCharCode(97+i)})</span>
+                                    <input type="text" value="${opt}" oninput="actualizarOpcion(${p.id}, ${i}, this.value)" class="text-xs border p-1 rounded w-full">
+                                    <button onclick="eliminarOpcion(${p.id}, ${i})" class="text-gray-300 hover:text-red-500 px-1 font-bold" title="Eliminar">×</button>
+                                </div>
+                            `).join('')}
+                            <button onclick="agregarOpcion(${p.id})" class="text-[10px] text-blue-600 hover:text-blue-800 font-bold mt-1 ml-6">+ Agregar Alternativa</button>
+                        </div>
+                    </div>
+                `;
+                contenedor.appendChild(div);
+            });
+        }
+
+        function renderVista() {
+            const contenedor = document.getElementById('view-contenido');
+            contenedor.innerHTML = '';
+            preguntas.forEach((p, index) => {
+                const bloque = document.createElement('div');
+                bloque.className = "mb-6 break-inside-avoid"; 
+                let htmlPregunta = `<div class="font-bold text-sm mb-2 text-black">${index + 1}. ${p.texto}</div>`;
+                
+                let htmlRespuesta = '';
+                if (p.tipo === 'desarrollo') {
+                    if (modoPauta) htmlRespuesta = `<div class="desarrollo-profe"><b>Solución:</b><br>${p.solucion || '...'}</div>`;
+                    else htmlRespuesta = `<div class="mt-2 space-y-3 pl-5"><div class="border-b border-dotted border-gray-400 h-6 w-full"></div><div class="border-b border-dotted border-gray-400 h-6 w-full"></div></div>`;
+                } else {
+                    htmlRespuesta = `<div class="mt-2 pl-4 grid gap-2 text-sm">`;
+                    p.opciones.forEach((opt, i) => {
+                        let estilo = (modoPauta && i === p.correctaIndex) ? "opcion-correcta" : "";
+                        let check = (modoPauta && i === p.correctaIndex) ? " ✅" : "";
+                        htmlRespuesta += `<div class="flex gap-2 items-center ${estilo}"><div class="font-bold w-4 lowercase">${String.fromCharCode(97+i)})</div><div>${opt}${check}</div></div>`;
+                    });
+                    htmlRespuesta += `</div>`;
+                }
+                bloque.innerHTML = htmlPregunta + htmlRespuesta;
+                contenedor.appendChild(bloque);
+            });
+            if(window.MathJax) { MathJax.typesetPromise(); }
+        }
+    </script>
+</body>
+</html>

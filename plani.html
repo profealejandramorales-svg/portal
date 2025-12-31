@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Envío de Planificaciones (Links)</title>
+    <title>Gestión Planificaciones UTP v3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
@@ -11,103 +11,189 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f0fdf4; }
+        .tab-active { border-bottom: 4px solid #15803d; color: #15803d; font-weight: bold; background-color: #f0fdf4; }
+        .tab-inactive { color: #6b7280; background-color: white; }
+        .tab-inactive:hover { color: #15803d; background-color: #f9fafb; }
+        
+        /* Estilos para los estados */
+        .estado-select { -webkit-appearance: none; appearance: none; cursor: pointer; text-align: center; }
+        .bg-estado-pendiente { background-color: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; }
+        .bg-estado-aprobado { background-color: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .bg-estado-rechazado { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen p-2 md:p-6 bg-gray-100">
 
-    <div class="max-w-md w-full bg-white rounded-xl shadow-xl overflow-hidden">
-        <div class="bg-green-700 p-6 text-center">
-            <h1 class="text-white text-2xl font-bold">Envío de Enlaces</h1>
-            <p class="text-green-100 text-sm">Plataforma de Contingencia UTP 2025</p>
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-xl overflow-hidden min-h-[700px]">
+        
+        <div class="bg-green-700 p-5 text-white flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">📂 Sistema UTP 3.0</h1>
+                <p class="text-green-100 text-sm">Escuela Agrícola Sagrados Corazones</p>
+            </div>
+            <div class="text-right hidden md:block">
+                <div class="text-xs font-mono bg-green-800 px-2 py-1 rounded">Dev: ProfeAle</div>
+            </div>
         </div>
-
-        <div class="p-8 space-y-4">
-            
-            <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Docente</label>
-                <select id="input-docente" class="w-full border-2 border-gray-200 p-3 rounded-lg bg-white focus:border-green-500 outline-none">
-                    <option value="">Cargando lista...</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Curso / Nivel</label>
-                <select id="input-curso" class="w-full border-2 border-gray-200 p-3 rounded-lg bg-white focus:border-green-500 outline-none">
-                    <option value="">Cargando lista...</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Asignatura</label>
-                <input type="text" id="input-asignatura" class="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-green-500 outline-none" placeholder="Ej: Matemática, Orientación...">
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Título / Mes</label>
-                <input type="text" id="input-titulo" class="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-green-500 outline-none" placeholder="Ej: Marzo - Unidad 1">
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Link del Archivo (Drive/Dropbox)</label>
-                <input type="url" id="input-link" class="w-full border-2 border-gray-200 p-3 rounded-lg text-blue-600 focus:border-green-500 outline-none" placeholder="https://...">
-            </div>
-
-            <button id="btn-enviar" class="w-full bg-green-700 text-white font-bold py-4 rounded-lg hover:bg-green-800 transition flex justify-center items-center gap-2 shadow-lg mt-4">
-                <span id="btn-text">🚀 Enviar a UTP</span>
+        
+        <div class="flex border-b text-sm font-medium">
+            <button onclick="cambiarPestana('enviar')" id="tab-enviar" class="flex-1 py-4 text-center transition tab-active">
+                📤 Nuevo Envío
             </button>
+            <button onclick="cambiarPestana('revisar')" id="tab-revisar" class="flex-1 py-4 text-center transition tab-inactive">
+                📥 Buzón y Gestión
+            </button>
+        </div>
 
-            <div id="mensaje-exito" class="hidden mt-4 p-3 bg-green-100 text-green-800 text-center rounded-lg text-sm font-bold border border-green-200">
-                ✅ ¡Recibido! Tu planificación ha sido registrada en el sistema.
+        <div id="vista-enviar" class="p-6 md:p-10 max-w-lg mx-auto">
+            <div class="space-y-5">
+                <div class="text-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Subir Planificación</h2>
+                    <p class="text-sm text-gray-500">Registro oficial de enlaces</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Docente</label>
+                    <select id="input-docente" class="w-full border p-3 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+                        <option value="">Cargando lista...</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Curso</label>
+                        <select id="input-curso" class="w-full border p-3 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+                            <option value="">Cargando...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Asignatura</label>
+                        <input type="text" id="input-asignatura" class="w-full border p-3 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" placeholder="Ej: Lenguaje">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Título / Mes / Unidad</label>
+                    <input type="text" id="input-titulo" class="w-full border p-3 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" placeholder="Ej: Marzo - Unidad 1">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Link del Archivo (Drive)</label>
+                    <input type="url" id="input-link" class="w-full border p-3 rounded-lg text-blue-600 focus:ring-2 focus:ring-green-500 outline-none" placeholder="https://...">
+                </div>
+
+                <button id="btn-enviar" class="w-full bg-green-700 text-white font-bold py-4 rounded-lg hover:bg-green-800 transition flex justify-center items-center gap-2 shadow-lg pt-4">
+                    <span id="btn-text">🚀 Enviar a UTP</span>
+                </button>
+
+                <div id="mensaje-exito" class="hidden p-3 bg-green-100 text-green-800 text-center rounded-lg text-sm font-bold border border-green-200 animate-pulse">
+                    ✅ ¡Envío registrado exitosamente!
+                </div>
             </div>
+        </div>
 
+        <div id="vista-revisar" class="hidden p-4 md:p-8 bg-gray-50 min-h-[600px]">
+            
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 bg-white p-4 rounded-lg shadow-sm border">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-800">📋 Bandeja de Entrada</h2>
+                    <p class="text-xs text-gray-400">Gestiona y revisa los envíos</p>
+                </div>
+                
+                <div class="flex gap-2 w-full md:w-auto">
+                    <div class="relative w-full md:w-64">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
+                        <input type="text" id="input-buscar" onkeyup="filtrarTabla()" placeholder="Buscar profe o materia..." 
+                               class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:border-green-500">
+                    </div>
+                    <button onclick="cargarBuzon()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition">
+                        🔄
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow border overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
+                            <tr>
+                                <th class="p-4 font-bold border-b">Fecha</th>
+                                <th class="p-4 font-bold border-b">Docente</th>
+                                <th class="p-4 font-bold border-b">Detalle (Curso/Asig)</th>
+                                <th class="p-4 font-bold border-b text-center">Archivo</th>
+                                <th class="p-4 font-bold border-b text-center">Estado</th>
+                                <th class="p-4 font-bold border-b text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-body" class="text-sm text-gray-700 divide-y divide-gray-100">
+                            <tr><td colspan="6" class="p-8 text-center text-gray-400">Cargando datos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <p class="text-xs text-center text-gray-400 mt-4">Mostrando los últimos 50 registros</p>
         </div>
-        <div class="bg-gray-50 p-4 text-center text-xs text-gray-400 border-t">
-            Escuela Agrícola Sagrados Corazones
-        </div>
+
     </div>
 
     <script>
-        // 1. CONFIGURACIÓN BITÁCORA (Para leer listas)
+        // --- 1. CONFIGURACIÓN FIREBASE ---
         const configBitacora = { apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs", authDomain: "attendance-ai-s81lt.firebaseapp.com", projectId: "attendance-ai-s81lt", storageBucket: "attendance-ai-s81lt.firebasestorage.app", messagingSenderId: "935781953186", appId: "1:935781953186:web:6c8a7a93ffad180d33b1fb" };
         const appBitacora = firebase.initializeApp(configBitacora, "appBitacora");
         const dbBitacora = appBitacora.firestore();
 
-        // 2. CONFIGURACIÓN PLANIFICACIONES (Para guardar)
         const configPlanif = { apiKey: "AIzaSyDJnJlpsqR76z_lBnTNEULYcGoQGIi23VU", authDomain: "planificaciones-18b94.firebaseapp.com", projectId: "planificaciones-18b94", storageBucket: "planificaciones-18b94.appspot.com", messagingSenderId: "268119843295", appId: "1:268119843295:web:bb2bdbcb0affe4ecf3646a" };
         const appPlanif = firebase.initializeApp(configPlanif, "appPlanif");
         const dbPlanif = appPlanif.firestore();
 
-        // CARGAR LISTAS AL INICIAR
+        // Variable global para guardar datos y poder filtrar sin recargar
+        let datosGlobales = [];
+
+        // --- 2. SISTEMA DE PESTAÑAS ---
+        function cambiarPestana(tab) {
+            const vistaEnviar = document.getElementById('vista-enviar');
+            const vistaRevisar = document.getElementById('vista-revisar');
+            const tabEnviar = document.getElementById('tab-enviar');
+            const tabRevisar = document.getElementById('tab-revisar');
+
+            if(tab === 'enviar') {
+                vistaEnviar.classList.remove('hidden');
+                vistaRevisar.classList.add('hidden');
+                tabEnviar.classList.add('tab-active');
+                tabEnviar.classList.remove('tab-inactive');
+                tabRevisar.classList.remove('tab-active');
+                tabRevisar.classList.add('tab-inactive');
+            } else {
+                vistaEnviar.classList.add('hidden');
+                vistaRevisar.classList.remove('hidden');
+                tabEnviar.classList.remove('tab-active');
+                tabEnviar.classList.add('tab-inactive');
+                tabRevisar.classList.add('tab-active');
+                tabRevisar.classList.remove('tab-inactive');
+                cargarBuzon(); 
+            }
+        }
+
+        // --- 3. CARGAR LISTAS (Inicio) ---
         document.addEventListener("DOMContentLoaded", async () => {
             const selDocente = document.getElementById('input-docente');
             const selCurso = document.getElementById('input-curso');
-
             try {
-                // Cargar Docentes
+                // Docentes
                 const docSnap = await dbBitacora.collection('docentes').get();
                 const docentes = docSnap.docs.map(d => d.data().nombre).sort();
-                
                 selDocente.innerHTML = '<option value="">-- Seleccionar Docente --</option>';
-                docentes.forEach(d => {
-                    selDocente.innerHTML += `<option value="${d}">${d}</option>`;
-                });
+                docentes.forEach(d => selDocente.innerHTML += `<option value="${d}">${d}</option>`);
 
-                // Cargar Cursos (Niveles únicos)
+                // Cursos
                 const curSnap = await dbBitacora.collection('cursos').get();
                 const niveles = [...new Set(curSnap.docs.map(d => d.data().nivel))].sort();
-                
-                selCurso.innerHTML = '<option value="">-- Seleccionar Curso --</option>';
-                niveles.forEach(n => {
-                    selCurso.innerHTML += `<option value="${n}">${n}</option>`;
-                });
-
-            } catch (e) {
-                console.error("Error cargando listas:", e);
-                selDocente.innerHTML = '<option>Error de conexión</option>';
-            }
+                selCurso.innerHTML = '<option value="">-- Seleccionar --</option>';
+                niveles.forEach(n => selCurso.innerHTML += `<option value="${n}">${n}</option>`);
+            } catch (e) { console.error(e); }
         });
 
-        // ENVIAR
+        // --- 4. FUNCIÓN ENVIAR ---
         document.getElementById('btn-enviar').addEventListener('click', async () => {
             const docente = document.getElementById('input-docente').value;
             const curso = document.getElementById('input-curso').value;
@@ -116,55 +202,181 @@
             const link = document.getElementById('input-link').value.trim();
 
             if(!docente || !curso || !asignatura || !titulo) {
-                alert("⚠️ Por favor completa los campos obligatorios.");
-                return;
+                alert("⚠️ Faltan datos obligatorios."); return;
             }
 
             const btn = document.getElementById('btn-enviar');
             const btnText = document.getElementById('btn-text');
-            const originalText = btnText.innerText;
-            
-            btn.disabled = true;
-            btnText.innerText = "Enviando...";
-            btn.classList.add('opacity-50');
+            btn.disabled = true; btnText.innerText = "Enviando..."; btn.classList.add('opacity-50');
 
             try {
-                // Guardar en la MISMA colección que el planificador digital
-                // Esto hace que aparezca en el Control UTP automáticamente
                 await dbPlanif.collection('planificaciones_digitales').add({
                     docente: docente,
-                    curso: curso,           // Guardamos como 'curso' o 'nivel' según convenga, el Control lee ambos
-                    nivel: curso,           // Duplicamos para asegurar compatibilidad
+                    curso: curso,
+                    nivel: curso,
                     asignatura: asignatura,
-                    mes_planificado: titulo, // El control leerá esto como el mes/unidad
-                    link_externo: link,     
-                    estado: 'Enviado UTP',
-                    origen: 'link',         // Etiqueta clave para el visor
+                    mes_planificado: titulo,
+                    link_externo: link,
+                    estado: 'Pendiente', // Estado inicial por defecto
                     timestamp: Date.now(),
-                    fecha_envio: new Date().toLocaleString()
+                    fecha_envio: new Date().toLocaleString('es-CL')
                 });
 
                 document.getElementById('mensaje-exito').classList.remove('hidden');
-                
-                // Resetear campos visuales
                 document.getElementById('input-titulo').value = '';
                 document.getElementById('input-link').value = '';
                 
                 setTimeout(() => {
                     document.getElementById('mensaje-exito').classList.add('hidden');
-                    btn.disabled = false;
-                    btnText.innerText = originalText;
-                    btn.classList.remove('opacity-50');
+                    btn.disabled = false; btnText.innerText = "🚀 Enviar a UTP"; btn.classList.remove('opacity-50');
                 }, 3000);
 
             } catch (error) {
-                console.error("Error:", error);
-                alert("Hubo un error al enviar. Verifica tu conexión.");
-                btn.disabled = false;
-                btnText.innerText = originalText;
-                btn.classList.remove('opacity-50');
+                console.error(error); alert("Error al enviar.");
+                btn.disabled = false; btnText.innerText = "🚀 Enviar a UTP"; btn.classList.remove('opacity-50');
             }
         });
+
+        // --- 5. CARGAR BUZÓN Y GESTIÓN ---
+        function cargarBuzon() {
+            const tbody = document.getElementById('tabla-body');
+            tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400"><div class="animate-spin inline-block w-6 h-6 border-4 border-green-500 rounded-full border-t-transparent"></div> Cargando...</td></tr>';
+
+            dbPlanif.collection('planificaciones_digitales')
+              .orderBy('timestamp', 'desc')
+              .limit(50)
+              .get()
+              .then((querySnapshot) => {
+                  datosGlobales = []; // Limpiar array global
+                  
+                  if (querySnapshot.empty) {
+                      tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400">Buzón vacío.</td></tr>';
+                      return;
+                  }
+
+                  querySnapshot.forEach((doc) => {
+                      // Guardamos ID y Datos juntos
+                      datosGlobales.push({ id: doc.id, ...doc.data() });
+                  });
+
+                  dibujarTabla(datosGlobales);
+              })
+              .catch(err => {
+                  console.error(err);
+                  tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-red-400">Error de conexión.</td></tr>';
+              });
+        }
+
+        // --- 6. DIBUJAR TABLA (RENDER) ---
+        function dibujarTabla(lista) {
+            const tbody = document.getElementById('tabla-body');
+            tbody.innerHTML = '';
+
+            if(lista.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400">No hay coincidencias.</td></tr>';
+                 return;
+            }
+
+            lista.forEach(data => {
+                let fecha = data.fecha_envio ? data.fecha_envio.split(' ')[0] : '--'; // Solo fecha, sin hora
+                
+                // Botón Link
+                let btnLink = `<span class="text-xs text-gray-300 italic">Sin link</span>`;
+                if (data.link_externo) {
+                    btnLink = `<a href="${data.link_externo}" target="_blank" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded text-xs font-bold border border-blue-200 transition">📂 Abrir</a>`;
+                }
+
+                // Selector de Estado (Colores dinámicos)
+                let estadoActual = data.estado || 'Pendiente';
+                let claseEstado = 'bg-estado-pendiente';
+                if(estadoActual === 'Aprobado') claseEstado = 'bg-estado-aprobado';
+                if(estadoActual === 'Rechazado') claseEstado = 'bg-estado-rechazado';
+
+                const selectEstado = `
+                    <select onchange="actualizarEstado('${data.id}', this.value)" class="text-xs font-bold py-1 px-2 rounded-full border ${claseEstado} estado-select focus:outline-none">
+                        <option value="Pendiente" ${estadoActual === 'Pendiente' ? 'selected' : ''}>⏳ Pendiente</option>
+                        <option value="Aprobado" ${estadoActual === 'Aprobado' ? 'selected' : ''}>✅ Aprobado</option>
+                        <option value="Rechazado" ${estadoActual === 'Rechazado' ? 'selected' : ''}>❌ Rechazado</option>
+                    </select>
+                `;
+
+                const fila = `
+                  <tr class="hover:bg-gray-50 transition group">
+                      <td class="p-4 text-xs text-gray-500 whitespace-nowrap">${fecha}</td>
+                      <td class="p-4">
+                          <div class="font-bold text-gray-800">${data.docente || 'Anónimo'}</div>
+                      </td>
+                      <td class="p-4">
+                          <div class="text-xs font-bold text-green-700 bg-green-50 inline-block px-2 rounded">${data.curso}</div>
+                          <div class="text-xs text-gray-600 mt-1">${data.asignatura}</div>
+                          <div class="text-[10px] text-gray-400">${data.mes_planificado}</div>
+                      </td>
+                      <td class="p-4 text-center align-middle">${btnLink}</td>
+                      <td class="p-4 text-center align-middle">${selectEstado}</td>
+                      <td class="p-4 text-center align-middle">
+                          <button onclick="eliminarRegistro('${data.id}')" class="text-gray-300 hover:text-red-500 transition p-2 rounded-full hover:bg-red-50" title="Eliminar">
+                              🗑️
+                          </button>
+                      </td>
+                  </tr>
+                `;
+                tbody.innerHTML += fila;
+            });
+        }
+
+        // --- 7. FILTRAR TABLA (Buscador) ---
+        function filtrarTabla() {
+            const texto = document.getElementById('input-buscar').value.toLowerCase();
+            const filtrados = datosGlobales.filter(item => {
+                // Busca por Docente O Asignatura O Curso
+                return (item.docente && item.docente.toLowerCase().includes(texto)) || 
+                       (item.asignatura && item.asignatura.toLowerCase().includes(texto)) ||
+                       (item.curso && item.curso.toLowerCase().includes(texto));
+            });
+            dibujarTabla(filtrados);
+        }
+
+        // --- 8. ACTUALIZAR ESTADO (En DB) ---
+        async function actualizarEstado(id, nuevoEstado) {
+            try {
+                await dbPlanif.collection('planificaciones_digitales').doc(id).update({
+                    estado: nuevoEstado
+                });
+                
+                // Actualizar visualmente sin recargar todo (Optimización UX)
+                const index = datosGlobales.findIndex(d => d.id === id);
+                if(index !== -1) {
+                    datosGlobales[index].estado = nuevoEstado;
+                    filtrarTabla(); // Redibujar para actualizar colores
+                }
+                
+                // Feedback sutil (Toast o log)
+                console.log("Estado actualizado a:", nuevoEstado);
+
+            } catch (e) {
+                console.error("Error al actualizar estado:", e);
+                alert("No se pudo actualizar el estado. Revisa tu conexión.");
+            }
+        }
+
+        // --- 9. ELIMINAR REGISTRO ---
+        async function eliminarRegistro(id) {
+            if(!confirm("⚠️ ¿Estás seguro de que quieres eliminar esta planificación permanentemente?")) return;
+
+            try {
+                await dbPlanif.collection('planificaciones_digitales').doc(id).delete();
+                
+                // Quitar del array local y redibujar
+                datosGlobales = datosGlobales.filter(d => d.id !== id);
+                filtrarTabla();
+                alert("🗑️ Eliminado correctamente.");
+
+            } catch (e) {
+                console.error("Error al eliminar:", e);
+                alert("Error al eliminar.");
+            }
+        }
+
     </script>
 </body>
 </html>

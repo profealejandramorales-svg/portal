@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control UTP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { font-family: 'Quicksand', sans-serif; background-color: #f3f4f6; }
+        .glass { background: white; border: 1px solid #e5e7eb; }
+        
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 1000px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
+        
+        /* Table Styles inside Modal */
+        .plan-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 20px; }
+        .plan-table th { background-color: #f3f4f6; padding: 8px; border: 1px solid #ddd; text-align: left; }
+        .plan-table td { padding: 8px; border: 1px solid #ddd; vertical-align: top; }
+    </style>
+</head>
+<body class="p-6">
+
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Panel de Control UTP</h1>
+                <p class="text-gray-500 text-sm">Gestión centralizada de planificaciones (Digitales y Enlaces)</p>
+            </div>
+            <button onclick="cargarBandeja()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold shadow transition">
+                <i class="fas fa-sync-alt mr-2"></i> Actualizar
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-xl shadow border-l-4 border-yellow-500">
+                <h3 class="text-gray-500 text-xs uppercase font-bold">Pendientes Revisión</h3>
+                <p class="text-2xl font-bold text-yellow-600" id="count-pending">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow border-l-4 border-green-500">
+                <h3 class="text-gray-500 text-xs uppercase font-bold">Aprobadas</h3>
+                <p class="text-2xl font-bold text-green-600" id="count-approved">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow border-l-4 border-blue-500">
+                <h3 class="text-gray-500 text-xs uppercase font-bold">Total Recibido</h3>
+                <p class="text-2xl font-bold text-blue-600" id="count-total">0</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
+                        <tr>
+                            <th class="p-4 font-bold">Fecha</th>
+                            <th class="p-4 font-bold">Docente</th>
+                            <th class="p-4 font-bold">Curso / Asignatura</th>
+                            <th class="p-4 font-bold">Tipo</th>
+                            <th class="p-4 font-bold text-center">Estado</th>
+                            <th class="p-4 font-bold text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-body" class="text-sm text-gray-700 divide-y divide-gray-100">
+                        <tr><td colspan="6" class="p-8 text-center text-gray-400">Cargando datos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-visor" class="modal">
+        <div class="modal-content relative">
+            <button onclick="cerrarModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl font-bold">&times;</button>
+            
+            <div id="modal-header" class="mb-6 border-b pb-4">
+                <h2 class="text-2xl font-bold text-purple-700">Detalle de Planificación</h2>
+                <div id="modal-info" class="text-sm text-gray-600 mt-2 grid grid-cols-2 gap-2"></div>
+            </div>
+
+            <div id="modal-body">
+                </div>
+
+            <div class="mt-6 flex justify-end gap-3 border-t pt-4">
+                <button onclick="cambiarEstadoDesdeModal('Rechazado')" class="bg-red-100 text-red-700 px-4 py-2 rounded font-bold hover:bg-red-200">Rechazar</button>
+                <button onclick="cambiarEstadoDesdeModal('Aprobado')" class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">✅ Aprobar Planificación</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN FIREBASE (Mismas credenciales)
+        const configPlanif = { apiKey: "AIzaSyDJnJlpsqR76z_lBnTNEULYcGoQGIi23VU", authDomain: "planificaciones-18b94.firebaseapp.com", projectId: "planificaciones-18b94", storageBucket: "planificaciones-18b94.appspot.com", messagingSenderId: "268119843295", appId: "1:268119843295:web:bb2bdbcb0affe4ecf3646a" };
+        const app = firebase.initializeApp(configPlanif);
+        const db = firebase.firestore();
+
+        // Variable global para almacenar los datos cargados
+        let datosGlobales = [];
+        let itemActualId = null;
+
+        // --- 1. CARGAR DATOS ---
+        function cargarBandeja() {
+            const tbody = document.getElementById('tabla-body');
+            tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400">Actualizando bandeja...</td></tr>';
+
+            db.collection('planificaciones_digitales')
+              .orderBy('timestamp', 'desc')
+              .limit(50)
+              .get()
+              .then((snapshot) => {
+                  datosGlobales = [];
+                  let countPend = 0, countAppr = 0;
+
+                  if (snapshot.empty) {
+                      tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400">No hay planificaciones recibidas.</td></tr>';
+                      return;
+                  }
+
+                  tbody.innerHTML = '';
+                  snapshot.forEach(doc => {
+                      const data = doc.data();
+                      data.id = doc.id; // Guardamos ID
+                      datosGlobales.push(data);
+
+                      // Contadores
+                      if(data.estado === 'Aprobado') countAppr++;
+                      else if(data.estado === 'Enviado UTP' || data.estado === 'Pendiente') countPend++;
+
+                      // Determinar Tipo (Link vs Digital)
+                      const esDigital = !!data.detailed_planning; // Si tiene 'detailed_planning', es digital
+                      const tipoBadge = esDigital 
+                        ? `<span class="bg-purple-100 text-purple-700 py-1 px-2 rounded-full text-xs font-bold border border-purple-200">💻 Digital</span>`
+                        : `<span class="bg-blue-100 text-blue-700 py-1 px-2 rounded-full text-xs font-bold border border-blue-200">🔗 Enlace</span>`;
+
+                      // Botón de Acción
+                      let btnAccion = '';
+                      if (esDigital) {
+                          btnAccion = `<button onclick="abrirVisor('${data.id}')" class="bg-purple-600 hover:bg-purple-700 text-white py-1 px-3 rounded text-xs font-bold transition flex items-center gap-1 mx-auto"><i class="fas fa-eye"></i> Ver</button>`;
+                      } else {
+                          btnAccion = `<a href="${data.link_externo}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded text-xs font-bold transition flex items-center gap-1 justify-center mx-auto"><i class="fas fa-external-link-alt"></i> Abrir</a>`;
+                      }
+
+                      // Estado Color
+                      let estadoClass = "bg-gray-100 text-gray-600";
+                      if(data.estado === 'Aprobado') estadoClass = "bg-green-100 text-green-700 border-green-200";
+                      if(data.estado === 'Rechazado') estadoClass = "bg-red-100 text-red-700 border-red-200";
+                      if(data.estado === 'Enviado UTP') estadoClass = "bg-yellow-100 text-yellow-700 border-yellow-200 animate-pulse";
+
+                      const fecha = data.fecha_envio ? data.fecha_envio.split(' ')[0] : '--';
+
+                      const row = `
+                        <tr class="hover:bg-gray-50 border-b last:border-0 transition">
+                            <td class="p-4 text-gray-500 font-mono text-xs">${fecha}</td>
+                            <td class="p-4 font-bold text-gray-800">${data.docente || 'Anónimo'}</td>
+                            <td class="p-4">
+                                <div class="font-bold text-xs text-gray-600">${data.nivel || data.curso}</div>
+                                <div class="text-xs text-gray-400">${data.asignatura}</div>
+                            </td>
+                            <td class="p-4">${tipoBadge}</td>
+                            <td class="p-4 text-center">
+                                <span class="px-2 py-1 rounded text-xs font-bold border ${estadoClass}">${data.estado || 'Pendiente'}</span>
+                            </td>
+                            <td class="p-4 text-center">
+                                ${btnAccion}
+                            </td>
+                        </tr>
+                      `;
+                      tbody.innerHTML += row;
+                  });
+
+                  // Actualizar Dashboard
+                  document.getElementById('count-pending').innerText = countPend;
+                  document.getElementById('count-approved').innerText = countAppr;
+                  document.getElementById('count-total').innerText = snapshot.size;
+              });
+        }
+
+        // --- 2. LÓGICA DEL VISOR (MODAL) ---
+        function abrirVisor(id) {
+            const data = datosGlobales.find(d => d.id === id);
+            if (!data) return;
+            
+            itemActualId = id;
+
+            // Llenar cabecera modal
+            document.getElementById('modal-info').innerHTML = `
+                <p><strong>Docente:</strong> ${data.docente}</p>
+                <p><strong>Asignatura:</strong> ${data.asignatura}</p>
+                <p><strong>Curso:</strong> ${data.nivel}</p>
+                <p><strong>Fecha Envío:</strong> ${data.fecha_envio}</p>
+            `;
+
+            // Construir contenido del plan
+            const container = document.getElementById('modal-body');
+            container.innerHTML = '';
+
+            const planes = data.detailed_planning || {};
+            
+            // Iterar por meses
+            Object.keys(planes).forEach(mes => {
+                const clases = planes[mes];
+                if (clases.length === 0) return;
+
+                let tableHTML = `
+                    <h3 class="text-lg font-bold text-gray-700 mt-4 mb-2 border-l-4 border-purple-500 pl-2">📅 ${mes}</h3>
+                    <table class="plan-table">
+                        <thead>
+                            <tr>
+                                <th width="5%">N°</th>
+                                <th width="25%">OA / Contenido</th>
+                                <th width="40%">Actividades (Inicio/Des/Cierre)</th>
+                                <th width="20%">Recursos/Eval</th>
+                                <th width="10%">DUA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                clases.forEach(clase => {
+                    // Formatear DUA
+                    let duaTxt = [];
+                    if(clase.dua?.p1) duaTxt.push("Pres.");
+                    if(clase.dua?.p2) duaTxt.push("Acc.");
+                    if(clase.dua?.p3) duaTxt.push("Imp.");
+
+                    tableHTML += `
+                        <tr>
+                            <td class="text-center font-bold">${clase.number}</td>
+                            <td>
+                                <div class="font-bold text-xs text-green-700 mb-1">${clase.oa_ref}</div>
+                                <div class="text-xs text-gray-600">${clase.contenido}</div>
+                            </td>
+                            <td>
+                                <div class="mb-1"><strong class="text-green-600 text-xs">I:</strong> ${clase.actividad_inicio}</div>
+                                <div class="mb-1"><strong class="text-blue-600 text-xs">D:</strong> ${clase.actividad_desarrollo}</div>
+                                <div><strong class="text-red-600 text-xs">C:</strong> ${clase.actividad_cierre}</div>
+                            </td>
+                            <td>
+                                <div class="text-xs mb-1">🛠️ ${clase.recursos}</div>
+                                <div class="text-xs italic">📝 ${clase.evaluacion}</div>
+                            </td>
+                            <td class="text-xs text-center text-purple-600 font-bold">
+                                ${duaTxt.join(', ') || '-'}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tableHTML += `</tbody></table>`;
+                container.innerHTML += tableHTML;
+            });
+
+            document.getElementById('modal-visor').style.display = "block";
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-visor').style.display = "none";
+            itemActualId = null;
+        }
+
+        // --- 3. APROBAR / RECHAZAR ---
+        async function cambiarEstadoDesdeModal(nuevoEstado) {
+            if(!itemActualId) return;
+            
+            if(!confirm(`¿Estás seguro de marcar esto como ${nuevoEstado}?`)) return;
+
+            try {
+                await db.collection('planificaciones_digitales').doc(itemActualId).update({
+                    estado: nuevoEstado
+                });
+                alert(`Estado actualizado a: ${nuevoEstado}`);
+                cerrarModal();
+                cargarBandeja(); // Refrescar lista de fondo
+            } catch (e) {
+                alert("Error al actualizar: " + e.message);
+            }
+        }
+
+        // Iniciar
+        document.addEventListener('DOMContentLoaded', cargarBandeja);
+
+        // Cerrar modal al hacer click fuera
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('modal-visor')) {
+                cerrarModal();
+            }
+        }
+    </script>
+</body>
+</html>

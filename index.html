@@ -20,7 +20,6 @@
             background-attachment: fixed;
         }
         
-        /* Efecto Cristal */
         .glass-panel {
             background: rgba(255, 255, 255, 0.9); 
             backdrop-filter: blur(8px);
@@ -48,70 +47,20 @@
         .title-font { font-family: 'Dancing Script', cursive; }
         .flower-icon { color: #ec4899; opacity: 0.8; position: absolute; z-index: 0; }
 
-        /* ESTILOS RELOJ ANÁLOGO */
+        /* RELOJ */
         .analog-clock-container {
-            position: relative;
-            width: 220px;
-            height: 220px;
-            margin: 0 auto;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.5);
+            position: relative; width: 220px; height: 220px; margin: 0 auto;
+            border-radius: 50%; background: rgba(255, 255, 255, 0.5);
             border: 8px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 
-                inset 0 0 20px rgba(0,0,0,0.1),
-                0 10px 20px rgba(0,0,0,0.2);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.2);
             backdrop-filter: blur(5px);
         }
-
-        .clock-number {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            text-align: center;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #555;
-            padding-top: 10px; /* Distancia del borde */
-        }
-
-        /* Manecillas */
-        .hand {
-            position: absolute;
-            bottom: 50%;
-            left: 50%;
-            transform-origin: bottom center;
-            border-radius: 4px;
-            z-index: 10;
-        }
-        .hour-hand {
-            width: 6px;
-            height: 60px;
-            background: #333;
-            margin-left: -3px;
-        }
-        .minute-hand {
-            width: 4px;
-            height: 85px;
-            background: #555;
-            margin-left: -2px;
-        }
-        .second-hand {
-            width: 2px;
-            height: 90px;
-            background: #ec4899; /* Color Rosa */
-            margin-left: -1px;
-            z-index: 11;
-        }
-        .center-dot {
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 12px; height: 12px;
-            background: #ec4899;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 12;
-            border: 2px solid white;
-        }
+        .clock-number { position: absolute; width: 100%; height: 100%; text-align: center; font-size: 1.5rem; font-weight: 700; color: #555; padding-top: 10px; }
+        .hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom center; border-radius: 4px; z-index: 10; }
+        .hour-hand { width: 6px; height: 50px; background: #333; margin-left: -3px; }
+        .minute-hand { width: 4px; height: 70px; background: #555; margin-left: -2px; }
+        .second-hand { width: 2px; height: 80px; background: #ec4899; margin-left: -1px; z-index: 11; }
+        .center-dot { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; background: #ec4899; border-radius: 50%; transform: translate(-50%, -50%); z-index: 12; border: 2px solid white; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-slate-700">
@@ -136,16 +85,13 @@
 
     <div class="max-w-4xl mx-auto w-full mt-8 px-4 relative">
         <div class="glass-panel rounded-3xl p-6 text-center shadow-lg border-t-4 border-l-4 border-pink-400 relative overflow-hidden group">
-            
             <p class="text-pink-500 font-bold tracking-[0.3em] text-sm uppercase mb-4">Hora Oficial</p>
-            
             <div class="analog-clock-container" id="analog-clock">
                 <div class="center-dot"></div>
                 <div class="hand hour-hand" id="hour-hand"></div>
                 <div class="hand minute-hand" id="minute-hand"></div>
                 <div class="hand second-hand" id="second-hand"></div>
-                </div>
-
+            </div>
             <p id="date-display" class="text-gray-600 text-xl font-bold mt-6 capitalize font-serif italic"></p>
         </div>
     </div>
@@ -153,11 +99,11 @@
     <main class="flex-grow max-w-7xl mx-auto px-4 py-10 w-full space-y-12">
 
         <div class="relative">
-            <h2 class="text-2xl font-bold text-pink-700 mb-6 flex items-center gap-3 border-b-2 border-pink-100 pb-2 drop-shadow-sm">
+            <h2 class="text-2xl font-bold text-pink-700 mb-6 flex items-center gap-3 border-b-2 border-pink-100 pb-2">
                 <span class="bg-pink-50 p-2 rounded-lg border border-pink-100"><i class="fa-solid fa-briefcase text-pink-500"></i></span>
                 Administración & RR.HH.
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 <a href="permisos.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-admin">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-admin transition-transform group-hover:scale-110"><i class="fa-solid fa-user-lock"></i></div>
                     <div><h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition">Permisos</h3><p class="text-xs text-gray-600 font-medium">Control permisos.</p></div>
@@ -182,7 +128,7 @@
         </div>
 
         <div>
-            <h2 class="text-2xl font-bold text-purple-800 mb-6 flex items-center gap-3 border-b-2 border-purple-100 pb-2 drop-shadow-sm">
+            <h2 class="text-2xl font-bold text-purple-800 mb-6 flex items-center gap-3 border-b-2 border-purple-100 pb-2">
                 <span class="bg-purple-50 p-2 rounded-lg border border-purple-100"><i class="fa-solid fa-graduation-cap text-purple-600"></i></span>
                 Gestión UTP
             </h2>
@@ -191,40 +137,52 @@
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-laptop-code"></i></div>
                     <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Planif. Digital</h3><p class="text-xs text-gray-600 font-medium">Plataforma Web.</p></div>
                 </a>
-                
-                <a href="acompanamiento.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-clipboard-user"></i></div>
-                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Acompañamiento</h3><p class="text-xs text-gray-600 font-medium">Observación aula.</p></div>
+                <a href="pruebas.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-file-pen"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Generador</h3><p class="text-xs text-gray-600 font-medium">Crear pruebas.</p></div>
+                </a>
+                <a href="corrector_pruebas.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-camera"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Scanner</h3><p class="text-xs text-gray-600 font-medium">Corregir pruebas.</p></div>
+                </a>
+                <a href="visor.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-eye"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Visor UTP</h3><p class="text-xs text-gray-600 font-medium">Revisión central.</p></div>
+                </a>
+
+                <a href="plani.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-list-check"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Planif. Manual</h3><p class="text-xs text-gray-600 font-medium">Enlaces Drive.</p></div>
+                </a>
+                <a href="control_plan.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-file-signature"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Control Envío</h3><p class="text-xs text-gray-600 font-medium">Checklist entregas.</p></div>
+                </a>
+                <a href="bitacora.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-book-open"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Bitácora</h3><p class="text-xs text-gray-600 font-medium">Planif. Anual.</p></div>
                 </a>
                 <a href="coberturas.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-chart-pie"></i></div>
                     <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Coberturas</h3><p class="text-xs text-gray-600 font-medium">Avance curricular.</p></div>
                 </a>
-                <a href="plani.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-list-check"></i></div>
-                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Planificacion Manual</h3><p class="text-xs text-gray-600 font-medium">Planificacion manual.</p></div>
-                </a>
-                <a href="bitacora.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-book-open"></i></div>
-                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Bitácora</h3><p class="text-xs text-gray-600 font-medium">Planificacion anual.</p></div>
-                </a>
-                <a href="control_plan.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-file-signature"></i></div>
-                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Control Planificaciones</h3><p class="text-xs text-gray-600 font-medium">Envio planificaciones.</p></div>
+                <a href="acompanamiento.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-clipboard-user"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Acompañamiento</h3><p class="text-xs text-gray-600 font-medium">Observación aula.</p></div>
                 </a>
                 <a href="asistencia-mi-clase-privada_en_uso.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-chalkboard-user"></i></div>
-                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Supervisión Aula</h3><p class="text-xs text-gray-600 font-medium">Vista Mi Clase.</p></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Supervisión</h3><p class="text-xs text-gray-600 font-medium">Asistencia y Leccionario.</p></div>
                 </a>
                 <a href="prestamo.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-laptop"></i></div>
-                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Recursos TICS</h3><p class="text-xs text-gray-600 font-medium">Tablets y Lab.</p></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Recursos TICS</h3><p class="text-xs text-gray-600 font-medium">Reserva equipos.</p></div>
                 </a>
             </div>
         </div>
 
         <div>
-            <h2 class="text-2xl font-bold text-cyan-800 mb-6 flex items-center gap-3 border-b-2 border-cyan-100 pb-2 drop-shadow-sm">
+            <h2 class="text-2xl font-bold text-cyan-800 mb-6 flex items-center gap-3 border-b-2 border-cyan-100 pb-2">
                 <span class="bg-cyan-50 p-2 rounded-lg border border-cyan-100"><i class="fa-solid fa-calculator text-cyan-600"></i></span>
                 Herramientas de Cálculo
             </h2>
@@ -245,47 +203,47 @@
         </div>
 
         <div>
-            <h2 class="text-2xl font-bold text-pink-900 mb-6 flex items-center gap-3 border-b-2 border-pink-100 pb-2 drop-shadow-sm">
+            <h2 class="text-2xl font-bold text-pink-900 mb-6 flex items-center gap-3 border-b-2 border-pink-100 pb-2">
                 <span class="bg-pink-50 p-2 rounded-lg border border-pink-100"><i class="fa-solid fa-gavel text-pink-600"></i></span>
                 Convivencia Escolar
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 <a href="atrasos.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-insp">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-insp transition-transform group-hover:scale-110"><i class="fa-solid fa-user-clock"></i></div>
                     <div><h3 class="font-bold text-gray-800">Atrasos</h3><p class="text-xs text-gray-600 font-medium">Ingresos tarde.</p></div>
                 </a>
                 <a href="salida_alumnos.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-insp">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-insp transition-transform group-hover:scale-110"><i class="fa-solid fa-door-open"></i></div>
-                    <div><h3 class="font-bold text-gray-800">Salidas</h3><p class="text-xs text-gray-600 font-medium">Retiros anticipados.</p></div>
+                    <div><h3 class="font-bold text-gray-800">Salidas</h3><p class="text-xs text-gray-600 font-medium">Retiros.</p></div>
                 </a>
                 <a href="suspensiones.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-insp">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-insp transition-transform group-hover:scale-110"><i class="fa-solid fa-file-shield"></i></div>
-                    <div><h3 class="font-bold text-gray-800">Sanciones</h3><p class="text-xs text-gray-600 font-medium">Registro medidas.</p></div>
-                </a>
-                <a href="citacion.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-insp">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-insp transition-transform group-hover:scale-110"><i class="fa-solid fa-comments"></i></div>
-                    <div><h3 class="font-bold text-gray-800">Citaciones</h3><p class="text-xs text-gray-600 font-medium">Apoderados.</p></div>
+                    <div><h3 class="font-bold text-gray-800">Sanciones</h3><p class="text-xs text-gray-600 font-medium">Suspensiones.</p></div>
                 </a>
                 <a href="justificativos.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-insp">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-insp transition-transform group-hover:scale-110"><i class="fa-solid fa-file-medical"></i></div>
                     <div><h3 class="font-bold text-gray-800">Justificativos</h3><p class="text-xs text-gray-600 font-medium">Licencias.</p></div>
                 </a>
+                <a href="citacion.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-insp">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-insp transition-transform group-hover:scale-110"><i class="fa-solid fa-comments"></i></div>
+                    <div><h3 class="font-bold text-gray-800">Citaciones</h3><p class="text-xs text-gray-600 font-medium">Apoderados.</p></div>
+                </a>
             </div>
         </div>
 
         <div>
-            <h2 class="text-2xl font-bold text-violet-800 mb-6 flex items-center gap-3 border-b-2 border-violet-100 pb-2 drop-shadow-sm">
+            <h2 class="text-2xl font-bold text-violet-800 mb-6 flex items-center gap-3 border-b-2 border-violet-100 pb-2">
                 <span class="bg-violet-50 p-2 rounded-lg border border-violet-100"><i class="fa-solid fa-puzzle-piece text-violet-600"></i></span>
                 PIE & Orientación
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <a href="pie.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-pie">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-pie transition-transform group-hover:scale-110"><i class="fa-solid fa-users-viewfinder"></i></div>
-                    <div><h3 class="font-bold text-gray-800 group-hover:text-violet-600 transition">Gestor PIE</h3><p class="text-xs text-gray-600 font-medium">Colaborativo & Admisión.</p></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-violet-600 transition">Gestor PIE</h3><p class="text-xs text-gray-600 font-medium">Colaborativo.</p></div>
                 </a>
                 <a href="repitencia.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-pie">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-pie transition-transform group-hover:scale-110"><i class="fa-solid fa-file-contract"></i></div>
-                    <div><h3 class="font-bold text-gray-800 group-hover:text-violet-600 transition">Decreto 67</h3><p class="text-xs text-gray-600 font-medium">Actas repitencia.</p></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-violet-600 transition">Decreto 67</h3><p class="text-xs text-gray-600 font-medium">Repitencia.</p></div>
                 </a>
                 <a href="entrevistas.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-pie">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-pie transition-transform group-hover:scale-110"><i class="fa-solid fa-clipboard-question"></i></div>
@@ -302,54 +260,46 @@
     </footer>
 
     <script>
-        // 1. Generar los números del reloj dinámicamente
-        const clockContainer = document.getElementById('analog-clock');
-        for (let i = 1; i <= 12; i++) {
-            const num = document.createElement('div');
-            num.className = 'clock-number';
-            num.innerText = i;
-            num.style.transform = `rotate(${i * 30}deg)`;
-            
-            // Un pequeño truco para que el número quede derecho (no rotado con el eje)
-            // Creamos un span interno que contra-rota
-            const innerSpan = document.createElement('span');
-            innerSpan.innerText = i;
-            innerSpan.style.display = 'inline-block';
-            innerSpan.style.transform = `rotate(-${i * 30}deg)`;
-            
-            // Limpiamos el texto directo y usamos el span
-            num.innerText = '';
-            num.appendChild(innerSpan);
-            
-            clockContainer.appendChild(num);
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const clockContainer = document.getElementById('analog-clock');
+            for (let i = 1; i <= 12; i++) {
+                const num = document.createElement('div');
+                num.className = 'clock-number';
+                num.style.transform = `rotate(${i * 30}deg)`;
+                const innerSpan = document.createElement('span');
+                innerSpan.innerText = i;
+                innerSpan.style.display = 'inline-block';
+                innerSpan.style.transform = `rotate(-${i * 30}deg)`;
+                num.appendChild(innerSpan);
+                clockContainer.appendChild(num);
+            }
 
-        // 2. Lógica del movimiento
-        const hourHand = document.getElementById('hour-hand');
-        const minuteHand = document.getElementById('minute-hand');
-        const secondHand = document.getElementById('second-hand');
-        const dateDisplay = document.getElementById('date-display');
+            const hourHand = document.getElementById('hour-hand');
+            const minuteHand = document.getElementById('minute-hand');
+            const secondHand = document.getElementById('second-hand');
+            const dateDisplay = document.getElementById('date-display');
 
-        function updateClock() {
-            const now = new Date();
-            const seconds = now.getSeconds();
-            const minutes = now.getMinutes();
-            const hours = now.getHours();
+            function updateClock() {
+                const now = new Date();
+                const seconds = now.getSeconds();
+                const minutes = now.getMinutes();
+                const hours = now.getHours();
 
-            const secondsDegrees = ((seconds / 60) * 360);
-            const minutesDegrees = ((minutes / 60) * 360) + ((seconds/60)*6);
-            const hoursDegrees = ((hours / 12) * 360) + ((minutes/60)*30);
+                const secondsDegrees = ((seconds / 60) * 360);
+                const minutesDegrees = ((minutes / 60) * 360) + ((seconds/60)*6);
+                const hoursDegrees = ((hours / 12) * 360) + ((minutes/60)*30);
 
-            secondHand.style.transform = `translateX(-50%) rotate(${secondsDegrees}deg)`;
-            minuteHand.style.transform = `translateX(-50%) rotate(${minutesDegrees}deg)`;
-            hourHand.style.transform = `translateX(-50%) rotate(${hoursDegrees}deg)`;
+                secondHand.style.transform = `translateX(-50%) rotate(${secondsDegrees}deg)`;
+                minuteHand.style.transform = `translateX(-50%) rotate(${minutesDegrees}deg)`;
+                hourHand.style.transform = `translateX(-50%) rotate(${hoursDegrees}deg)`;
 
-            const dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
-            dateDisplay.textContent = now.toLocaleDateString('es-CL', dateOptions);
-        }
+                const dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+                dateDisplay.textContent = now.toLocaleDateString('es-CL', dateOptions);
+            }
 
-        setInterval(updateClock, 1000);
-        updateClock();
+            updateClock();
+            setInterval(updateClock, 1000);
+        });
     </script>
 
 </body>
