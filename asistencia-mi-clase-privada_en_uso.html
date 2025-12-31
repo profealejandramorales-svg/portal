@@ -3,588 +3,407 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Académica - ProfeAle 2025</title>
+    <title>Panel Privado - ProfeAle Admin v8.6 (Fix)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .printable-container { width: 100%; }
-        
-        /* Botones y Estilos */
-        .btn-add { background-color: #22c55e; } .btn-add:hover { background-color: #16a34a; }
-        .btn-grade { background-color: #f97316; } .btn-grade:hover { background-color: #ea580c; }
-        .btn-delete { background-color: #9ca3af; } .btn-delete:hover { background-color: #6b7280; }
-        .btn-volver { background-color: #a855f7; } .btn-volver:hover { background-color: #9333ea; }
-        .btn-print { background-color: #0d9488; } .btn-print:hover { background-color: #0f766e; }
-        .btn-reset { background-color: #f59e0b; } .btn-reset:hover { background-color: #d97706; }
-        
-        /* Chips de Notas */
-        .grade-chip { cursor: pointer; transition: all 0.2s; }
-        .grade-chip:hover { transform: scale(1.1); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-
-        /* Reglas de IMPRESIÓN */
+        .grade-cell { min-width: 70px; text-align: center; }
+        .empty-grade { color: #d1d5db; font-style: italic; font-size: 0.7rem; }
+        .btn-action { transition: all 0.2s; } .btn-action:hover { transform: translateY(-1px); }
         .print-only { display: none; }
         @media print {
             .no-print { display: none !important; }
-            .printable-container { margin: 0; padding: 0; box-shadow: none; }
+            .printable-container { margin: 0; padding: 0; box-shadow: none; width: 100% !important; max-width: 100% !important; }
             body { background-color: white; }
             .print-only { display: block; }
-            
-            #printHeader { 
-                position: fixed; top: 0; left: 0; width: 100%; 
-                background-color: white; border-bottom: 2px solid #3730a3; 
-                padding: 10px 40px; margin-bottom: 20px; z-index: 1000;
-            }
-            #printFooter { 
-                position: fixed; bottom: 0; width: 100%; text-align: center; 
-                border-top: 1px solid #ccc; padding-top: 5px; 
-                background-color: white; font-size: 10px; 
-            }
-            body > .printable-container { padding-top: 100px; padding-bottom: 20px; }
-            table { font-size: 11px; width: 100%; }
-            th, td { padding: 4px !important; }
+            #printHeader { position: fixed; top: 0; left: 0; width: 100%; background-color: white; border-bottom: 2px solid #3730a3; padding: 10px 40px; margin-bottom: 20px; z-index: 1000; }
+            body > .printable-container { padding-top: 100px; }
+            table { font-size: 10px; width: 100%; }
+            th, td { padding: 4px !important; border: 1px solid #9ca3af !important; }
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body class="bg-slate-100 flex flex-col items-center min-h-screen py-6">
 
-    <div id="printHeader" class="print-only">
-        <div class="flex items-center justify-between w-full">
-            <div class="w-1/3">
-                <img src="logo.jpg" onerror="this.style.display='none'" alt="Logo" class="h-16 object-contain">
-            </div>
-            <div class="w-1/3 text-center">
-                <h3 class="text-xl font-bold text-gray-800 uppercase tracking-wider">Gestión Académica</h3>
-                <p class="text-sm text-gray-500 font-bold">ProfeAle</p>
-            </div>
-            <div class="w-1/3 text-right text-xs text-gray-400">
-                <p>Reporte Generado</p>
-                <p class="print-date-placeholder">--/--/----</p>
-            </div>
+    <div id="loginOverlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center border-t-4 border-indigo-600">
+            <h1 class="text-3xl font-bold text-slate-800 tracking-tight">ProfeAle Admin</h1>
+            <p class="text-slate-500 text-sm mt-1 mb-6">Acceso Privado con Evidencia</p>
+            <form id="loginForm" class="space-y-4 text-left">
+                <input type="email" id="emailInput" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="admin@profeale.cl" required>
+                <input type="password" id="passwordInput" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="••••••••" required>
+                <div id="authErrorMsg" class="text-rose-500 text-xs text-center font-bold hidden"></div>
+                <button type="submit" id="btnLogin" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition shadow-md">Ingresar</button>
+            </form>
         </div>
     </div>
 
-    <div class="printable-container bg-white p-8 rounded-2xl shadow-xl max-w-6xl w-full">
+    <div id="printHeader" class="print-only">
+        <div class="flex items-center justify-between w-full">
+            <div class="w-1/3"><h3 class="font-bold">ProfeAle</h3></div>
+            <div class="w-1/3 text-center"><h3 class="text-xl font-bold uppercase">Informe Académico</h3></div>
+            <div class="w-1/3 text-right text-xs"><p class="print-date-placeholder">--/--/----</p></div>
+        </div>
+    </div>
+
+    <div class="printable-container bg-white p-6 rounded-2xl shadow-xl max-w-[95%] w-full">
         
-        <div class="text-center mb-4 no-print relative group">
-            <div class="w-full flex justify-center">
-                <img src="logo.jpg" 
-                     onerror="this.src='https://cdn-icons-png.flaticon.com/512/167/167707.png'" 
-                     alt="Logo Escuela" 
-                     class="h-24 mx-auto object-contain hover:scale-105 transition-transform duration-300 drop-shadow-sm">
+        <div class="no-print flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+            <div class="flex items-center gap-4">
+                <img src="logo.jpg" onerror="this.src='https://cdn-icons-png.flaticon.com/512/167/167707.png'" alt="Logo" class="h-16 object-contain hover:scale-105 transition-transform">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">Panel de Control</h1>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">Admin + Evidencia</span>
+                        <span id="userIdDisplay" class="text-slate-400">...</span>
+                    </div>
+                </div>
             </div>
-            <p class="text-xs text-gray-300 mt-1 opacity-0 group-hover:opacity-100 transition-opacity absolute w-full text-center bottom-[-20px]">
-                (Guarda tu logo como 'logo.jpg')
-            </p>
+            <div class="flex flex-col items-end gap-2">
+                <button id="backupBtn" class="bg-rose-100 text-rose-700 hover:bg-rose-200 text-xs font-bold py-1 px-3 rounded border border-rose-200 transition">💾 Descargar Respaldo JSON</button>
+                <button id="btnLogout" class="text-xs font-bold text-slate-400 hover:text-slate-600 underline">Cerrar Sesión</button>
+            </div>
         </div>
 
-        <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center no-print">Control de Asistencia y Calificaciones</h1>
+        <p id="currentDate" class="text-slate-500 text-center mb-4 no-print text-sm font-medium capitalize"></p>
+
+        <div id="controlsContainer" class="no-print bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 shadow-sm">
+             <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                 <div class="md:col-span-1"><label class="block text-xs font-bold text-indigo-600 uppercase mb-1">Año</label><select id="yearSelector" class="w-full p-2 border-2 border-indigo-100 rounded text-sm font-bold text-indigo-700"><option value="2025">2025</option><option value="2026">2026</option></select></div>
+                 <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Clase</label><div class="flex"><select id="classSelector" class="w-full p-2 border border-slate-300 rounded-l text-sm"></select><button id="addClassBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold px-2 rounded-r" title="Nueva Clase">+</button></div></div>
+                 <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha</label><input type="date" id="dateSelector" class="w-full p-2 border border-slate-300 rounded text-sm"></div>
+                 <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Evaluación</label><input type="text" id="evalNameInput" placeholder="Ej: PRUEBA 1" class="w-full p-2 border border-slate-300 rounded text-sm uppercase font-semibold text-slate-700"></div>
+                 <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Estudiante</label><div class="flex"><input type="text" id="studentNameInput" placeholder="Nombre" class="w-full p-2 border border-slate-300 rounded-l text-sm" /><button id="addStudentBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 rounded-r transition">+</button></div></div>
+                 <div class="md:col-span-1"><button id="saveDataBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded shadow-md btn-action text-sm">💾 Guardar Todo</button></div>
+             </div>
+        </div>
+
+        <div id="backToTableContainer" class="no-print hidden mb-4"><button id="backToTableBtn" class="text-indigo-600 font-bold hover:underline flex items-center gap-1">← Volver al Panel Principal</button></div>
+
+        <div id="studentsTableContainer" class="printable-container overflow-x-auto min-h-[300px]">
+            <div id="loadingIndicator" class="text-center py-12">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+                <p class="text-slate-400 font-medium">Cargando base de datos...</p>
+                <p id="loadingError" class="text-red-500 text-xs mt-2 hidden">Si esto tarda mucho, verifica tu conexión.</p>
+            </div>
+            <table id="mainTable" class="w-full hidden border-collapse text-sm">
+                <thead id="tableHeader" class="bg-slate-100 text-slate-500 uppercase text-xs font-bold border-b-2 border-slate-200"></thead>
+                <tbody id="tableBody" class="bg-white"></tbody>
+            </table>
+        </div>
+
+        <div id="classReportContainer" class="hidden mt-6 printable-container"></div>
+        <div id="classDetailsContainer" class="hidden mt-6 printable-container"></div>
         
-        <div class="no-print text-center mb-6 bg-indigo-50 py-2 rounded-lg mx-auto max-w-md border border-indigo-100">
-             <p class="text-sm text-gray-600 flex flex-col items-center justify-center">
-                <span class="font-bold text-indigo-700 text-base">✨ Desarrollado por ProfeAle ✨</span>
-                <span id="statusDisplay" class="text-xs font-medium mt-1 text-green-600">Conectando...</span>
-             </p>
+        <div id="reportButtons" class="no-print mt-8 pt-6 border-t border-slate-100 flex flex-wrap justify-center gap-4">
+            <button id="showReportBtn" class="px-5 py-2 bg-white border border-slate-300 rounded-full text-slate-700 font-bold shadow-sm hover:bg-slate-50 transition text-sm">📊 Resumen</button>
+            <button id="showDetailedReportBtn" class="px-5 py-2 bg-white border border-slate-300 rounded-full text-slate-700 font-bold shadow-sm hover:bg-slate-50 transition text-sm">📋 Detallado</button>
+            <button id="printReportBtn" class="px-5 py-2 bg-slate-800 text-white rounded-full font-bold shadow-md hover:bg-slate-900 transition text-sm flex items-center gap-2">🖨️ Imprimir</button>
+            <div class="w-full flex justify-center mt-2"><button id="resetCoursesBtn" class="text-xs text-slate-400 hover:text-indigo-500 underline">📥 Cargar Nómina Inicial 2025</button></div>
         </div>
 
-        <p id="currentDate" class="text-gray-600 text-center mb-6 no-print font-bold"></p>
-
-        <div id="controlsContainer" class="no-print mb-8 space-y-4 md:space-y-0 md:flex md:justify-between md:items-end bg-gray-50 p-4 rounded-xl border border-gray-200">
-             
-             <div class="flex flex-col space-y-1">
-                <label for="classSelector" class="text-gray-700 font-bold text-sm">Seleccionar Clase</label>
-                <div class="flex gap-2">
-                    <select id="classSelector" class="p-2 border rounded-lg shadow-sm w-48 bg-white focus:ring-2 focus:ring-indigo-400"></select>
-                    <button id="addClassBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold px-3 rounded-lg shadow" title="Crear nueva clase">➕</button>
+        <div id="observationModal" class="no-print fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[95vh]">
+                <div class="bg-indigo-600 p-3 flex justify-between items-center">
+                    <h3 class="text-md font-bold text-white flex items-center gap-2"><span>💬</span> <span id="modalTitle">Observaciones</span></h3>
+                    <button id="closeObservationModalBtn" class="text-white hover:text-gray-200 font-bold text-lg leading-none">&times;</button>
                 </div>
-             </div>
-             
-             <div class="flex flex-col space-y-1">
-                <label for="dateSelector" class="text-gray-700 font-bold text-sm">Fecha de Trabajo</label>
-                <input type="date" id="dateSelector" class="p-2 border rounded-lg shadow-sm w-40 bg-white focus:ring-2 focus:ring-indigo-400">
-             </div>
-
-             <div class="flex flex-col space-y-1">
-                <label for="studentNameInput" class="text-gray-700 font-bold text-sm">Agregar Estudiante</label>
-                <div class="flex">
-                    <input type="text" id="studentNameInput" placeholder="Ej: Juan Pérez" class="p-2 border rounded-l-lg shadow-sm w-48 focus:outline-none focus:ring-2 focus:ring-green-400" />
-                    <button id="addStudentBtn" class="btn-add text-white font-bold py-2 px-3 rounded-r-lg transition duration-150 shadow-md">+</button>
+                <div class="p-4 overflow-y-auto bg-slate-50 flex-1">
+                    <div id="observationHistory" class="space-y-3 mb-4"></div>
+                    
+                    <div class="bg-white p-3 rounded border border-slate-200 shadow-sm relative">
+                        <label class="text-xs font-bold text-slate-400 uppercase mb-1 block">Fecha</label>
+                        <input type="date" id="obsDateInput" class="w-full mb-2 p-1.5 border border-slate-300 rounded text-sm font-bold text-slate-700">
+                        
+                        <label class="text-xs font-bold text-slate-400 uppercase mb-1 block">Observación</label>
+                        <textarea id="newObservationText" class="w-full text-sm text-slate-700 border border-slate-200 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-20 placeholder:text-slate-300 mb-2" placeholder="Escribe el detalle..."></textarea>
+                        
+                        <div class="flex items-center gap-2 border-t border-slate-100 pt-2">
+                            <label class="cursor-pointer bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200 rounded px-3 py-1.5 flex items-center gap-2 text-xs font-bold transition">
+                                <span>📷</span> Adjuntar Foto
+                                <input type="file" id="photoInput" accept="image/*" class="hidden">
+                            </label>
+                            <span id="photoPreviewText" class="text-[10px] text-emerald-600 font-bold hidden">¡Foto lista para subir!</span>
+                            <img id="photoPreviewImg" class="h-8 w-8 object-cover rounded hidden border border-slate-300">
+                            <button id="clearPhotoBtn" class="hidden text-rose-500 text-xs hover:underline">Borrar</button>
+                        </div>
+                    </div>
                 </div>
-             </div>
-             
-             <button id="saveDataBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md w-full md:w-auto transform hover:-translate-y-1">
-                💾 Guardar Cambios
-             </button>
-        </div>
-
-        <div id="backToTableContainer" class="no-print text-center mb-6 hidden">
-             <button id="backToTableBtn" class="btn-volver text-white font-bold py-2 px-4 rounded-lg transition duration-150 mr-4">Volver a la Tabla</button>
-             <button id="printReportBtn" class="btn-print text-white font-bold py-2 px-4 rounded-lg transition duration-150">🖨️ Imprimir Reporte</button>
-        </div>
-
-        <div id="studentsTableContainer" class="min-h-[200px] flex flex-col justify-start printable-container">
-            <div id="loadingIndicator" class="text-center p-10 font-bold text-gray-500 animate-pulse">Cargando datos de la nube...</div>
-            
-            <div id="tableHeader" class="grid grid-cols-12 gap-2 py-3 border-b-2 border-gray-300 font-bold text-gray-700 uppercase text-xs text-center bg-gray-100 rounded-t-lg">
-                <div class="col-span-3 text-left pl-4">ESTUDIANTE</div>
-                <div class="col-span-4">NOTAS (Click para editar)</div>
-                <div class="col-span-1">PROM</div>
-                <div class="col-span-2">ASISTENCIA</div>
-                <div class="col-span-2">ACCIONES</div>
-            </div>
-             <div id="tableBody" class="bg-white"></div>
-        </div>
-
-        <div id="reportButtons" class="no-print mt-8 space-y-4">
-            <div class="text-center md:flex md:justify-center md:space-x-4">
-                <button id="showReportBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg border border-gray-300">📊 Resumen Asistencia</button>
-                <button id="showDetailedReportBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg border border-gray-300">📋 Reporte Detallado</button>
-            </div>
-            
-            <div class="text-center mt-6 border-t pt-4">
-                <p class="text-xs text-gray-400 mb-2">¿Faltan cursos? Pulsa aquí para cargar la nómina importada (1° a 4° Medio)</p>
-                <button id="resetCoursesBtn" class="btn-reset text-white text-xs font-bold py-2 px-4 rounded-lg shadow-sm">🔄 Cargar Nómina 2025</button>
+                <div class="p-3 bg-white border-t border-slate-100 flex justify-end">
+                    <button id="saveObservationBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-6 rounded shadow transition text-sm">Guardar</button>
+                </div>
             </div>
         </div>
 
-        <div id="classReportContainer" class="hidden mt-8 printable-container"></div>
-        <div id="classDetailsContainer" class="hidden mt-8 printable-container"></div>
-        
-        <div id="observationModal" class="no-print fixed inset-0 bg-gray-900 bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm">
-            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                <div class="bg-indigo-600 p-4">
-                    <h3 id="modalTitle" class="text-xl font-bold text-white">Observaciones</h3>
-                </div>
-                <div class="p-6 flex-1 overflow-y-auto">
-                    <h4 class="text-sm font-bold text-gray-500 uppercase mb-3">Historial Cronológico</h4>
-                    <div id="observationHistory" class="space-y-3 mb-6"></div>
-                    <h4 class="text-sm font-bold text-gray-500 uppercase mb-2">Nueva Observación (<span id="obsDateDisplay"></span>)</h4>
-                    <textarea id="newObservationText" class="w-full p-3 border border-gray-300 rounded-lg h-24 resize-none" placeholder="Escribe el detalle..."></textarea>
-                </div>
-                <div class="bg-gray-50 p-4 flex justify-end space-x-2 border-t">
-                    <button id="closeObservationModalBtn" class="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg">Cancelar</button>
-                    <button id="saveObservationBtn" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg shadow-lg">Guardar</button>
-                </div>
+        <div id="photoViewerModal" class="no-print fixed inset-0 bg-black/90 hidden items-center justify-center z-[60] backdrop-blur-sm p-4">
+            <div class="relative max-w-4xl w-full">
+                <button id="closePhotoViewer" class="absolute -top-10 right-0 text-white font-bold text-xl hover:text-gray-300">CERRAR ✕</button>
+                <img id="fullSizeImage" class="w-full max-h-[85vh] object-contain rounded shadow-2xl">
+                <p id="photoCaption" class="text-white text-center mt-2 text-sm font-mono"></p>
             </div>
         </div>
 
     </div>
     
-    <div id="printFooter" class="print-only text-gray-500">Desarrollado por ProfeAle</div>
+    <div id="printFooter" class="print-only text-center text-xs text-slate-400 mt-2">Sistema Privado ProfeAle</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // CONFIGURACIÓN
-        const CLAVE_DOCENTE = "ProfeAle"; 
         const firebaseConfig = { apiKey: "AIzaSyAFp6biz1UTr9Ehaudkpe7QyTFVbdQz5Sc", authDomain: "asistencia-mi-clase.firebaseapp.com", projectId: "asistencia-mi-clase", storageBucket: "asistencia-mi-clase.appspot.com", messagingSenderId: "552398254230", appId: "1:552398254230:web:c58dd07e5ceeb67e0912b7", measurementId: "G-MYR01HM1YE" };
         const appId = firebaseConfig.appId;
+        
+        // NÓMINA COMPLETA
+        const fullDefaultClasses = {
+            "1° Medio A": ["ALBURQUENQUE DEL GRECCO EMILYA ANTONIA", "ANABALÓN BELTRÁN BENJAMÍN NICOLÁS", "CONTRERAS SALGADO HADEEY ALEJANDRA", "FERRADA ALBORNOZ AGUSTÍN ALEXIS", "HERNÁNDEZ FERNÁNDEZ DHARIEN ALEXSANDER", "IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA", "LAGOS LASTRA ALEXANDRA DANAE", "LÓPEZ LÓPEZ LUCIANO ANTONIO", "MALDONADO FLORES ANTONELLA BELÉN", "MONTECINO DÍAZ VALESKA BELÉN", "MUÑOZ CONTRERAS LUIS GABRIEL", "MUÑOZ LUNA ROGER JOEL", "NAVARRO VILLANUEVA KARLA PAZ", "ORELLANA ARRIAGADA SEBASTIÁN ANDRÉS", "QUEZADA NARANJO FELIPE ALONSO", "QUINTEROS VERGARA FERNANDA FLORENCIA", "RAMÍREZ VILLALOBOS DUVAN EMILIO", "SANTANDER LÓPEZ MARÍA JOSÉ", "TAPIA CASTILLA JEANFRANCO PATRICK", "URBINA CÁCERES FRANCHESCA POULETTE", "VÁSQUEZ ZALDUENDO AMANDA ISABEL", "ZABALAGA COFRÉ DAMIÁN ANDRÉS", "BAEZ DONOSO LUKAS ALFONSO", "MESA DÍAZ GONZALO IGNACIO"],
+            "1° Medio B": ["ARAVENA ZÚÑIGA NOEMÍ JESÚS DE LAS ESTRELLAS", "ASTUDILLO CAMPOS CRISTÓBAL ANTONIO", "ASTUDILLO VÁSQUEZ BRUNO FERNANDO LEÓN", "CUMINAO VIDAL CATALINA ANDREA", "DÍAZ MALUENDA MIGUEL ALBERTO", "KILTAN GONZÁLEZ DIDIER EZEQUIEL", "LÓPEZ ACUÑA MARCO EMILIO", "LÓPEZ NOVOA EYDAN DAMIÁN", "MÉNDEZ SUAZO FABIÁN FELIPE", "MOYA REYES MATEO ANTONIO BENJAMÍN", "OSES CAMPOS VALENTINA ABIGAIL", "PALMA ORELLANA ANTONELLA FRANCISCA", "PEREIRA ORELLANA MONSERRAT ALAMIRA", "PÉREZ ORMAZÁBAL ZADKA ALEJANDRA", "ROJAS GONZÁLEZ FLORENCIA TRINIDAD", "ROJAS LEIVA EDUARDO JAVIER", "VÁSQUEZ AGUILERA SCARLET NICOLE", "YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN", "VARGAS MORAGA MARTINA SAYEN", "SALAZAR SALAS PEDRO JOSÉ", "VERA BRAVO FLORENCIA ANTONIA", "PÉREZ QUEVEDO CONSTANZA TRINIDAD", "RIQUELME SANTOS BENJAMÍN ALONSO"],
+            "2° Medio A": ["AHUMADA ROJAS TRINIDAD BELÉN", "ESPINOSA TORRES FERNANDA ELENA", "ESPINOZA PEÑALILLO BRAYAN JESÚS", "GONZÁLEZ SALAZAR EMILIA CATALINA", "MEDEL OJEDA LEÓN IGNACIO", "MORALES REIMÁN ALFONSO TOMÁS", "PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO", "PINTO TOBAR JORDÁN AMARO", "RECABAL YÁÑEZ KEVIN ANDRÉS", "RIQUELME CASTILLO MATÍAS EDUARDO ANTONIO", "RIVERA ABARZA CONSTANZA VICTORIA", "SANTIS CASSEUS TEIVA SCARLETT", "SOBARZO YÉVENES KATHERINNE ALEXIA BELÉN", "TOLEDO ALBORNOZ ANTONELLA INES", "VENEGAS ARRIAGADA ANTONIA EDITH", "VIELMA ZABALAGA JOAN MANUEL", "MEZA COLIMÁN ANGEL BLAS", "SAAVEDRA BRAVO FLORENCIA ALEJANDRA"],
+            "2° Medio B": ["ARAYA DOMÍNGUEZ ALEX FABIÁN", "BRAVO MENARES ALEX JOHAN", "CARRASCO LEIVA BENJAMÍN IGNACIO", "CARVAJAL URRUTIA CONSTANZA PRISILA (DANIEL)", "ENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER", "FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO", "JARAMILLO VILLAR EMILIO SCOTT", "LÓPEZ VILLAR MARTÍN ALONSO", "MIRANDA MUÑOZ ALEXANDRA JAVIERA", "MUÑOZ TRONCOSO HÉCTOR ANTONIO", "OLIVARES VALENZUELA ALONSO IGNACIO", "OLIVARES VALENZUELA ANTONELLA DANAE IGNACIA", "ORELLANA GARRIDO MATÍAS LEANDRO", "PUNOY MEDEL MILLARAY ANGÉLICA", "QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO", "RIQUELME COLOMA DALIA CONSTANZA", "SALGADO ROJAS VICENTE MOISÉS", "SANDOVAL CERPA VICENTE ESTEBAN", "SOTO NARANJO CHRISTOPHER", "VEKARIC VERDEJO MARTÍN"],
+            "3° Medio A": ["ALCÁNTAR GARCÍA MARTINA ALEJANDRA", "BAHAMONDE MUÑOZ ARIEL LEON", "CAMPOS MUÑOZ CRISTOPHER JESÚS", "CANCINO ORÓSTICA VICENTE GASPAR", "CARRASCO GONZÁLEZ CAMILA ANDREA", "COFRÉ CASTILLO ANTONIO ANDRÉS", "CONTRERAS VENEGAS BELÉN ALEJANDRA", "GALDAMES VERGARA FELIPE ESTEBAN", "GARCÍA GONZÁLEZ SANTIAGO HUMBERTO", "GONZÁLEZ AMIGO FRANCISCA IGNACIA", "GONZÁLEZ SALAZAR JOAQUÍN ALONSO", "GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN", "JARA SEPÚLVEDA KATRINA DARINKA", "MARTÍNEZ LIZANA AARON ALEJANDRO", "MEZA CARRASCO BENJAMÍN INTI", "MIÑO GONZALEZ CATALINA ANDREA", "MORAGA PACHECO RENATO IGNACIO", "PÉREZ CORÓN MANUEL IGNACIO", "SAMANIEGO CORTEZ JAKSON FERGIE", "SEPÚLVEDA SALAZAR SOFÍA ANTONIA", "TAPIA ACUÑA GABRIEL ANTONIO", "VEGA VIVANCO CRISTÓBAL ANTONIO", "VERA NAVARRETE DANIELA ELIZABETH", "VILLALOBOS ARAVENA KARINA ANGELINA", "VILLALOBOS VILLALOBOS SAMIR LUCIAN JESÚS", "HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO", "TORREALBA MOYA FLORVELIS DE LOS ANGELES", "CARO URRUTIA CONSUELO ANTONIA", "LOBOS CÁCERES ANTONIA PAZ"],
+            "3° Medio C": ["ARELLANO ACUÑA MARTÍN ANTONIO", "AROS ÁVILA DAYANA IGNACIA", "CABRERA COLOMBINO MARÍA GRACIA", "FUENTES CARRASCO YARIXA ALEJANDRA", "GÓMEZ CANCINO DANIELA ALEJANDRA", "GUTIÉRREZ CARRIÓN MILLARAY CAROLINA", "HONORATO TAPIA GLORIA JAVIERA", "LARA RIVERA BENJAMÍN ESTEBAN", "PALACIOS SOTO JOSÉ TOMÁS", "PEZO SANTANDER JOSÉ CRISTÓBAL", "ROCHA ROJAS JOSÉ PABLO WILLIAMS", "ROJAS YÉVENES FABIANA ISIDORA", "SÁNCHEZ PAREJA ANDY ANTONIO", "SANTANDER LÓPEZ SIMÓN ESTEBAN", "TRONCOSO LIZAMA SIOMARA IGNACIA", "WARNKEN ROJAS LUCIANA BERNABELA", "DE LA HOZ VALENZUELA FRANCO SEBASTIÁN", "COLLAO MEDINA ANAÍS VALENTINA"],
+            "4° Medio A": [], "4° Medio B": [], "4° Medio C": []
+        };
 
-        let app, db, auth, isFirebaseConnected = false;
-        let currentDateString = new Date().toISOString().slice(0, 10);
+        let app, db, auth, userId = null;
+        let masterData = {}; 
+        let currentYear = "2025";
         let allClassesData = {};
         let currentClass = null;
         let students = [];
         let currentStudentIndex = -1;
+        let currentDateString = new Date().toISOString().slice(0, 10);
+        let pendingPhotoBase64 = null;
 
-        // DOM Elements
         const getEl = (id) => document.getElementById(id);
-        const statusDisplay = getEl('statusDisplay');
-        const currentDateElement = getEl('currentDate');
-        const studentsTableContainer = getEl('studentsTableContainer');
-        const loadingIndicator = getEl('loadingIndicator');
-        const classSelector = getEl('classSelector');
-        const dateSelector = getEl('dateSelector');
-        const studentNameInput = getEl('studentNameInput');
-        
-        const saveDataBtn = getEl('saveDataBtn');
-        const showReportBtn = getEl('showReportBtn');
-        const showDetailedReportBtn = getEl('showDetailedReportBtn');
-        const backToTableBtn = getEl('backToTableBtn');
-        const printReportBtn = getEl('printReportBtn'); 
-        const addStudentBtn = getEl('addStudentBtn');
-        const addClassBtn = getEl('addClassBtn');
-        const resetCoursesBtn = getEl('resetCoursesBtn');
-        
-        const classReportContainer = getEl('classReportContainer');
-        const classDetailsContainer = getEl('classDetailsContainer');
-        const tableBody = getEl('tableBody');
-        const tableHeader = getEl('tableHeader');
-        const controlsContainer = getEl('controlsContainer');
-        const reportButtons = getEl('reportButtons');
-        const backToTableContainer = getEl('backToTableContainer');
-
-        const observationModal = getEl('observationModal');
-        const observationHistory = getEl('observationHistory');
-        const newObservationText = getEl('newObservationText');
-        const obsDateDisplay = getEl('obsDateDisplay');
-        
-        // DATOS IMPORTADOS DE NÓMINA 2025.CSV
-        const fullDefaultClasses = {
-            "1° Medio A": [
-                "ALBURQUENQUE DEL GRECCO EMILYA ANTONIA", "ANABALÓN BELTRÁN BENJAMÍN NICOLÁS", "CONTRERAS SALGADO HADEEY ALEJANDRA",
-                "FERRADA ALBORNOZ AGUSTÍN ALEXIS", "HERNÁNDEZ FERNÁNDEZ DHARIEN ALEXSANDER", "IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA",
-                "LAGOS LASTRA ALEXANDRA DANAE", "LÓPEZ LÓPEZ LUCIANO ANTONIO", "MALDONADO FLORES ANTONELLA BELÉN",
-                "MONTECINO DÍAZ VALESKA BELÉN", "MUÑOZ CONTRERAS LUIS GABRIEL", "MUÑOZ LUNA ROGER JOEL",
-                "NAVARRO VILLANUEVA KARLA PAZ", "ORELLANA ARRIAGADA SEBASTIÁN ANDRÉS", "QUEZADA NARANJO FELIPE ALONSO",
-                "QUINTEROS VERGARA FERNANDA FLORENCIA", "RAMÍREZ VILLALOBOS DUVAN EMILIO", "SANTANDER LÓPEZ MARÍA JOSÉ",
-                "TAPIA CASTILLA JEANFRANCO PATRICK", "URBINA CÁCERES FRANCHESCA POULETTE", "VÁSQUEZ ZALDUENDO AMANDA ISABEL",
-                "ZABALAGA COFRÉ DAMIÁN ANDRÉS", "BAEZ DONOSO LUKAS ALFONSO", "MESA DÍAZ GONZALO IGNACIO"
-            ],
-            "1° Medio B": [
-                "ARAVENA ZÚÑIGA NOEMÍ JESÚS DE LAS ESTRELLAS", "ASTUDILLO CAMPOS CRISTÓBAL ANTONIO", "ASTUDILLO VÁSQUEZ BRUNO FERNANDO LEÓN",
-                "CUMINAO VIDAL CATALINA ANDREA", "DÍAZ MALUENDA MIGUEL ALBERTO", "KILTAN GONZÁLEZ DIDIER EZEQUIEL",
-                "LÓPEZ ACUÑA MARCO EMILIO", "LÓPEZ NOVOA EYDAN DAMIÁN", "MÉNDEZ SUAZO FABIÁN FELIPE",
-                "MOYA REYES MATEO ANTONIO BENJAMÍN", "OSES CAMPOS VALENTINA ABIGAIL", "PALMA ORELLANA ANTONELLA FRANCISCA",
-                "PEREIRA ORELLANA MONSERRAT ALAMIRA", "PÉREZ ORMAZÁBAL ZADKA ALEJANDRA", "ROJAS GONZÁLEZ FLORENCIA TRINIDAD",
-                "ROJAS LEIVA EDUARDO JAVIER", "VÁSQUEZ AGUILERA SCARLET NICOLE", "YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN",
-                "VARGAS MORAGA MARTINA SAYEN", "SALAZAR SALAS PEDRO JOSÉ", "VERA BRAVO FLORENCIA ANTONIA",
-                "PÉREZ QUEVEDO CONSTANZA TRINIDAD", "RIQUELME SANTOS BENJAMÍN ALONSO"
-            ],
-            "1° Medio C": [],
-            "2° Medio A": [
-                "AHUMADA ROJAS TRINIDAD BELÉN", "ESPINOSA TORRES FERNANDA ELENA", "ESPINOZA PEÑALILLO BRAYAN JESÚS",
-                "GONZÁLEZ SALAZAR EMILIA CATALINA", "MEDEL OJEDA LEÓN IGNACIO", "MORALES REIMÁN ALFONSO TOMÁS",
-                "PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO", "PINTO TOBAR JORDÁN AMARO", "RECABAL YÁÑEZ KEVIN ANDRÉS",
-                "RIQUELME CASTILLO MATÍAS EDUARDO ANTONIO", "RIVERA ABARZA CONSTANZA VICTORIA", "SANTIS CASSEUS TEIVA SCARLETT",
-                "SOBARZO YÉVENES KATHERINNE ALEXIA BELÉN", "TOLEDO ALBORNOZ ANTONELLA INES", "VENEGAS ARRIAGADA ANTONIA EDITH",
-                "VIELMA ZABALAGA JOAN MANUEL", "MEZA COLIMÁN ANGEL BLAS", "SAAVEDRA BRAVO FLORENCIA ALEJANDRA"
-            ],
-            "2° Medio B": [
-                "ARAYA DOMÍNGUEZ ALEX FABIÁN", "BRAVO MENARES ALEX JOHAN", "CARRASCO LEIVA BENJAMÍN IGNACIO",
-                "CARVAJAL URRUTIA CONSTANZA PRISILA (DANIEL)", "ENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER", "FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO",
-                "JARAMILLO VILLAR EMILIO SCOTT", "LÓPEZ VILLAR MARTÍN ALONSO", "MIRANDA MUÑOZ ALEXANDRA JAVIERA",
-                "MUÑOZ TRONCOSO HÉCTOR ANTONIO", "OLIVARES VALENZUELA ALONSO IGNACIO", "OLIVARES VALENZUELA ANTONELLA DANAE IGNACIA",
-                "ORELLANA GARRIDO MATÍAS LEANDRO", "PUNOY MEDEL MILLARAY ANGÉLICA", "QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO",
-                "RIQUELME COLOMA DALIA CONSTANZA", "SALGADO ROJAS VICENTE MOISÉS", "SANDOVAL CERPA VICENTE ESTEBAN",
-                "SOTO NARANJO CHRISTOPHER", "VEKARIC VERDEJO MARTÍN"
-            ],
-            "2° Medio C": [],
-            "3° Medio A": [
-                "ALCÁNTAR GARCÍA MARTINA ALEJANDRA", "BAHAMONDE MUÑOZ ARIEL LEON", "CAMPOS MUÑOZ CRISTOPHER JESÚS",
-                "CANCINO ORÓSTICA VICENTE GASPAR", "CARRASCO GONZÁLEZ CAMILA ANDREA", "COFRÉ CASTILLO ANTONIO ANDRÉS",
-                "CONTRERAS VENEGAS BELÉN ALEJANDRA", "GALDAMES VERGARA FELIPE ESTEBAN", "GARCÍA GONZÁLEZ SANTIAGO HUMBERTO",
-                "GONZÁLEZ AMIGO FRANCISCA IGNACIA", "GONZÁLEZ SALAZAR JOAQUÍN ALONSO", "GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN",
-                "JARA SEPÚLVEDA KATRINA DARINKA", "MARTÍNEZ LIZANA AARON ALEJANDRO", "MEZA CARRASCO BENJAMÍN INTI",
-                "MIÑO GONZALEZ CATALINA ANDREA", "MORAGA PACHECO RENATO IGNACIO", "PÉREZ CORÓN MANUEL IGNACIO",
-                "SAMANIEGO CORTEZ JAKSON FERGIE", "SEPÚLVEDA SALAZAR SOFÍA ANTONIA", "TAPIA ACUÑA GABRIEL ANTONIO",
-                "VEGA VIVANCO CRISTÓBAL ANTONIO", "VERA NAVARRETE DANIELA ELIZABETH", "VILLALOBOS ARAVENA KARINA ANGELINA",
-                "VILLALOBOS VILLALOBOS SAMIR LUCIAN JESÚS", "HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO", "TORREALBA MOYA FLORVELIS DE LOS ANGELES",
-                "CARO URRUTIA CONSUELO ANTONIA", "LOBOS CÁCERES ANTONIA PAZ"
-            ],
-            "3° Medio B": [],
-            "3° Medio C": [
-                "ARELLANO ACUÑA MARTÍN ANTONIO", "AROS ÁVILA DAYANA IGNACIA", "CABRERA COLOMBINO MARÍA GRACIA",
-                "FUENTES CARRASCO YARIXA ALEJANDRA", "GÓMEZ CANCINO DANIELA ALEJANDRA", "GUTIÉRREZ CARRIÓN MILLARAY CAROLINA",
-                "HONORATO TAPIA GLORIA JAVIERA", "LARA RIVERA BENJAMÍN ESTEBAN", "PALACIOS SOTO JOSÉ TOMÁS",
-                "PEZO SANTANDER JOSÉ CRISTÓBAL", "ROCHA ROJAS JOSÉ PABLO WILLIAMS", "ROJAS YÉVENES FABIANA ISIDORA",
-                "SÁNCHEZ PAREJA ANDY ANTONIO", "SANTANDER LÓPEZ SIMÓN ESTEBAN", "TRONCOSO LIZAMA SIOMARA IGNACIA",
-                "WARNKEN ROJAS LUCIANA BERNABELA", "DE LA HOZ VALENZUELA FRANCO SEBASTIÁN", "COLLAO MEDINA ANAÍS VALENTINA"
-            ],
-            "4° Medio A": [], 
-            "4° Medio B": [], 
-            "4° Medio C": []
+        const els = {
+            loginOverlay: getEl('loginOverlay'), loginForm: getEl('loginForm'), email: getEl('emailInput'), pass: getEl('passwordInput'), authError: getEl('authErrorMsg'),
+            mainTable: getEl('mainTable'), tableHeader: getEl('tableHeader'), tableBody: getEl('tableBody'), tableContainer: getEl('studentsTableContainer'),
+            yearSel: getEl('yearSelector'), classSel: getEl('classSelector'), dateSel: getEl('dateSelector'), evalName: getEl('evalNameInput'),
+            saveBtn: getEl('saveDataBtn'), addStudentBtn: getEl('addStudentBtn'), addClassBtn: getEl('addClassBtn'), backupBtn: getEl('backupBtn'),
+            reportSummary: getEl('classReportContainer'), reportDetail: getEl('classDetailsContainer'), backNav: getEl('backToTableContainer'), controls: getEl('controlsContainer'), reportBtns: getEl('reportButtons'),
+            modal: { el: getEl('observationModal'), title: getEl('modalTitle'), history: getEl('observationHistory'), input: getEl('newObservationText'), date: getEl('obsDateInput'), save: getEl('saveObservationBtn'), close: getEl('closeObservationModalBtn'), photoInput: getEl('photoInput'), photoPreview: getEl('photoPreviewImg'), photoText: getEl('photoPreviewText'), clearPhoto: getEl('clearPhotoBtn') },
+            photoViewer: { el: getEl('photoViewerModal'), img: getEl('fullSizeImage'), caption: getEl('photoCaption'), close: getEl('closePhotoViewer') }
         };
 
-        function getMyPrivateDocRef() { return doc(db, `artifacts/${appId}/public/data/calificaciones/master_data`); }
+        // --- RUTA ORIGINAL RESTAURADA ---
+        function getMyPrivateDocRef() { 
+            return doc(db, `artifacts/${appId}/public/data/calificaciones/master_data`); 
+        }
 
         async function initApp() {
-             try {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                isFirebaseConnected = true;
-                dateSelector.value = currentDateString;
-
+            try {
+                app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
+                const today = new Date(); const offset = today.getTimezoneOffset() * 60000;
+                currentDateString = new Date(today.getTime() - offset).toISOString().slice(0, 10);
+                els.dateSel.value = currentDateString; updateDateDisplay();
                 onAuthStateChanged(auth, user => {
-                    if (user) {
-                        statusDisplay.textContent = '● CONECTADO (ADMIN)';
-                        loadDataFromFirestore();
-                    } else {
-                        signInAnonymously(auth).catch(e => console.error(e));
-                    }
+                    if (user) { userId = user.uid; getEl('userIdDisplay').textContent = user.email; els.loginOverlay.classList.add('hidden'); loadData(); }
+                    else { els.loginOverlay.classList.remove('hidden'); }
                 });
-             } catch (e) { alert('Error Fatal: No se pudo conectar a Firebase.'); }
-             updateCurrentDateUI();
-             setupEventHandlers();
+                setupEvents();
+            } catch (e) { alert("Error crítico: " + e.message); }
         }
 
-        function loadDataFromFirestore() {
-            const docRef = getMyPrivateDocRef(); 
-            onSnapshot(docRef, (docSnap) => {
-                loadingIndicator.style.display = 'none';
-                if (docSnap.exists() && docSnap.data().classes) {
-                    allClassesData = docSnap.data().classes;
-                    
-                    // Normalización de datos antiguos
-                    for (const className in allClassesData) {
-                        allClassesData[className] = allClassesData[className].map(s => {
-                            const normalizedGrades = (s.grades || []).map(g => (typeof g === 'object' && g.value) ? g : { value: g, date: '---', id: Date.now() + Math.random() });
-                            let normalizedObs = [];
-                            if (Array.isArray(s.observations)) normalizedObs = s.observations;
-                            else if (s.observations && typeof s.observations === 'string') normalizedObs = [{ text: s.observations, date: '---', id: Date.now() }];
-                            return { name: s.name, grades: normalizedGrades, attendance: s.attendance || {}, observations: normalizedObs };
-                        });
-                    }
-                    if (!currentClass || !allClassesData[currentClass]) currentClass = Object.keys(allClassesData)[0];
-                } else {
-                    createInitialData(); 
-                    return; 
-                }
-                students = allClassesData[currentClass] || [];
-                initializeClassSelector();
-                renderStudentsTable();
+        async function handleLogin(e) { e.preventDefault(); els.authError.classList.add('hidden'); try { await signInWithEmailAndPassword(auth, els.email.value, els.pass.value); } catch (error) { els.authError.textContent = "Error: " + error.message; els.authError.classList.remove('hidden'); } }
+
+        function loadData() {
+            // Se agrega manejador de errores al onSnapshot
+            onSnapshot(getMyPrivateDocRef(), (docSnap) => {
+                getEl('loadingIndicator').style.display = 'none';
+                let raw = docSnap.exists() ? docSnap.data() : null;
+                if (!raw) { masterData = { "2025": { classes: {} }, "2026": { classes: {} } }; } 
+                else if (raw.classes && !raw["2025"]) { masterData = { "2025": { classes: raw.classes }, "2026": { classes: {} } }; } 
+                else { masterData = raw; }
+                if(!masterData["2025"]) masterData["2025"] = { classes: {} };
+                if(!masterData["2026"]) masterData["2026"] = { classes: {} };
+                loadYearData(currentYear);
+            }, (error) => {
+                // Si falla la carga, mostramos el error
+                console.error("Error cargando datos:", error);
+                getEl('loadingError').textContent = "Error de Permisos o Conexión: " + error.message;
+                getEl('loadingError').classList.remove('hidden');
             });
         }
 
-        async function createInitialData() {
-             // Si no hay datos, iniciamos con la lista completa
-             const initialClasses = {};
-             for (const className in fullDefaultClasses) {
-                 initialClasses[className] = fullDefaultClasses[className].map(name => ({ name, grades: [], attendance: {}, observations: [] }));
-             }
-             await setDoc(getMyPrivateDocRef(), { classes: initialClasses });
+        function loadYearData(year) {
+            currentYear = year; allClassesData = masterData[currentYear].classes || {};
+            const keys = Object.keys(allClassesData).sort();
+            els.classSel.innerHTML = keys.map(k => `<option value="${k}">${k}</option>`).join('');
+            if (!currentClass || !allClassesData[currentClass]) currentClass = keys[0] || null;
+            els.classSel.value = currentClass || "";
+            refreshTable();
         }
 
-        // FUNCIONES DE GESTIÓN DE CLASES
-        async function loadDefaultCourses() {
-            if(!confirm("⚠️ ¿Estás seguro? Esto agregará la NÓMINA 2025 completa (1° a 4° Medio) a tu lista actual. No borrará los alumnos existentes.")) return;
+        function getUniqueEvaluations(list) { const evals = new Set(); list.forEach(s => s.grades.forEach(g => evals.add(g.type || "EVALUACIÓN"))); return Array.from(evals).sort(); }
+
+        function refreshTable() {
+            if(!currentClass) { els.mainTable.classList.add('hidden'); return; }
+            students = allClassesData[currentClass] || []; els.mainTable.classList.remove('hidden');
+            const evalCols = getUniqueEvaluations(students);
+
+            let htmlHead = `<tr><th class="p-3 text-left border w-48 bg-slate-50">Estudiante</th><th class="p-3 text-center border w-16 bg-slate-50">Prom</th>`;
+            evalCols.forEach(col => htmlHead += `<th class="p-3 text-center border min-w-[80px] bg-indigo-50 text-indigo-700 font-bold text-xs">${col}</th>`);
+            htmlHead += `<th class="p-3 text-center border w-24 bg-slate-50">Asistencia</th><th class="p-3 text-center border w-32 bg-slate-50">Acciones</th></tr>`;
+            els.tableHeader.innerHTML = htmlHead;
+
+            els.tableBody.innerHTML = students.map((s, idx) => {
+                if(!s.grades) s.grades=[]; if(!s.attendance) s.attendance={}; if(!s.observations) s.observations=[];
+                const avg = calculateAverage(s.grades); const att = s.attendance[currentDateString]; const hasObs = s.observations.length > 0;
+                const cells = evalCols.map(col => {
+                    const g = s.grades.slice().reverse().find(gr => (gr.type || "EVALUACIÓN") === col);
+                    if(g) return `<td class="border p-1 text-center bg-slate-50"><div class="flex items-center justify-center gap-1"><span class="font-bold text-slate-700">${g.value.toFixed(1)}</span><button onclick="window.editGrade(${idx},${s.grades.indexOf(g)})" class="text-[10px] text-indigo-400 hover:text-indigo-700">✏️</button></div></td>`;
+                    return `<td class="border p-1 text-center empty-grade">-</td>`;
+                }).join('');
+
+                return `<tr class="hover:bg-slate-50 transition"><td class="border p-2 font-medium text-slate-700 truncate max-w-[200px]">${s.name}</td><td class="border p-2 text-center font-bold ${parseFloat(avg)<4?'text-rose-500':'text-slate-700'}">${avg}</td>${cells}<td class="border p-1 text-center"><div class="flex justify-center gap-1 scale-90">${renderAtt(idx,'P','bg-emerald-500',att)}${renderAtt(idx,'A','bg-rose-500',att)}${renderAtt(idx,'J','bg-amber-400',att)}</div></td><td class="border p-1"><div class="flex justify-end gap-2 pr-2"><div class="flex items-center border border-slate-300 rounded bg-white"><input type="number" id="g-${idx}" class="w-10 text-center text-xs outline-none font-bold" placeholder="-"><button onclick="window.addGrade(${idx})" class="px-2 bg-slate-100 hover:bg-slate-200 border-l border-slate-300 text-xs font-bold">+</button></div><button onclick="window.openModal(${idx})" class="w-7 h-7 rounded-full flex items-center justify-center ${hasObs?'bg-indigo-100 text-indigo-600':'bg-slate-100 text-slate-400'}">${hasObs?'📝':'💬'}</button><button onclick="window.delStudent(${idx})" class="text-slate-300 hover:text-rose-500">🗑️</button></div></td></tr>`;
+            }).join('');
+        }
+
+        function renderAtt(idx,t,c,cur) { return `<button onclick="window.setAtt(${idx},'${t}')" class="w-6 h-6 rounded-full text-[10px] font-bold transition ${cur===t?`${c} text-white scale-110 shadow`:'bg-slate-100 text-slate-300 hover:bg-slate-200'}">${t}</button>`; }
+
+        window.setAtt = (i,s) => { students[i].attendance[currentDateString]=s; saveLoc(); }
+        window.addGrade = (i) => {
+            const v = parseFloat(getEl(`g-${i}`).value); if(isNaN(v)||v<1||v>7) return alert("Nota inválida");
+            const type = els.evalName.value.trim().toUpperCase() || "EVALUACIÓN";
+            const exists = students[i].grades.find(g => (g.type||"EVALUACIÓN")===type);
+            if(exists && !confirm(`Ya existe nota para ${type}. ¿Agregar igual?`)) return;
+            students[i].grades.push({ value:v, date:currentDateString, type:type, id:Date.now() }); getEl(`g-${i}`).value=''; saveLoc();
+        }
+        window.editGrade = (si, gi) => {
+            const g = students[si].grades[gi]; const n = prompt(`Editar ${g.type||"Nota"}:`, g.value);
+            if(n==='borrar') students[si].grades.splice(gi,1); else if(n&&!isNaN(parseFloat(n))) students[si].grades[gi].value=parseFloat(n);
+            saveLoc();
+        }
+        window.delStudent = (i) => { if(confirm("¿Eliminar?")) { students.splice(i,1); saveLoc(); } }
+        
+        // --- MODAL Y FOTOS ---
+        window.openModal = (i) => { 
+            currentStudentIndex=i; pendingPhotoBase64 = null;
+            els.modal.el.classList.remove('hidden','flex'); els.modal.el.classList.add('flex');
+            els.modal.title.textContent=students[i].name; els.modal.date.value=currentDateString;
+            resetPhotoUI();
+            renderObs(students[i].observations); 
+        }
+
+        async function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width; let height = img.height;
+                        const MAX_WIDTH = 600; 
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.6)); 
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function resetPhotoUI() {
+            els.modal.photoInput.value = ''; els.modal.photoPreview.src = ''; els.modal.photoPreview.classList.add('hidden'); els.modal.clearPhoto.classList.add('hidden'); els.modal.photoText.classList.add('hidden');
+        }
+
+        window.viewPhoto = (base64, caption) => {
+            els.photoViewer.img.src = base64; els.photoViewer.caption.textContent = caption;
+            els.photoViewer.el.classList.remove('hidden'); els.photoViewer.el.classList.add('flex');
+        }
+
+        function renderObs(l) { 
+            const s = [...l].sort((a,b)=>new Date(b.date)-new Date(a.date));
+            els.modal.history.innerHTML = s.map(o=>`
+                <div class="border-b pb-2 mb-2 border-slate-100 flex justify-between items-start">
+                    <div>
+                        <strong class="text-[10px] text-indigo-500 bg-indigo-50 px-1 rounded">${o.date}</strong>
+                        <p class="text-xs text-slate-700 mt-1">${o.text}</p>
+                    </div>
+                    ${o.photo ? `<button onclick="window.viewPhoto('${o.photo}', '${o.date} - ${o.text.substring(0,20)}...')" class="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-1 rounded hover:bg-indigo-200 flex items-center gap-1">📷 Ver Foto</button>` : ''}
+                </div>`).join('');
+        }
+
+        function saveLoc() { masterData[currentYear].classes[currentClass] = students; refreshTable(); }
+        async function saveCloud() {
+            if(!auth.currentUser) return;
+            try { await setDoc(getMyPrivateDocRef(), masterData); els.saveBtn.innerHTML = "✅ Listo"; els.saveBtn.classList.add("bg-emerald-600"); setTimeout(() => { els.saveBtn.innerHTML = "💾 Guardar Todo"; els.saveBtn.classList.remove("bg-emerald-600"); }, 2000); } catch(e) { alert("Error al guardar: "+e.message); }
+        }
+
+        function loadDefaultCourses() { if(confirm("Cargar cursos iniciales?")) { for(const k in fullDefaultClasses) { if(!allClassesData[k]) allClassesData[k]=fullDefaultClasses[k].map(n=>({name:n,grades:[],attendance:{},observations:[]})); } saveLoc(); saveCloud(); } }
+        function downloadBackup() { const a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(masterData)); a.download=`Respaldo_${currentDateString}.json`; a.click(); }
+        function calculateAverage(g) { if(!g.length) return '0.0'; return (g.reduce((a,b)=>a+b.value,0)/g.length).toFixed(1); }
+        function updateDateDisplay() { const d=new Date(currentDateString+'T12:00:00'); getEl('currentDate').textContent = d.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
+
+        function setupEvents() {
+            els.loginForm.onsubmit = handleLogin;
+            getEl('btnLogout').onclick = () => { if(confirm("Salir?")) signOut(auth).then(()=>location.reload()); };
+            els.saveBtn.onclick = saveCloud;
+            els.addStudentBtn.onclick = () => { const n=getEl('studentNameInput').value.trim().toUpperCase(); if(n&&!students.find(s=>s.name===n)){ students.push({name:n,grades:[],attendance:{},observations:[]}); getEl('studentNameInput').value=''; saveLoc(); } };
+            els.addClassBtn.onclick = () => { const n=prompt("Nombre curso:"); if(n&&!allClassesData[n]) { allClassesData[n]=[]; saveLoc(); saveCloud(); loadYearData(currentYear); } };
+            getEl('resetCoursesBtn').onclick = loadDefaultCourses;
+            els.backupBtn.onclick = downloadBackup;
             
-            let updated = false;
-            for (const className in fullDefaultClasses) {
-                if (!allClassesData[className]) {
-                    allClassesData[className] = fullDefaultClasses[className].map(name => ({ name, grades: [], attendance: {}, observations: [] }));
-                    updated = true;
+            els.yearSel.onchange = (e) => loadYearData(e.target.value);
+            els.classSel.onchange = (e) => { currentClass=e.target.value; refreshTable(); };
+            els.dateSel.onchange = (e) => { currentDateString=e.target.value; updateDateDisplay(); refreshTable(); };
+
+            els.modal.close.onclick = () => els.modal.el.classList.add('hidden');
+            els.photoViewer.close.onclick = () => els.photoViewer.el.classList.add('hidden');
+            
+            // LOGICA FOTO
+            els.modal.photoInput.onchange = async (e) => {
+                if(e.target.files && e.target.files[0]) {
+                    pendingPhotoBase64 = await compressImage(e.target.files[0]);
+                    els.modal.photoPreview.src = pendingPhotoBase64;
+                    els.modal.photoPreview.classList.remove('hidden');
+                    els.modal.photoText.classList.remove('hidden');
+                    els.modal.clearPhoto.classList.remove('hidden');
                 }
-            }
-            
-            if(updated) {
-                await setDoc(getMyPrivateDocRef(), { classes: allClassesData });
-                alert("✅ Cursos 2025 cargados exitosamente.");
+            };
+            els.modal.clearPhoto.onclick = () => { pendingPhotoBase64 = null; resetPhotoUI(); };
+
+            els.modal.save.onclick = () => { 
+                const t=els.modal.input.value.trim(); const d=els.modal.date.value; 
+                if((t || pendingPhotoBase64) && d) { 
+                    students[currentStudentIndex].observations.push({ text:t, date:d, photo: pendingPhotoBase64, id:Date.now() }); 
+                    els.modal.el.classList.add('hidden'); els.modal.input.value=''; pendingPhotoBase64=null; 
+                    saveLoc(); 
+                } 
+            };
+
+            getEl('showReportBtn').onclick = () => generateReport('summary');
+            getEl('showDetailedReportBtn').onclick = () => generateReport('detail');
+            getEl('backToTableBtn').onclick = () => { els.tableContainer.classList.remove('hidden'); els.controls.classList.remove('hidden'); els.backNav.classList.add('hidden'); els.reportSummary.classList.add('hidden'); els.reportDetail.classList.add('hidden'); };
+            getEl('printReportBtn').onclick = () => window.print();
+        }
+
+        function generateReport(type) {
+            if(!currentClass) return;
+            els.tableContainer.classList.add('hidden'); els.controls.classList.add('hidden'); els.backNav.classList.remove('hidden');
+            if(type==='summary') {
+                els.reportSummary.classList.remove('hidden'); els.reportDetail.classList.add('hidden');
+                const data = Object.keys(allClassesData).map(c=>{ const l=allClassesData[c]; let p=0,a=0,j=0,t=0; l.forEach(s=>Object.values(s.attendance||{}).forEach(v=>{ if(v==='P')p++;if(v==='A')a++;if(v==='J')j++;t++; })); return {c, count:l.length, p,a,j, rate: t?((p+j)/t*100).toFixed(1)+'%':'N/A'}; });
+                els.reportSummary.innerHTML = `<h2 class="text-xl font-bold mb-4 text-center">Resumen General ${currentYear}</h2><table class="w-full text-sm text-left"><thead class="bg-slate-100 uppercase"><tr><th class="px-4 py-2">Clase</th><th class="px-4 py-2 text-center">Matrícula</th><th class="text-center px-4 py-2 text-green-600">P</th><th class="text-center px-4 py-2 text-rose-600">A</th><th class="text-center px-4 py-2">%</th></tr></thead><tbody>${data.map(d=>`<tr class="border-b"><td class="px-4 py-2 font-medium">${d.c}</td><td class="text-center">${d.count}</td><td class="text-center text-green-600 font-bold">${d.p}</td><td class="text-center text-rose-600 font-bold">${d.a}</td><td class="text-center font-bold">${d.rate}</td></tr>`).join('')}</tbody></table>`;
             } else {
-                alert("ℹ️ Los cursos ya existían.");
+                els.reportDetail.classList.remove('hidden'); els.reportSummary.classList.add('hidden');
+                const list = allClassesData[currentClass];
+                const dates = new Set(); list.forEach(s=>Object.keys(s.attendance||{}).forEach(d=>dates.add(d)));
+                const sortedDates = Array.from(dates).sort();
+                const evalCols = getUniqueEvaluations(list);
+                els.reportDetail.innerHTML = `<h2 class="text-xl font-bold mb-4 text-center">Detalle: ${currentClass}</h2><table class="w-full text-xs border border-slate-200"><thead class="bg-slate-100"><tr><th class="px-2 py-2 text-left border w-40">Estudiante</th><th class="px-1 py-2 border w-10">Prom</th>${evalCols.map(e=>`<th class="px-1 py-2 border bg-indigo-50 text-indigo-700 w-12">${e}</th>`).join('')}${sortedDates.map(d=>`<th class="px-1 py-2 border w-8">${d.slice(5)}</th>`).join('')}<th class="px-2 py-2 text-left border">Obs</th></tr></thead><tbody>${list.map((s,i)=>{
+                    const grades = evalCols.map(c=>{ const g=s.grades.slice().reverse().find(gr=>(gr.type||"EVALUACIÓN")===c); return `<td class="text-center border font-bold ${g?'text-slate-700':'text-slate-200'}">${g?g.value.toFixed(1):'-'}</td>`; }).join('');
+                    const atts = sortedDates.map(d=>{ const v=s.attendance[d]||'-'; let c='text-slate-300'; if(v==='P')c='bg-green-100 text-green-700 font-bold'; if(v==='A')c='bg-rose-100 text-rose-700 font-bold'; return `<td class="text-center border ${c}">${v}</td>`; }).join('');
+                    const obs = s.observations.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(o=>`${o.date}: ${o.text} ${o.photo?'(📷)':''}`).join(' | ');
+                    return `<tr class="${i%2===0?'bg-white':'bg-slate-50'}"><td class="px-2 py-2 border font-medium truncate max-w-[150px]">${s.name}</td><td class="px-1 py-2 border text-center font-bold bg-slate-100">${calculateAverage(s.grades)}</td>${grades}${atts}<td class="px-2 py-2 border text-[10px] leading-tight">${obs}</td></tr>`;
+                }).join('')}</tbody></table>`;
             }
-        }
-
-        async function addNewClass() {
-            const name = prompt("Nombre del nuevo curso (Ej: 5° Básico A):");
-            if(name && name.trim() !== "") {
-                if(allClassesData[name]) return alert("Ese curso ya existe.");
-                allClassesData[name] = [];
-                currentClass = name;
-                await setDoc(getMyPrivateDocRef(), { classes: allClassesData });
-                alert(`✅ Curso "${name}" creado.`);
-            }
-        }
-
-        async function saveData() {
-             if (!isFirebaseConnected) return;
-             try {
-                 await setDoc(getMyPrivateDocRef(), { classes: allClassesData });
-                 saveDataBtn.textContent = "✅ Guardado";
-                 setTimeout(() => saveDataBtn.textContent = "💾 Guardar Cambios", 2000);
-             } catch (e) { alert('Error: ' + e.message); }
-        }
-        
-        function addStudent() {
-            const name = studentNameInput.value.trim().toUpperCase();
-            if (!name || !currentClass) return alert('Escribe un nombre válido.');
-            if (students.some(s => s.name === name)) return alert('Ya existe.');
-            students.push({ name: name, grades: [], attendance: {}, observations: [] });
-            studentNameInput.value = '';
-            updateDataAndRender();
-        }
-
-        function showView(view) {
-            studentsTableContainer.style.display = 'none';
-            classReportContainer.style.display = 'none';
-            classDetailsContainer.style.display = 'none';
-            controlsContainer.classList.add('hidden');
-            reportButtons.classList.add('hidden');
-            backToTableContainer.classList.add('hidden');
-
-            if (view === 'table') {
-                studentsTableContainer.style.display = 'flex';
-                controlsContainer.classList.remove('hidden');
-                reportButtons.classList.remove('hidden');
-            } else if (view === 'report') {
-                classReportContainer.style.display = 'block';
-                backToTableContainer.classList.remove('hidden');
-            } else if (view === 'detailed') {
-                classDetailsContainer.style.display = 'block';
-                backToTableContainer.classList.remove('hidden');
-            }
-        }
-
-        function renderStudentsTable() { 
-            tableHeader.style.display = students.length > 0 ? 'grid' : 'none';
-            tableBody.innerHTML = students.map((student, index) => {
-                const gradesHtml = student.grades.map((g, gIndex) => `
-                    <div onclick="editGrade(${index}, ${gIndex})" title="${g.date}"
-                         class="grade-chip inline-flex items-center justify-center bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full mr-1 mb-1 border border-blue-200">
-                        ${g.value.toFixed(1)}
-                    </div>`).join('');
-                const hasObs = student.observations && student.observations.length > 0;
-                return `
-                <div class="grid grid-cols-12 gap-2 py-3 border-b border-gray-100 hover:bg-gray-50 items-center text-sm px-2">
-                    <div class="col-span-3 text-left font-semibold text-gray-800 truncate pl-2">${student.name}</div>
-                    <div class="col-span-4 flex flex-wrap content-center">${gradesHtml.length > 0 ? gradesHtml : '<span class="text-gray-300 text-xs italic">Sin notas</span>'}</div>
-                    <div class="col-span-1 text-center font-bold text-gray-700">${calculateAverage(student.grades)}</div>
-                    <div class="col-span-2 flex justify-center space-x-1">
-                         <button data-status="P" data-index="${index}" class="attendance-btn w-7 h-7 rounded-full text-xs font-bold transition-all ${getAttendanceStatus(student) === 'P' ? 'bg-green-500 text-white scale-110' : 'bg-gray-200 text-gray-400'}">P</button>
-                         <button data-status="A" data-index="${index}" class="attendance-btn w-7 h-7 rounded-full text-xs font-bold transition-all ${getAttendanceStatus(student) === 'A' ? 'bg-red-500 text-white scale-110' : 'bg-gray-200 text-gray-400'}">A</button>
-                         <button data-status="J" data-index="${index}" class="attendance-btn w-7 h-7 rounded-full text-xs font-bold transition-all ${getAttendanceStatus(student) === 'J' ? 'bg-yellow-400 text-white scale-110' : 'bg-gray-200 text-gray-400'}">J</button>
-                    </div>
-                    <div class="col-span-2 flex justify-end items-center space-x-2 pr-2">
-                        <div class="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200">
-                            <input type="number" id="gradeInput-${index}" step="0.1" class="w-10 bg-transparent text-center text-xs focus:outline-none">
-                            <button onclick="addGrade(${index})" class="text-orange-500 font-bold px-1 text-lg leading-none">+</button>
-                        </div>
-                        <button onclick="openObservationModal(${index})" class="w-8 h-8 rounded-full border flex items-center justify-center ${hasObs ? 'text-indigo-600 bg-indigo-100' : 'text-gray-400 bg-gray-100'}">${hasObs ? '📝' : '💬'}</button>
-                        <button data-index="${index}" class="btn-delete text-white w-7 h-7 rounded-full text-xs shadow hover:bg-gray-500 flex items-center justify-center">🗑️</button>
-                    </div>
-                </div>`; }).join('');
-            attachTableListeners();
-        }
-
-        // REPORTES
-        function generateClassReport() {
-            showView('report');
-            const classNames = Object.keys(allClassesData);
-            classReportContainer.innerHTML = `
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Resumen de Asistencia General</h2>
-                <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200 border"><thead class="bg-gray-50"><tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Clase</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-green-600 uppercase">P</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-red-600 uppercase">A</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-yellow-600 uppercase">J</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase">%</th>
-                </tr></thead><tbody class="bg-white divide-y divide-gray-200">${classNames.map(c => {
-                    const s = calculateClassSummary(c);
-                    return `<tr><td class="px-6 py-4 font-medium text-gray-900">${c}</td><td class="px-6 py-4 text-center">${s.total_students}</td><td class="px-6 py-4 text-center text-green-600 font-bold">${s.P}</td><td class="px-6 py-4 text-center text-red-600 font-bold">${s.A}</td><td class="px-6 py-4 text-center text-yellow-600 font-bold">${s.J}</td><td class="px-6 py-4 text-center font-bold">${s.tasa_asistencia}</td></tr>`;
-                }).join('')}</tbody></table></div>`;
-        }
-
-        function generateDetailedReport(className) {
-            if (!className) return alert("Selecciona una clase.");
-            showView('detailed');
-            const data = allClassesData[className] || [];
-            let dates = new Set();
-            data.forEach(s => Object.values(s.attendance || {}).length > 0 && Object.keys(s.attendance).forEach(d => dates.add(d)));
-            const sortedDates = Array.from(dates).sort();
-            
-            // Fix si no hay fechas
-            const datesHeader = sortedDates.length > 0 
-                ? sortedDates.map(d => `<th class="px-2 py-2 text-center w-8">${d.substring(5)}</th>`).join('') 
-                : '<th class="px-2 py-2 text-center">Sin Fechas</th>';
-
-            classDetailsContainer.innerHTML = `
-                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Reporte Detallado: ${className}</h2>
-                <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200 border text-xs"><thead class="bg-gray-100"><tr>
-                    <th class="px-2 py-2 text-left border-r sticky left-0 bg-gray-100">Estudiante</th><th class="px-2 py-2 text-center border-r">Prom</th>${datesHeader}<th class="px-4 py-2 text-left">Obs</th>
-                </tr></thead><tbody class="bg-white divide-y divide-gray-200">${data.map(s => {
-                    const datesCells = sortedDates.length > 0 
-                        ? sortedDates.map(d => `<td class="px-1 py-2 text-center border-r ${s.attendance[d]==='P'?'bg-green-50 font-bold text-green-600':(s.attendance[d]==='A'?'bg-red-50 font-bold text-red-600':(s.attendance[d]==='J'?'bg-yellow-50 font-bold text-yellow-600':'text-gray-300'))}">${s.attendance[d]||'-'}</td>`).join('')
-                        : '<td class="px-1 py-2 text-center text-gray-400">-</td>';
-                    return `<tr><td class="px-2 py-3 font-medium border-r sticky left-0 bg-white">${s.name}</td><td class="px-2 py-3 text-center font-bold text-blue-600 border-r">${calculateAverage(s.grades)}</td>${datesCells}<td class="px-4 py-3 text-gray-600">${(s.observations||[]).map(o=>`${o.date}: ${o.text}`).join(' | ')}</td></tr>`;
-                }).join('')}</tbody></table></div>`;
-        }
-
-        // UTILIDADES Y HANDLERS
-        function calculateClassSummary(className) {
-            const cls = allClassesData[className] || [];
-            let sum = { P: 0, A: 0, J: 0, total_students: cls.length, total_records: 0 };
-            cls.forEach(s => {
-                if(s.attendance) Object.values(s.attendance).forEach(st => { if (st in sum) { sum[st]++; sum.total_records++; } });
-            });
-            sum.tasa_asistencia = sum.total_records > 0 ? ((sum.P + sum.J) / sum.total_records * 100).toFixed(1) + '%' : 'N/A';
-            return sum;
-        }
-
-        window.addGrade = (index) => {
-            const val = parseFloat(getEl(`gradeInput-${index}`).value);
-            if (isNaN(val) || val < 1 || val > 7) return alert('Nota inválida');
-            students[index].grades.push({ value: val, date: currentDateString, id: Date.now() });
-            getEl(`gradeInput-${index}`).value = '';
-            updateDataAndRender();
-        };
-
-        window.editGrade = (sIdx, gIdx) => {
-            if(prompt("🔒 Clave Docente:") !== CLAVE_DOCENTE) return alert("Clave Incorrecta");
-            const act = prompt(`Editar (nota) o 'borrar'`, students[sIdx].grades[gIdx].value);
-            if(!act) return;
-            if(act.toLowerCase()==='borrar') students[sIdx].grades.splice(gIdx, 1);
-            else students[sIdx].grades[gIdx].value = parseFloat(act);
-            updateDataAndRender();
-        };
-
-        window.openObservationModal = (index) => {
-            currentStudentIndex = index;
-            getEl('modalTitle').textContent = `Observaciones: ${students[index].name}`;
-            obsDateDisplay.textContent = currentDateString;
-            newObservationText.value = '';
-            const hist = students[index].observations || [];
-            observationHistory.innerHTML = hist.length ? hist.map(o => `<div class="bg-gray-50 border-l-4 border-indigo-400 p-2 mb-2"><span class="text-xs font-bold text-indigo-600">${o.date}</span><p class="text-sm">${o.text}</p></div>`).join('') : '<p class="text-gray-400 italic">Sin observaciones.</p>';
-            observationModal.style.display = 'flex';
-        };
-
-        window.saveObservation = () => {
-            const txt = newObservationText.value.trim();
-            if(!txt) return;
-            if(!students[currentStudentIndex].observations) students[currentStudentIndex].observations = [];
-            students[currentStudentIndex].observations.push({ text: txt, date: currentDateString, id: Date.now() });
-            observationModal.style.display = 'none';
-            updateDataAndRender();
-        };
-
-        function updateDataAndRender() { allClassesData[currentClass] = students; renderStudentsTable(); }
-        function calculateAverage(g) { return (!g || !g.length) ? '0.0' : (g.reduce((a, b) => a + (b.value||0), 0) / g.length).toFixed(1); }
-        function getAttendanceStatus(s) { return (s.attendance && s.attendance[currentDateString]) ? s.attendance[currentDateString] : 'N/A'; }
-        
-        function initializeClassSelector() {
-            classSelector.innerHTML = '';
-            Object.keys(allClassesData).forEach(n => {
-                const opt = document.createElement('option'); opt.value = n; opt.textContent = n;
-                if(n === currentClass) opt.selected = true;
-                classSelector.appendChild(opt);
-            });
-        }
-
-        function updateCurrentDateUI() { 
-             const parts = currentDateString.split('-');
-             const d = new Date(parts[0], parts[1]-1, parts[2]);
-             currentDateElement.textContent = d.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-             dateSelector.value = currentDateString;
-             document.querySelectorAll('.print-date-placeholder').forEach(el => el.textContent = d.toLocaleDateString('es-ES'));
-        }
-
-        function attachTableListeners() {
-            document.querySelectorAll('.attendance-btn').forEach(b => b.addEventListener('click', (e) => {
-                if(!students[e.target.dataset.index].attendance) students[e.target.dataset.index].attendance = {};
-                students[e.target.dataset.index].attendance[currentDateString] = e.target.dataset.status;
-                updateDataAndRender();
-            }));
-            document.querySelectorAll('.btn-delete').forEach(b => b.addEventListener('click', (e) => {
-                if(confirm("¿Eliminar?")) { students.splice(e.target.dataset.index, 1); updateDataAndRender(); }
-            }));
-        }
-        
-        function setupEventHandlers() { 
-             saveDataBtn.addEventListener('click', saveData);
-             getEl('closeObservationModalBtn').addEventListener('click', () => observationModal.style.display = 'none');
-             getEl('saveObservationBtn').addEventListener('click', window.saveObservation); 
-             classSelector.addEventListener('change', (e) => { currentClass = e.target.value; students = allClassesData[currentClass] || []; renderStudentsTable(); });
-             dateSelector.addEventListener('change', (e) => { currentDateString = e.target.value; updateCurrentDateUI(); renderStudentsTable(); });
-             showReportBtn.addEventListener('click', generateClassReport);
-             showDetailedReportBtn.addEventListener('click', () => generateDetailedReport(currentClass));
-             backToTableBtn.addEventListener('click', () => showView('table'));
-             printReportBtn.addEventListener('click', () => window.print());
-             addStudentBtn.addEventListener('click', addStudent);
-             addClassBtn.addEventListener('click', addNewClass);
-             resetCoursesBtn.addEventListener('click', loadDefaultCourses);
         }
 
         window.onload = initApp;
