@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Privado - ProfeAle Admin v9.5 (PDF)</title>
+    <title>Panel Privado - ProfeAle Admin v9.6 (2026 Ready)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -58,7 +58,7 @@
                 <div>
                     <h1 class="text-2xl font-bold text-slate-800">Panel de Control</h1>
                     <div class="flex items-center gap-2 text-xs">
-                        <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">Admin v9.5</span>
+                        <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">Admin v9.6</span>
                         <span id="userIdDisplay" class="text-slate-400">...</span>
                     </div>
                 </div>
@@ -75,7 +75,7 @@
 
         <div id="controlsContainer" class="no-print bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 shadow-sm">
              <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                 <div class="md:col-span-1"><label class="block text-xs font-bold text-indigo-600 uppercase mb-1">Año</label><select id="yearSelector" class="w-full p-2 border-2 border-indigo-100 rounded text-sm font-bold text-indigo-700"><option value="2025">2025</option><option value="2026">2026</option></select></div>
+                 <div class="md:col-span-1"><label class="block text-xs font-bold text-indigo-600 uppercase mb-1">Año</label><select id="yearSelector" class="w-full p-2 border-2 border-indigo-100 rounded text-sm font-bold text-indigo-700"><option value="2025">2025</option><option value="2026" selected>2026</option></select></div>
                  <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Clase</label><div class="flex"><select id="classSelector" class="w-full p-2 border border-slate-300 rounded-l text-sm"></select><button id="addClassBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold px-2 rounded-r" title="Nueva Clase">+</button></div></div>
                  <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha</label><input type="date" id="dateSelector" class="w-full p-2 border border-slate-300 rounded text-sm"></div>
                  <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Evaluación</label><input type="text" id="evalNameInput" placeholder="Ej: PRUEBA 1" class="w-full p-2 border border-slate-300 rounded text-sm uppercase font-semibold text-slate-700"></div>
@@ -137,13 +137,179 @@
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // DATOS PRECARGADOS 2026 (NÓMINA OFICIAL)
+        const PRELOADED_2026 = {
+            "1A": [
+                {name: "ÁLVAREZ FAÚNDEZ MATEO VICENTE", grades: [], attendance: {}, observations: []},
+                {name: "CASTILLO ARAVENA MAITE PASCAL", grades: [], attendance: {}, observations: []},
+                {name: "COLLADO PUENTES SANTINO ALEXANDER", grades: [], attendance: {}, observations: []},
+                {name: "CONCHA TORREALBA  JOAQUÍN IGNACIO", grades: [], attendance: {}, observations: []},
+                {name: "DÍAZ MALUENDA ESTEFANÍA ANTONIA", grades: [], attendance: {}, observations: []},
+                {name: "DONAIRE ROJAS MAITE EMILIA ESTER", grades: [], attendance: {}, observations: []},
+                {name: "ESPINOZA CACHAÑA LISBET ALEXANDRA", grades: [], attendance: {}, observations: []},
+                {name: "FERRADA ALBORNOZ AGUSTÍN ALEXIS", grades: [], attendance: {}, observations: []},
+                {name: "FUENTEMAVIDA BARROS OSCAR ANTONIO", grades: [], attendance: {}, observations: []},
+                {name: "JAQUE PACHECO DAMIÁN IGNACIO", grades: [], attendance: {}, observations: []},
+                {name: "JARAMILLO VILLAR MATT HOST", grades: [], attendance: {}, observations: []},
+                {name: "LÓPEZ ACUÑA MARCO EMILIO", grades: [], attendance: {}, observations: []},
+                {name: "LÓPEZ VILLAR FRANCO IGNACIO", grades: [], attendance: {}, observations: []},
+                {name: "MESA DÍAZ GONZALO IGNACIO", grades: [], attendance: {}, observations: []},
+                {name: "MEZA CARRASCO CRISTIAN ALFONSO", grades: [], attendance: {}, observations: []},
+                {name: "MORALES GARRIDO NICOLÁS ANTONIO", grades: [], attendance: {}, observations: []},
+                {name: "ORTEGA DA SILVA EMILIA CATALINA SOPHIA", grades: [], attendance: {}, observations: []},
+                {name: "PEREIRA TAPIA KEVIN RUBÉN", grades: [], attendance: {}, observations: []},
+                {name: "RAMÍREZ SEPÚLVEDA LUIS JUSTIN JESÚS", grades: [], attendance: {}, observations: []},
+                {name: "RAMÍREZ VALDÉS MARTINA POLETTE", grades: [], attendance: {}, observations: []},
+                {name: "RECABAL YÁÑEZ TOMÁS IGNACIO", grades: [], attendance: {}, observations: []},
+                {name: "RODRÍGUEZ  SEPÚLVEDA SIMONEY ISAMAR", grades: [], attendance: {}, observations: []},
+                {name: "ROJAS ÓRDENES TRACY MAIDEN", grades: [], attendance: {}, observations: []},
+                {name: "SÁNCHEZ MUNIZAGA ALONDRA ANAÍS", grades: [], attendance: {}, observations: []},
+                {name: "SOLIZ OLGUIN BRAYAN", grades: [], attendance: {}, observations: []},
+                {name: "VALENZUELA  MUÑOZ MAGDALENA  BELÉN", grades: [], attendance: {}, observations: []}
+            ],
+            "2A": [
+                {name: "ALBURQUENQUE DEL GRECCO EMILYA ANTONIA", grades: [], attendance: {}, observations: []},
+                {name: "ANABALÓN BELTRÁN BENJAMÍN NICOLÁS", grades: [], attendance: {}, observations: []},
+                {name: "ARAVENA ZÚÑIGA NOEMÍ JESÚS DE LAS ESTRELLAS", grades: [], attendance: {}, observations: []},
+                {name: "ARAYA DOMÍNGUEZ  ALEX FABIÁN", grades: [], attendance: {}, observations: []},
+                {name: "ASTUDILLO CAMPOS CRISTÓBAL ANTONIO", grades: [], attendance: {}, observations: []},
+                {name: "ASTUDILLO VÁSQUEZ BRUNO FERNANDO LEÓN", grades: [], attendance: {}, observations: []},
+                {name: "BAEZ DONOSO LUKAS ALFONSO", grades: [], attendance: {}, observations: []},
+                {name: "CARO BUSTOS KRISCHNA ESTEFANIA", grades: [], attendance: {}, observations: []},
+                {name: "CONTRERAS  SALGADO HADEEY ALEJANDRA", grades: [], attendance: {}, observations: []},
+                {name: "CUMINAO VIDAL CATALINA ANDREA", grades: [], attendance: {}, observations: []},
+                {name: "DÍAZ MALUENDA MIGUEL ALBERTO", grades: [], attendance: {}, observations: []},
+                {name: "IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA", grades: [], attendance: {}, observations: []},
+                {name: "KILTAN GONZÁLEZ DIDIER EZEQUIEL", grades: [], attendance: {}, observations: []},
+                {name: "LAGOS LASTRA ALEXANDRA  DANAE", grades: [], attendance: {}, observations: []},
+                {name: "LÓPEZ LÓPEZ LUCIANO ANTONIO", grades: [], attendance: {}, observations: []},
+                {name: "LÓPEZ NOVOA EYDAN DAMIÁN", grades: [], attendance: {}, observations: []},
+                {name: "MALDONADO  FLORES ANTONELLA  BELÉN", grades: [], attendance: {}, observations: []},
+                {name: "MONTECINO  DÍAZ VALESKA BELÉN", grades: [], attendance: {}, observations: []},
+                {name: "MOYA REYES MATEO ANTONIO BENJAMÍN", grades: [], attendance: {}, observations: []},
+                {name: "MUÑOZ CONTRERAS  LUIS GABRIEL", grades: [], attendance: {}, observations: []},
+                {name: "MUÑOZ LUNA ROGER JOEL", grades: [], attendance: {}, observations: []},
+                {name: "NAVARRO VILLANUEVA  KARLA PAZ", grades: [], attendance: {}, observations: []},
+                {name: "ORELLANA ARRIAGADA  SEBASTIÁN ANDRÉS", grades: [], attendance: {}, observations: []},
+                {name: "OSES CAMPOS VALENTINA ABIGAIL", grades: [], attendance: {}, observations: []},
+                {name: "PALMA ORELLANA ANTONELLA  FRANCISCA", grades: [], attendance: {}, observations: []},
+                {name: "PEREIRA ORELLANA MONSERRAT  ALAMIRA", grades: [], attendance: {}, observations: []},
+                {name: "PÉREZ ORMAZÁBAL  ZADKA ALEJANDRA", grades: [], attendance: {}, observations: []},
+                {name: "PÉREZ QUEVEDO CONSTANZA  TRINIDAD", grades: [], attendance: {}, observations: []},
+                {name: "QUEZADA NARANJO FELIPE ALONSO", grades: [], attendance: {}, observations: []},
+                {name: "RAMÍREZ VILLALOBOS  DUVAN EMILIO", grades: [], attendance: {}, observations: []},
+                {name: "RIQUELME SANTOS BENJAMÍN ALONSO", grades: [], attendance: {}, observations: []},
+                {name: "ROJAS GONZÁLEZ FLORENCIA TRINIDAD", grades: [], attendance: {}, observations: []},
+                {name: "ROJAS LEIVA EDUARDO JAVIER", grades: [], attendance: {}, observations: []},
+                {name: "SALAZAR SALAS PEDRO JOSÉ", grades: [], attendance: {}, observations: []},
+                {name: "SANTANDER  LÓPEZ MARÍA JOSÉ", grades: [], attendance: {}, observations: []},
+                {name: "TAPIA CASTILLA JEANFRANCO  PATRICK", grades: [], attendance: {}, observations: []},
+                {name: "URBINA CÁCERES FRANCHESCA  POULETTE", grades: [], attendance: {}, observations: []},
+                {name: "VARGAS MORAGA MARTINA SAYEN", grades: [], attendance: {}, observations: []},
+                {name: "VÁSQUEZ AGUILERA SCARLET NICOLE", grades: [], attendance: {}, observations: []},
+                {name: "VÁSQUEZ ZALDUENDO  AMANDA ISABEL", grades: [], attendance: {}, observations: []},
+                {name: "VERA BRAVO FLORENCIA ANTONIA", grades: [], attendance: {}, observations: []},
+                {name: "YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN", grades: [], attendance: {}, observations: []},
+                {name: "ZABALAGA COFRÉ DAMIÁN ANDRÉS", grades: [], attendance: {}, observations: []}
+            ],
+            "3A": [
+                {name: "AHUMADA ROJAS TRINIDAD BELÉN", grades: [], attendance: {}, observations: []},
+                {name: "CORNEJO CASTILLO OSCAR GABRIEL", grades: [], attendance: {}, observations: []},
+                {name: "ESPINOZA PEÑALILLO BRAYAN JESÚS", grades: [], attendance: {}, observations: []},
+                {name: "FAÚNDEZ NORAMBUENA ALEJANDRO  ANTONIO", grades: [], attendance: {}, observations: []},
+                {name: "JARAMILLO VILLAR EMILIO SCOTT", grades: [], attendance: {}, observations: []},
+                {name: "LÓPEZ VILLAR MARTÍN ALONSO", grades: [], attendance: {}, observations: []},
+                {name: "MEZA COLIMÁN ANGEL BLAS", grades: [], attendance: {}, observations: []},
+                {name: "MIRANDA MUÑOZ ALEXANDRA  JAVIERA", grades: [], attendance: {}, observations: []},
+                {name: "MORAGA PACHECO RENATO IGNACIO", grades: [], attendance: {}, observations: []},
+                {name: "MORALES REIMÁN ALFONSO TOMÁS", grades: [], attendance: {}, observations: []},
+                {name: "ORELLANA GARRIDO MATÍAS LEANDRO", grades: [], attendance: {}, observations: []},
+                {name: "PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO", grades: [], attendance: {}, observations: []},
+                {name: "PINTO TOBAR JORDÁN AMARO", grades: [], attendance: {}, observations: []},
+                {name: "RECABAL YÁÑEZ KEVIN ANDRÉS", grades: [], attendance: {}, observations: []},
+                {name: "SANDOVAL CERPA VICENTE ESTEBAN", grades: [], attendance: {}, observations: []},
+                {name: "SOTO NARANJO CHRISTOPHER", grades: [], attendance: {}, observations: []},
+                {name: "VEKARIC VERDEJO MARTÍN", grades: [], attendance: {}, observations: []},
+                {name: "VIELMA ZABALAGA JOAN MANUEL", grades: [], attendance: {}, observations: []}
+            ],
+            "3C": [
+                {name: "BRAVO MENARES ALEX JOHAN", grades: [], attendance: {}, observations: []},
+                {name: "CARRASCO LEIVA BENJAMÍN IGNACIO", grades: [], attendance: {}, observations: []},
+                {name: "ENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER", grades: [], attendance: {}, observations: []},
+                {name: "ESPINOSA TORRES FERNANDA ELENA", grades: [], attendance: {}, observations: []},
+                {name: "GONZÁLEZ SALAZAR EMILIA CATALINA", grades: [], attendance: {}, observations: []},
+                {name: "MEDEL OJEDA LEÓN IGNACIO", grades: [], attendance: {}, observations: []},
+                {name: "OLIVARES VALENZUELA  ALONSO IGNACIO", grades: [], attendance: {}, observations: []},
+                {name: "OLIVARES VALENZUELA  ANTONELLA  DANAE IGNACIA", grades: [], attendance: {}, observations: []},
+                {name: "PUNOY MEDEL MILLARAY ANGÉLICA", grades: [], attendance: {}, observations: []},
+                {name: "QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO", grades: [], attendance: {}, observations: []},
+                {name: "RIQUELME CASTILLO MATÍAS EDUARDO ANTONIO", grades: [], attendance: {}, observations: []},
+                {name: "RIQUELME COLOMA DALIA CONSTANZA", grades: [], attendance: {}, observations: []},
+                {name: "RIVERA ABARZA CONSTANZA  VICTORIA", grades: [], attendance: {}, observations: []},
+                {name: "SAAVEDRA BRAVO FLORENCIA ALEJANDRA", grades: [], attendance: {}, observations: []},
+                {name: "SALGADO ROJAS VICENTE MOISÉS", grades: [], attendance: {}, observations: []},
+                {name: "SANTIS CASSEUS TEIVA SCARLETT", grades: [], attendance: {}, observations: []},
+                {name: "SOBARZO YÉVENES KATHERINNE  ALEXIA BELÉN", grades: [], attendance: {}, observations: []},
+                {name: "TOLEDO ALBORNOZ ANTONELLA  INES", grades: [], attendance: {}, observations: []},
+                {name: "VENEGAS ARRIAGADA  ANTONIA EDITH", grades: [], attendance: {}, observations: []}
+            ],
+            "4A": [
+                {name: "ALCÁNTAR GARCÍA MARTINA ALEJANDRA", grades: [], attendance: {}, observations: []},
+                {name: "BAHAMONDE  MUÑOZ ARIEL LEON", grades: [], attendance: {}, observations: []},
+                {name: "CAMPOS MUÑOZ CRISTOPHER  JESÚS", grades: [], attendance: {}, observations: []},
+                {name: "CANCINO ORÓSTICA VICENTE GASPAR", grades: [], attendance: {}, observations: []},
+                {name: "CARO URRUTIA CONSUELO ANTONIA", grades: [], attendance: {}, observations: []},
+                {name: "CARRASCO GONZÁLEZ CAMILA ANDREA", grades: [], attendance: {}, observations: []},
+                {name: "COFRÉ CASTILLO ANTONIO ANDRÉS", grades: [], attendance: {}, observations: []},
+                {name: "GALDAMES VERGARA FELIPE ESTEBAN", grades: [], attendance: {}, observations: []},
+                {name: "GARCÍA GONZÁLEZ SANTIAGO HUMBERTO", grades: [], attendance: {}, observations: []},
+                {name: "GONZÁLEZ AMIGO FRANCISCA IGNACIA", grades: [], attendance: {}, observations: []},
+                {name: "GONZÁLEZ SALAZAR JOAQUÍN ALONSO", grades: [], attendance: {}, observations: []},
+                {name: "GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN", grades: [], attendance: {}, observations: []},
+                {name: "HERNÁNDEZ  SEPÚLVEDA VICENTE ALEJANDRO", grades: [], attendance: {}, observations: []},
+                {name: "LOBOS CÁCERES ANTONIA PAZ", grades: [], attendance: {}, observations: []},
+                {name: "MARTÍNEZ LIZANA AARON ALEJANDRO", grades: [], attendance: {}, observations: []},
+                {name: "MEZA CARRASCO BENJAMÍN INTI", grades: [], attendance: {}, observations: []},
+                {name: "MIÑO GONZALEZ CATALINA ANDREA", grades: [], attendance: {}, observations: []},
+                {name: "PÉREZ CORÓN MANUEL IGNACIO", grades: [], attendance: {}, observations: []},
+                {name: "SAMANIEGO  CORTEZ JAKSON FERGIE", grades: [], attendance: {}, observations: []},
+                {name: "SEPÚLVEDA SALAZAR SOFÍA ANTONIA", grades: [], attendance: {}, observations: []},
+                {name: "TAPIA ACUÑA GABRIEL ANTONIO", grades: [], attendance: {}, observations: []},
+                {name: "TORREALBA  MOYA FLORVELIS DE LOS ANGELES", grades: [], attendance: {}, observations: []},
+                {name: "VEGA VIVANCO CRISTÓBAL ANTONIO", grades: [], attendance: {}, observations: []},
+                {name: "VERA NAVARRETE  DANIELA ELIZABETH", grades: [], attendance: {}, observations: []},
+                {name: "VILLALOBOS  ARAVENA KARINA ANGELINA", grades: [], attendance: {}, observations: []},
+                {name: "VILLALOBOS  VILLALOBOS  SAMIR LUCIAN JESÚS", grades: [], attendance: {}, observations: []}
+            ],
+            "4C": [
+                {name: "ARELLANO ACUÑA MARTÍN ANTONIO", grades: [], attendance: {}, observations: []},
+                {name: "AROS ÁVILA DAYANA IGNACIA", grades: [], attendance: {}, observations: []},
+                {name: "CABRERA COLOMBINO  MARÍA GRACIA", grades: [], attendance: {}, observations: []},
+                {name: "COLLAO MEDINA ANAÍS VALENTINA", grades: [], attendance: {}, observations: []},
+                {name: "DE LA HOZ VALENZUELA  FRANCO SEBASTIÁN", grades: [], attendance: {}, observations: []},
+                {name: "FUENTES CARRASCO YARIXA ALEJANDRA", grades: [], attendance: {}, observations: []},
+                {name: "GÓMEZ CANCINO DANIELA ALEJANDRA", grades: [], attendance: {}, observations: []},
+                {name: "GUTIÉRREZ CARRIÓN MILLARAY CAROLINA", grades: [], attendance: {}, observations: []},
+                {name: "HONORATO TAPIA GLORIA JAVIERA", grades: [], attendance: {}, observations: []},
+                {name: "LARA RIVERA BENJAMÍN ESTEBAN", grades: [], attendance: {}, observations: []},
+                {name: "PALACIOS SOTO JOSÉ TOMÁS", grades: [], attendance: {}, observations: []},
+                {name: "PEZO SANTANDER  JOSÉ CRISTÓBAL", grades: [], attendance: {}, observations: []},
+                {name: "ROCHA ROJAS JOSÉ PABLO WILLIAMS", grades: [], attendance: {}, observations: []},
+                {name: "ROJAS YÉVENES FABIANA ISIDORA", grades: [], attendance: {}, observations: []},
+                {name: "SÁNCHEZ PAREJA ANDY ANTONIO", grades: [], attendance: {}, observations: []},
+                {name: "SANTANDER  LÓPEZ SIMÓN ESTEBAN", grades: [], attendance: {}, observations: []},
+                {name: "TRONCOSO LIZAMA SIOMARA IGNACIA", grades: [], attendance: {}, observations: []},
+                {name: "WARNKEN ROJAS LUCIANA BERNABELA", grades: [], attendance: {}, observations: []}
+            ]
+        };
+
         // CONFIGURACIÓN
         const firebaseConfig = { apiKey: "AIzaSyAFp6biz1UTr9Ehaudkpe7QyTFVbdQz5Sc", authDomain: "asistencia-mi-clase.firebaseapp.com", projectId: "asistencia-mi-clase", storageBucket: "asistencia-mi-clase.appspot.com", messagingSenderId: "552398254230", appId: "1:552398254230:web:c58dd07e5ceeb67e0912b7", measurementId: "G-MYR01HM1YE" };
         const appId = firebaseConfig.appId;
 
         let app, db, auth, userId = null;
         let masterData = {}; 
-        let currentYear = "2025";
+        let currentYear = "2026"; // Cambiado por defecto a 2026
         let allClassesData = {};
         let currentClass = null;
         let students = [];
@@ -188,9 +354,18 @@
                 if (!raw) { masterData = { "2025": { classes: {} }, "2026": { classes: {} } }; } 
                 else if (raw.classes && !raw["2025"]) { masterData = { "2025": { classes: raw.classes }, "2026": { classes: {} } }; } 
                 else { masterData = raw; }
+                
                 if(!masterData["2025"]) masterData["2025"] = { classes: {} };
                 if(!masterData["2026"]) masterData["2026"] = { classes: {} };
-                loadYearData(currentYear);
+
+                // --- INYECCIÓN AUTOMÁTICA DE NÓMINA 2026 SI ESTÁ VACÍA ---
+                if(Object.keys(masterData["2026"].classes).length === 0) {
+                    console.log("Cargando nómina 2026 por defecto...");
+                    masterData["2026"].classes = JSON.parse(JSON.stringify(PRELOADED_2026));
+                }
+                // --------------------------------------------------------
+
+                loadYearData(els.yearSelector.value);
             }, (error) => {
                 getEl('loadingError').textContent = "Error: " + error.message;
                 getEl('loadingError').classList.remove('hidden');
@@ -275,13 +450,24 @@
         function calculateAverage(g) { if(!g.length) return '0.0'; return (g.reduce((a,b)=>a+b.value,0)/g.length).toFixed(1); }
         function updateDateDisplay() { const d=new Date(currentDateString+'T12:00:00'); getEl('currentDate').textContent = d.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
 
-        // --- LÓGICA IMPORTACIÓN CSV ---
+        // --- LÓGICA IMPORTACIÓN CSV MEJORADA (Soporta punto y coma) ---
         function parseCSV(text) {
             const lines = text.split('\n'); let addedCount = 0;
             lines.forEach(line => {
-                const parts = line.split(',');
+                // Detecta si usa ; o ,
+                const separator = line.includes(';') ? ';' : ',';
+                const parts = line.split(separator);
+                
                 if(parts.length >= 2) {
-                    const className = parts[0].trim(); const studentName = parts[1].trim().toUpperCase();
+                    const className = parts[0].trim();
+                    // Si usa ; asumo formato: Clase;RUT;Nombre (indice 2), sino Clase,Nombre (indice 1)
+                    let studentName = "";
+                    if (separator === ';' && parts.length > 2) {
+                        studentName = parts[2].trim().toUpperCase();
+                    } else if (parts[1]) {
+                        studentName = parts[1].trim().toUpperCase();
+                    }
+
                     if(className && studentName) {
                         if(!allClassesData[className]) allClassesData[className] = [];
                         const exists = allClassesData[className].find(s => s.name === studentName);
@@ -292,7 +478,7 @@
             if(addedCount > 0) { saveLoc(); saveCloud(); loadYearData(currentYear); alert(`✅ ${addedCount} importados.`); } else { alert("ℹ️ Nada nuevo."); }
         }
 
-        // --- NUEVA LÓGICA: GENERAR PDF INDIVIDUAL ---
+        // --- GENERAR PDF INDIVIDUAL ---
         window.generateStudentPDF = async (index) => {
             const s = students[index];
             const { jsPDF } = window.jspdf;
