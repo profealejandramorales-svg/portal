@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Control de Horarios v19</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f1f5f9; }
+        .cell-input { width: 100%; text-align: center; background: transparent; border: 1px solid transparent; font-weight: bold; }
+        .cell-input:focus { background: white; border-color: #6366f1; outline: none; }
+        .input-time { font-size: 0.8rem; padding: 2px; text-align: center; border-radius: 4px; border: 1px solid #cbd5e1; width: 100%; }
+        
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #10b981; color: #fff; text-align: center;
+            border-radius: 8px; padding: 16px; position: fixed; z-index: 50; left: 50%; bottom: 30px;
+            transform: translateX(-50%); font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+        .text-debt { color: #dc2626; font-weight: 800; } 
+        .text-extra { color: #3b82f6; font-size: 0.75rem; }
+        .bg-weekend { background-color: #f8fafc; color: #cbd5e1; }
+    </style>
+</head>
+<body class="p-4 text-slate-800 flex flex-col min-h-screen">
+
+    <div id="toast"><i class="fa-solid fa-check-circle"></i> Guardado exitoso</div>
+    
+    <input type="file" id="logoInput" accept="image/*" class="hidden">
+
+    <div class="max-w-[1600px] mx-auto bg-white rounded-xl shadow-xl overflow-hidden border border-slate-200 flex-grow w-full">
+        
+        <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div>
+                    <h1 class="text-xl font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-orange-400"></i> Control de Horarios
+                    </h1>
+                    <p class="text-xs text-slate-400">Gestión de Asistencia Docente y Asistentes</p>
+                </div>
+                
+                <div class="flex gap-2 items-center">
+                    <div class="bg-slate-800 p-1 px-3 rounded border border-slate-600">
+                        <label class="text-[9px] text-slate-400 uppercase font-bold block">Periodo</label>
+                        <input type="month" id="reportMonth" class="bg-transparent text-white font-bold text-sm outline-none cursor-pointer" onchange="renderTable()">
+                    </div>
+                    
+                    <button onclick="document.getElementById('logoInput').click()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1 rounded text-xs flex flex-col items-center justify-center transition border border-indigo-400 h-full">
+                        <i class="fa-solid fa-camera"></i>
+                        <span>Logo</span>
+                    </button>
+                    <img id="logoPreview" class="h-10 w-10 object-contain bg-white rounded hidden border border-white">
+                </div>
+            </div>
+
+            <label class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-6 rounded cursor-pointer transition shadow border border-emerald-400 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-file-import"></i> Cargar Excel Reloj
+                <input type="file" id="fileUpload" class="hidden">
+            </label>
+        </div>
+
+        <div class="p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <div class="lg:col-span-3 space-y-4 border-r border-slate-100 pr-4">
+                
+                <div class="bg-blue-50 p-3 rounded border border-blue-100 shadow-sm">
+                    <label class="block text-xs font-bold text-blue-900 uppercase mb-1">1. Funcionario</label>
+                    <select id="staffSelector" class="w-full p-2 border border-blue-300 rounded bg-white text-sm font-bold text-slate-700" disabled onchange="loadStaffConfig()">
+                        <option value="">Esperando archivo...</option>
+                    </select>
+                </div>
+
+                <div id="schedulePanel" class="bg-slate-50 p-3 rounded border border-slate-200 opacity-50 pointer-events-none transition-opacity shadow-sm">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-xs font-bold text-slate-700 uppercase">2. Horario Contrato</label>
+                        <button onclick="saveToCloud()" class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded hover:bg-blue-700 shadow transition">
+                            <i class="fa-solid fa-cloud"></i> Guardar
+                        </button>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="grid grid-cols-3 text-[9px] font-bold text-center text-slate-400 uppercase"><div>Día</div><div>Entrada</div><div>Salida</div></div>
+                        <div class="grid grid-cols-3 gap-1 items-center"><span class="text-xs font-bold pl-2">Lun</span><input type="time" id="in1" class="input-time"><input type="time" id="out1" class="input-time"></div>
+                        <div class="grid grid-cols-3 gap-1 items-center"><span class="text-xs font-bold pl-2">Mar</span><input type="time" id="in2" class="input-time"><input type="time" id="out2" class="input-time"></div>
+                        <div class="grid grid-cols-3 gap-1 items-center"><span class="text-xs font-bold pl-2">Mié</span><input type="time" id="in3" class="input-time"><input type="time" id="out3" class="input-time"></div>
+                        <div class="grid grid-cols-3 gap-1 items-center"><span class="text-xs font-bold pl-2">Jue</span><input type="time" id="in4" class="input-time"><input type="time" id="out4" class="input-time"></div>
+                        <div class="grid grid-cols-3 gap-1 items-center"><span class="text-xs font-bold pl-2">Vie</span><input type="time" id="in5" class="input-time"><input type="time" id="out5" class="input-time"></div>
+                    </div>
+                </div>
+
+                <div id="alignControls" class="bg-orange-50 p-3 rounded border border-orange-200 opacity-50 pointer-events-none transition-opacity shadow-sm">
+                    <label class="block text-xs font-bold text-orange-900 uppercase mb-1 text-center">3. Alinear Datos</label>
+                    <div class="flex gap-2 justify-center items-center">
+                        <button onclick="shiftData(1)" class="w-8 h-8 bg-white border border-orange-300 rounded hover:bg-orange-100 font-bold text-orange-700">◀</button>
+                        <span id="offsetDisplay" class="font-mono font-bold text-lg w-8 text-center text-orange-800">0</span>
+                        <button onclick="shiftData(-1)" class="w-8 h-8 bg-white border border-orange-300 rounded hover:bg-orange-100 font-bold text-orange-700">▶</button>
+                    </div>
+                </div>
+
+                <button onclick="renderTable()" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded shadow hover:bg-indigo-700 transition text-sm mt-4 flex justify-center gap-2 items-center">
+                    <i class="fa-solid fa-rotate"></i> Recalcular
+                </button>
+                
+                <button onclick="exportExcelWithLogo()" id="btnExport" class="w-full bg-green-600 text-white font-bold py-2.5 rounded shadow hover:bg-green-700 transition opacity-50 cursor-not-allowed text-sm mt-2 flex justify-center gap-2 items-center" disabled>
+                    <i class="fa-solid fa-file-excel"></i> Exportar Informe
+                </button>
+            </div>
+
+            <div class="lg:col-span-9 flex flex-col h-[650px]">
+                <div class="flex-grow overflow-auto border rounded bg-white shadow-inner">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead class="bg-slate-100 text-slate-600 uppercase text-xs sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th class="p-2 text-center border-b w-10">Día</th>
+                                <th class="p-2 text-center border-b w-10 text-gray-400 font-normal">Sem</th>
+                                <th class="p-2 text-center border-b border-l bg-slate-50 w-20">Entrada<br>Prog</th>
+                                <th class="p-2 text-center border-b border-l w-24 bg-blue-50 text-blue-900 font-bold border-blue-200">Entrada<br>Real</th>
+                                <th class="p-2 text-center border-b border-l bg-slate-50 w-20">Salida<br>Prog</th>
+                                <th class="p-2 text-center border-b border-l w-24 bg-blue-50 text-blue-900 font-bold border-blue-200">Salida<br>Real</th>
+                                <th class="p-2 text-center border-b border-l w-20 text-red-600 bg-red-50">Atraso</th>
+                                <th class="p-2 text-center border-b border-l w-20 text-orange-600 bg-orange-50">S.Antic</th>
+                                <th class="p-2 border-b border-l">Observación</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-3 flex justify-end gap-4 text-sm items-center border-t pt-3">
+                    <div class="bg-red-50 p-2 px-4 rounded border border-red-200 text-red-800 flex gap-2 items-center shadow-sm">
+                        <span class="text-xs uppercase font-bold">Total Atrasos:</span>
+                        <span id="totalLate" class="font-bold text-xl">0</span> min
+                    </div>
+                    <div class="bg-orange-50 p-2 px-4 rounded border border-orange-200 text-orange-800 flex gap-2 items-center shadow-sm">
+                        <span class="text-xs uppercase font-bold">Total Salida Ant.:</span>
+                        <span id="totalEarly" class="font-bold text-xl">0</span> min
+                    </div>
+                    <div class="bg-slate-800 p-2 px-4 rounded border border-slate-900 text-white flex gap-2 items-center shadow-lg">
+                        <span class="text-xs uppercase font-bold text-slate-300">Total a Descontar:</span>
+                        <span id="finalDebt" class="font-bold text-xl text-red-400">0</span> min
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-slate-50 text-center py-3 text-xs text-slate-400 border-t border-slate-200 mt-2">
+            Desarrollado por <strong>ProfeAle</strong> &copy; 2026 - Control de Horarios - Escuela Agrícola Sagrados Corazones
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyAFp6biz1UTr9Ehaudkpe7QyTFVbdQz5Sc", authDomain: "asistencia-mi-clase.firebaseapp.com", projectId: "asistencia-mi-clase", storageBucket: "asistencia-mi-clase.appspot.com", messagingSenderId: "552398254230", appId: "1:552398254230:web:c58dd07e5ceeb67e0912b7" };
+        const app = initializeApp(firebaseConfig); const db = getFirestore(app);
+
+        let allSheetsData = {}, uniqueStaffList = [], currentStaff = null, globalOffset = 0, currentTableData = []; 
+        const today = new Date(); document.getElementById('reportMonth').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+        // === GESTIÓN DE LOGO CON REDIMENSIONAMIENTO ===
+        const logoInput = document.getElementById('logoInput');
+        
+        logoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const img = new Image();
+                    img.src = evt.target.result;
+                    img.onload = () => {
+                        // Crear Canvas para reducir tamaño
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Tamaño máximo para el logo
+                        const MAX_WIDTH = 150;
+                        const MAX_HEIGHT = 150;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                        } else {
+                            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const compressedDataUrl = canvas.toDataURL('image/png', 0.8);
+                        
+                        try {
+                            localStorage.setItem('school_logo', compressedDataUrl);
+                            updateLogoPreview();
+                            alert("✅ Logo guardado y optimizado correctamente.");
+                        } catch (err) {
+                            alert("❌ Error: La imagen sigue siendo muy pesada. Intenta con una más pequeña.");
+                        }
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function updateLogoPreview() {
+            const logoData = localStorage.getItem('school_logo');
+            const img = document.getElementById('logoPreview');
+            if (logoData) {
+                img.src = logoData;
+                img.classList.remove('hidden');
+            } else {
+                img.classList.add('hidden');
+            }
+        }
+        // Cargar al inicio
+        updateLogoPreview();
+
+        // 1. CARGA
+        document.getElementById('fileUpload').addEventListener('change', async (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const data = await file.arrayBuffer(); const wb = XLSX.read(data, { type: 'array' });
+            allSheetsData = {}; uniqueStaffList = []; const seenNames = new Set(); let detectedDate = null;
+            wb.SheetNames.forEach(name => {
+                const ws = wb.Sheets[name]; const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                allSheetsData[name] = json;
+                if (!detectedDate) { const m = JSON.stringify(json).match(/(\d{4})[\/\-](\d{2})/); if (m) detectedDate = `${m[1]}-${m[2]}`; }
+                json.forEach((row, rIdx) => {
+                    if (!row) return; const nameColIdx = row.findIndex(c => typeof c === 'string' && c.toUpperCase().replace(/\s/g,'').includes('NOMBRE:'));
+                    if (nameColIdx !== -1) {
+                        let foundName = null; for(let i=1; i<=5; i++) { if(row[nameColIdx+i] && typeof row[nameColIdx+i] === 'string') { foundName = row[nameColIdx+i].trim(); break; } }
+                        if (foundName && !seenNames.has(foundName)) { seenNames.add(foundName); uniqueStaffList.push({ name: foundName, sheetName: name, rowIndex: rIdx }); }
+                    }
+                });
+            });
+            if (detectedDate) document.getElementById('reportMonth').value = detectedDate;
+            populateSelect();
+        });
+
+        function populateSelect() {
+            const sel = document.getElementById('staffSelector'); sel.innerHTML = '<option value="">-- Selecciona --</option>';
+            uniqueStaffList.sort((a, b) => a.name.localeCompare(b.name));
+            uniqueStaffList.forEach((p, idx) => { const opt = document.createElement('option'); opt.value = idx; opt.text = p.name; sel.appendChild(opt); });
+            sel.disabled = false;
+        }
+
+        // 2. CONFIG Y RENDER
+        window.loadStaffConfig = async () => {
+            const listIdx = document.getElementById('staffSelector').value; if(listIdx === "") return;
+            currentStaff = uniqueStaffList[listIdx];
+            document.getElementById('schedulePanel').classList.remove('opacity-50', 'pointer-events-none');
+            document.getElementById('alignControls').classList.remove('opacity-50', 'pointer-events-none');
+            globalOffset = 0; document.getElementById('offsetDisplay').innerText = "0";
+            try {
+                const docId = currentStaff.name.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase();
+                const docSnap = await getDoc(doc(db, "config_horarios", docId));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    ['in','out'].forEach(type => { for(let i=1; i<=5; i++) { const k = ['Mon','Tue','Wed','Thu','Fri'][i-1] + (type === 'in' ? '_In' : '_Out'); document.getElementById(type+i).value = data[k] || ''; } });
+                } else { document.querySelectorAll('.input-time').forEach(i => i.value = ''); }
+            } catch (e) {}
+            renderTable();
+        };
+
+        window.saveToCloud = async () => {
+            if(!currentStaff) return;
+            const docId = currentStaff.name.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase(); const data = {};
+            for(let i=1; i<=5; i++) { const d = ['Mon','Tue','Wed','Thu','Fri'][i-1]; data[`${d}_In`] = document.getElementById(`in${i}`).value; data[`${d}_Out`] = document.getElementById(`out${i}`).value; }
+            await setDoc(doc(db, "config_horarios", docId), data, { merge: true });
+            document.getElementById("toast").className = "show"; setTimeout(() => document.getElementById("toast").className = "", 3000);
+        };
+
+        window.shiftData = (d) => { globalOffset += d; document.getElementById('offsetDisplay').innerText = globalOffset > 0 ? `+${globalOffset}` : globalOffset; renderTable(); };
+
+        window.renderTable = () => {
+            if (!currentStaff) return;
+            const schedule = [null]; for(let i=1; i<=5; i++) schedule.push({ in: document.getElementById(`in${i}`).value, out: document.getElementById(`out${i}`).value }); schedule.push(null);
+            const sheetJson = allSheetsData[currentStaff.sheetName]; const startRow = currentStaff.rowIndex;
+            let rowData = null; for(let i=1; i<=4; i++) { const cand = sheetJson[startRow + i]; if(cand && cand.some(c => typeof c === 'string' && /\d{1,2}:\d{2}/.test(c))) { rowData = cand; break; } }
+            if(!rowData) rowData = sheetJson[startRow + 1] || [];
+            
+            const [y, m] = document.getElementById('reportMonth').value.split('-').map(Number); const daysInMonth = new Date(y, m, 0).getDate();
+            const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
+            let sumLate = 0, sumEarly = 0; currentTableData = [];
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const actIdx = (day + 1) + globalOffset; let rawCell = rowData[actIdx]; let entry = '', exit = '';
+                if (rawCell && typeof rawCell === 'string') { const t = rawCell.match(/\d{1,2}:\d{2}/g); if (t && t.length) { t.sort(); entry = t[0]; if (t.length > 1) exit = t[t.length - 1]; } }
+                
+                const date = new Date(y, m - 1, day); const wd = date.getDay(); const wdNames = ['Do','Lu','Ma','Mi','Ju','Vi','Sa']; const isW = (wd === 0 || wd === 6); const conf = schedule[wd];
+                let late = 0, early = 0, isE = false, isL = false, pIn = '', pOut = '';
+
+                if (!isW && conf) {
+                    pIn = conf.in; pOut = conf.out;
+                    if (pIn && entry) { const d = toMins(entry) - toMins(pIn); if (d > 5) late = d; else if (d < 0) isE = true; }
+                    if (pOut && exit) { const d = toMins(pOut) - toMins(exit); if (d > 5) early = d; else if (d < 0) isL = true; }
+                }
+                if(late > 0) sumLate += late; if(early > 0) sumEarly += early;
+
+                const entDisp = isE ? `<span class="text-extra">${entry} <i class="fa-solid fa-caret-up"></i></span>` : (late > 0 ? `<span class="text-debt">${entry}</span>` : entry);
+                const extDisp = isL ? `<span class="text-extra">${exit} <i class="fa-solid fa-caret-down"></i></span>` : (early > 0 ? `<span class="text-debt">${exit}</span>` : exit);
+
+                tbody.innerHTML += `<tr class="${isW ? 'bg-weekend' : 'hover:bg-blue-50 border-b'}">
+                    <td class="p-2 text-center border-r font-bold">${day} <span class="text-[10px] text-gray-400 block">${wdNames[wd]}</span></td>
+                    <td class="p-1 border-r text-center text-xs text-gray-500">${pIn || '-'}</td><td class="p-1 border-r text-center">${entDisp}</td>
+                    <td class="p-1 border-r text-center text-xs text-gray-500">${pOut || '-'}</td><td class="p-1 border-r text-center">${extDisp}</td>
+                    <td class="p-2 text-center font-bold ${late>0?'text-debt bg-red-50':''}">${late>0?late:'-'}</td>
+                    <td class="p-2 text-center font-bold ${early>0?'text-orange-600 bg-orange-50':''}">${early>0?early:'-'}</td>
+                    <td class="p-1"><input type="text" class="cell-input text-left text-xs italic text-gray-600 w-full" placeholder="..." onchange="updateObs(${day-1}, this.value)"></td>
+                </tr>`;
+                
+                currentTableData.push({ d:day, wd:wdNames[wd], pi:pIn, ri:entry, po:pOut, ro:exit, late, early, obs:'' });
+            }
+            document.getElementById('totalLate').innerText = sumLate; document.getElementById('totalEarly').innerText = sumEarly; document.getElementById('finalDebt').innerText = sumLate + sumEarly;
+            const btn = document.getElementById('btnExport'); btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        };
+
+        window.updateObs = (idx, val) => { if(currentTableData[idx]) currentTableData[idx].obs = val; };
+        function toMins(t) { if (!t) return 0; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+
+        // --- 3. EXPORTAR CON EXCELJS ---
+        window.exportExcelWithLogo = async () => {
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Asistencia');
+
+            // 1. CONFIGURAR COLUMNAS
+            worksheet.columns = [
+                { header: 'Día', key: 'd', width: 6 },
+                { header: 'Sem', key: 'wd', width: 6 },
+                { header: 'Entrada\nProg', key: 'pi', width: 12 },
+                { header: 'Entrada\nReal', key: 'ri', width: 12 },
+                { header: 'Salida\nProg', key: 'po', width: 12 },
+                { header: 'Salida\nReal', key: 'ro', width: 12 },
+                { header: 'Atraso\n(min)', key: 'late', width: 10 },
+                { header: 'S. Antic\n(min)', key: 'early', width: 10 },
+                { header: 'Observación', key: 'obs', width: 35 }
+            ];
+
+            // 2. INSERTAR LOGO (SI EXISTE)
+            const logoBase64 = localStorage.getItem('school_logo');
+            if (logoBase64) {
+                const imageId = workbook.addImage({ base64: logoBase64, extension: 'png' });
+                // Insertar en A1 con tamaño fijo
+                worksheet.addImage(imageId, { tl: { col: 0, row: 0 }, ext: { width: 80, height: 80 } });
+            }
+
+            // 3. ENCABEZADO
+            worksheet.mergeCells('C1:I1');
+            const titleCell = worksheet.getCell('C1');
+            titleCell.value = 'REPORTE OFICIAL DE ASISTENCIA';
+            titleCell.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FF1E293B' } };
+            titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            worksheet.mergeCells('C2:I2');
+            const nameCell = worksheet.getCell('C2');
+            nameCell.value = `Funcionario: ${currentStaff.name}`;
+            nameCell.font = { name: 'Arial', size: 16, bold: true };
+            nameCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            worksheet.mergeCells('C3:I3');
+            worksheet.getCell('C3').value = `Periodo: ${document.getElementById('reportMonth').value}`;
+            worksheet.getCell('C3').alignment = { vertical: 'middle', horizontal: 'center' };
+
+            // 4. ESTILOS TABLA
+            const headerRow = worksheet.getRow(5);
+            headerRow.values = ['Día', 'Sem', 'Entrada Prog', 'Entrada Real', 'Salida Prog', 'Salida Real', 'Atraso', 'S. Antic', 'Observación'];
+            headerRow.height = 30;
+            
+            headerRow.eachCell((cell) => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+                cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+            });
+
+            let currentRowIdx = 6;
+            currentTableData.forEach(r => {
+                const row = worksheet.getRow(currentRowIdx);
+                row.values = [r.d, r.wd, r.pi, r.ri, r.po, r.ro, r.late || 0, r.early || 0, r.obs];
+                row.eachCell((cell, colNumber) => {
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+                    if (colNumber === 7 && cell.value > 0) { cell.font = { color: { argb: 'FFDC2626' }, bold: true }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } }; }
+                    if (colNumber === 8 && cell.value > 0) { cell.font = { color: { argb: 'FFEA580C' }, bold: true }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEDD5' } }; }
+                });
+                currentRowIdx++;
+            });
+
+            // 6. TOTALES
+            currentRowIdx++; 
+            const totalRow = worksheet.getRow(currentRowIdx);
+            totalRow.getCell(6).value = "TOTALES (min):"; totalRow.getCell(6).font = { bold: true }; totalRow.getCell(6).alignment = { horizontal: 'right' };
+            const tLate = totalRow.getCell(7); tLate.value = parseInt(document.getElementById('totalLate').innerText); tLate.font = { color: { argb: 'FFDC2626' }, bold: true }; tLate.border = { top: {style:'double'} };
+            const tEarly = totalRow.getCell(8); tEarly.value = parseInt(document.getElementById('totalEarly').innerText); tEarly.font = { color: { argb: 'FFEA580C' }, bold: true }; tEarly.border = { top: {style:'double'} };
+
+            currentRowIdx++;
+            const grandTotalRow = worksheet.getRow(currentRowIdx);
+            grandTotalRow.getCell(6).value = "TOTAL DESCUENTO:"; grandTotalRow.getCell(6).font = { bold: true };
+            const gTotal = grandTotalRow.getCell(7); gTotal.value = document.getElementById('finalDebt').innerText + " min"; gTotal.font = { size: 12, bold: true, color: { argb: 'FFDC2626' } }; gTotal.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE4E6' } };
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, `Reporte_Oficial_${currentStaff.name.replace(/\s+/g, '_')}.xlsx`);
+        };
+    </script>
+</body>
+</html>
