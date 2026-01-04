@@ -12,12 +12,11 @@
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .card { background-color: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; }
         @media print {
-            @page { size: Letter portrait; margin: 0.5cm; }
             body > *:not(#printable-area) { display: none !important; }
-            #printable-area { display: block !important; width: 100%; position: absolute; top:0; left:0; }
-            .citation-slip { border: 2px solid #000; padding: 25px; display: flex; height: 10cm; background: white; color: black; }
+            #printable-area { display: block !important; width: 100%; position: absolute; top:0; }
+            .citation-slip { border: 2px solid #000; padding: 25px; display: flex; height: 10cm; background: white; }
             .slip-left { width: 70%; border-right: 1px dashed #000; padding-right: 20px; }
-            .slip-right { width: 30%; padding-left: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
+            .slip-right { width: 30%; padding-left: 20px; text-align: center; }
         }
     </style>
 </head>
@@ -33,15 +32,15 @@
                     <p class="text-xs text-purple-600 font-bold uppercase">Escuela Agrícola Sagrados Corazones</p>
                 </div>
             </div>
-            <div id="status-indicator" class="text-xs font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-200">⌛ Conectando...</div>
+            <div id="status-indicator" class="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-200">🟢 Conectado</div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="card space-y-4">
                 <h2 class="font-bold text-gray-700 border-b pb-2">Nueva Citación</h2>
                 <select id="course-select" class="w-full p-2 border rounded bg-gray-50 text-sm"></select>
-                <select id="student-select" class="w-full p-2 border rounded bg-gray-50 text-sm" disabled><option>Seleccione Curso...</option></select>
-                <input type="email" id="parent-email" class="w-full p-2 border rounded text-sm" placeholder="Email Apoderado (Invitación Calendar)">
+                <select id="student-select" class="w-full p-2 border rounded bg-gray-50 text-sm" disabled><option>Seleccione Alumno...</option></select>
+                <input type="email" id="parent-email" class="w-full p-2 border rounded text-sm" placeholder="Email Apoderado">
                 <div class="grid grid-cols-2 gap-3">
                     <input type="date" id="citation-date" class="w-full p-2 border rounded text-sm">
                     <input type="time" id="citation-time" class="w-full p-2 border rounded text-sm">
@@ -53,24 +52,24 @@
                     <option value="UTP">UTP</option>
                 </select>
                 <div class="flex gap-2">
-                    <button id="add-btn" disabled class="flex-1 bg-gray-400 text-white font-bold py-3 rounded shadow transition active:scale-95">REGISTRAR</button>
+                    <button id="add-btn" class="flex-1 bg-purple-600 text-white font-bold py-3 rounded shadow hover:bg-purple-700 transition active:scale-95">REGISTRAR</button>
                     <button id="clear-btn" class="px-4 bg-gray-200 text-gray-700 font-bold rounded hover:bg-gray-300">LIMPIAR</button>
                 </div>
             </div>
 
-            <div class="card space-y-4">
-                <h2 class="font-bold text-gray-700 border-b pb-2">Generar Reporte</h2>
+            <div class="card space-y-4 text-center">
+                <h2 class="font-bold text-gray-700 border-b pb-2 text-left">Generar Reporte</h2>
                 <div class="grid grid-cols-2 gap-2">
                     <input type="date" id="filter-date" class="p-2 border rounded text-xs">
                     <select id="filter-course" class="p-2 border rounded text-xs"><option value="">Todos los Cursos</option></select>
                 </div>
                 <button id="report-btn" class="w-full bg-blue-600 text-white text-xs font-bold py-2 rounded hover:bg-blue-700">FILTRAR DATOS</button>
-                <div class="grid grid-cols-2 gap-4 pt-2">
-                    <div class="bg-blue-50 p-3 rounded border border-blue-100 text-center">
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <div class="bg-blue-50 p-3 rounded border border-blue-100">
                         <p class="text-[10px] text-blue-600 font-bold uppercase">Citados</p>
                         <p id="stat-total" class="text-2xl font-bold text-blue-800">0</p>
                     </div>
-                    <div class="bg-green-50 p-3 rounded border border-green-100 text-center">
+                    <div class="bg-green-50 p-3 rounded border border-green-100">
                         <p class="text-[10px] text-green-600 font-bold uppercase">Asistencias</p>
                         <p id="stat-present" class="text-2xl font-bold text-green-800">0</p>
                     </div>
@@ -87,14 +86,12 @@
             </div>
         </div>
     </div>
-
     <div id="printable-area" class="hidden"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, updateDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // Configuración Firebase (Mantenida de tu archivo original)
         const firebaseConfig = { apiKey: "AIzaSyBnSMVCH0yyYUWk5z54kTIPTrWkyoeWs-I", authDomain: "suspenciones-40d0c.firebaseapp.com", projectId: "suspenciones-40d0c", storageBucket: "suspenciones-40d0c.firebasestorage.app", messagingSenderId: "853418739042", appId: "1:853418739042:web:d051befb99cd2acdd4583b" };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -102,10 +99,12 @@
         const CLIENT_ID = '434804825732-kg1u195e555j7odsvd8gons8njk9u24i.apps.googleusercontent.com';
         const API_KEY = 'AIzaSyBE2aVDXS6lGH_GqlhBe9a3LbCk2zG7yRU';
 
-        let tokenClient, gapiInited = false, gisInited = false;
-        let lastRecords = [];
+        let tokenClient;
+        window.onload = () => {
+            gapi.load('client', () => gapi.client.init({ apiKey: API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] }));
+            tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: 'https://www.googleapis.com/auth/calendar.events', callback: '' });
+        };
 
-        // Nómina 2026 completa
         const schoolData = {
             'Primero Medio A': ["ÁLVAREZ FAÚNDEZ MATEO VICENTE", "CASTILLO ARAVENA MAITE PASCAL", "COLLADO PUENTES SANTINO ALEXANDER", "CONCHA TORREALBA JOAQUÍN IGNACIO", "DÍAZ MALUENDA ESTEFANÍA ANTONIA", "DONAIRE ROJAS MAITE EMILIA ESTER", "ESPINOZA CACHAÑA LISBET ALEXANDRA", "FERRADA ALBORNOZ AGUSTÍN ALEXIS", "FUENTEMAVIDA BARROS OSCAR ANTONIO", "JAQUE PACHECO DAMIÁN IGNACIO", "JARAMILLO VILLAR MATT HOST", "LÓPEZ ACUÑA MARCO EMILIO", "LÓPEZ VILLAR FRANCO IGNACIO", "MESA DÍAZ GONZALO IGNACIO", "MEZA CARRASCO CRISTIAN ALFONSO", "MORALES GARRIDO NICOLÁS ANTONIO", "ORTEGA DA SILVA EMILIA CATALINA SOPHIA", "PEREIRA TAPIA KEVIN RUBÉN", "RAMÍREZ SEPÚLVEDA LUIS JUSTIN JESÚS", "RAMÍREZ VALDÉS MARTINA POLETTE", "RECABAL YÁÑEZ TOMÁS IGNACIO", "RODRÍGUEZ SEPÚLVEDA SIMONEY ISAMAR", "ROJAS ÓRDENES TRACY MAIDEN", "SÁNCHEZ MUNIZAGA ALONDRA ANAÍS", "SOLIZ OLGUIN BRAYAN", "VALENZUELA MUÑOZ MAGDALENA BELÉN"],
             'Segundo Medio A': ["ALBURQUENQUE DEL GRECCO EMILYA ANTONIA", "ANABALÓN BELTRÁN BENJAMÍN NICOLÁS", "ARAVENA ZÚÑIGA NOEMÍ JESÚS", "ARAYA DOMÍNGUEZ ALEX FABIÁN", "ASTUDILLO CAMPOS CRISTÓBAL ANTONIO", "BAEZ DONOSO LUKAS ALFONSO", "CARO BUSTOS KRISCHNA ESTEFANIA", "CUMINAO VIDAL CATALINA ANDREA", "DÍAZ MALUENDA MIGUEL ALBERTO", "IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA", "LAGOS LASTRA ALEXANDRA DANAE", "LÓPEZ NOVOA EYDAN DAMIÁN", "MALDONADO FLORES ANTONELLA BELÉN", "MONTECINO DÍAZ VALESKA BELÉN", "MUÑOZ CONTRERAS LUIS GABRIEL", "OSES CAMPOS VALENTINA ABIGAIL", "PALMA ORELLANA ANTONELLA FRANCISCA", "PÉREZ QUEVEDO CONSTANZA TRINIDAD", "RIQUELME SANTOS BENJAMÍN ALONSO", "ROJAS LEIVA EDUARDO JAVIER", "SALAZAR SALAS PEDRO JOSÉ", "SANTANDER LÓPEZ MARÍA JOSÉ", "VÁSQUEZ AGUILERA SCARLET NICOLE", "VERA BRAVO FLORENCIA ANTONIA", "YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN"],
@@ -118,24 +117,13 @@
         const cS = document.getElementById('course-select'), sS = document.getElementById('student-select'), fC = document.getElementById('filter-course');
         cS.innerHTML = '<option value="">Seleccione Curso...</option>';
         Object.keys(schoolData).forEach(c => { cS.innerHTML += `<option value="${c}">${c}</option>`; fC.innerHTML += `<option value="${c}">${c}</option>`; });
-        
-        cS.onchange = () => {
-            sS.innerHTML = '<option>Seleccione Alumno...</option>';
-            if(schoolData[cS.value]) { schoolData[cS.value].forEach(s => sS.innerHTML += `<option value="${s}">${s}</option>`); sS.disabled = false; }
-        };
+        cS.onchange = () => { sS.innerHTML = '<option>Seleccione Alumno...</option>'; if(schoolData[cS.value]) { schoolData[cS.value].forEach(s => sS.innerHTML += `<option value="${s}">${s}</option>`); sS.disabled = false; } };
 
-        // Google Calendar Logic
-        async function initGapi() { await gapi.client.init({ apiKey: API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] }); gapiInited = true; check(); }
-        window.onload = () => { gapi.load('client', initGapi); tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: 'https://www.googleapis.com/auth/calendar.events', callback: '' }); gisInited = true; check(); };
-        function check() { if(gapiInited && gisInited) { const b = document.getElementById('add-btn'); b.disabled = false; b.classList.replace('bg-gray-400', 'bg-purple-600'); b.innerText = "REGISTRAR"; document.getElementById('status-indicator').innerText = "🟢 Conectado"; } }
+        document.getElementById('clear-btn').onclick = () => { document.querySelectorAll('input, select').forEach(el => { if(el.id !== 'course-select' && el.id !== 'student-select') el.value = ''; }); };
 
-        // Acciones: Limpiar
-        document.getElementById('clear-btn').onclick = () => { document.querySelectorAll('input, select').forEach(el => { if(el.id !== 'course-select' && el.id !== 'student-select') el.value = ''; }); showToast("Formulario limpio"); };
-
-        // Registrar e Imprimir
         document.getElementById('add-btn').onclick = async () => {
             const d = { course: cS.value, student: sS.value, email: document.getElementById('parent-email').value, date: document.getElementById('citation-date').value, time: document.getElementById('citation-time').value, teacher: document.getElementById('teacher-input').value, assisted: false, timestamp: Date.now() };
-            if(!d.student || !d.date || !d.time) return alert("Faltan datos requeridos.");
+            if(!d.student || !d.date) return alert("Faltan datos requeridos.");
 
             tokenClient.callback = async (resp) => {
                 if (resp.error) return;
@@ -143,68 +131,29 @@
                     await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': `Cita: ${d.student} (${d.course})`, 'description': `Solicita: ${d.teacher}`, 'start': { 'dateTime': `${d.date}T${d.time}:00`, 'timeZone': 'America/Santiago' }, 'end': { 'dateTime': `${d.date}T${d.time}:30`, 'timeZone': 'America/Santiago' }, 'attendees': d.email ? [{ 'email': d.email }] : [] }, 'sendUpdates': 'all' });
                     await addDoc(collection(db, "citaciones"), d);
                     showToast("✅ Registrado con éxito");
-                    generateVoucher(d);
                 } catch (e) { console.error(e); }
             };
             tokenClient.requestAccessToken({prompt: 'consent'});
         };
 
-        // Reporte Dinámico
         document.getElementById('report-btn').onclick = async () => {
-            const fDate = document.getElementById('filter-date').value;
-            const fCourse = fC.value;
-            const querySnapshot = await getDocs(collection(db, "citaciones"));
-            let total = 0, asistieron = 0;
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                if((!fDate || data.date === fDate) && (!fCourse || data.course === fCourse)) { total++; if(data.assisted) asistieron++; }
-            });
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-present').innerText = asistieron;
+            const fDate = document.getElementById('filter-date').value, fCourse = fC.value;
+            const snap = await getDocs(collection(db, "citaciones"));
+            let t = 0, a = 0;
+            snap.forEach(doc => { const d = doc.data(); if((!fDate || d.date === fDate) && (!fCourse || d.course === fCourse)) { t++; if(d.assisted) a++; } });
+            document.getElementById('stat-total').innerText = t;
+            document.getElementById('stat-present').innerText = a;
         };
 
-        // Historial y Asistencia
         onSnapshot(query(collection(db, "citaciones"), orderBy('timestamp', 'desc'), limit(15)), (s) => {
             const b = document.getElementById('report-body'); b.innerHTML = '';
-            lastRecords = [];
-            let count = 0;
             s.forEach(snap => {
-                const i = snap.data(); lastRecords.push(i);
-                b.innerHTML += `
-                <tr class="hover:bg-gray-50 border-b">
-                    <td class="p-2 text-[10px] font-bold">${i.date}</td>
-                    <td class="p-2 text-[11px]">${i.student}<br><span class="text-purple-600 text-[9px]">${i.course}</span></td>
-                    <td class="p-2 text-center flex gap-1 justify-center mt-1">
-                        <button onclick="toggleAsist('${snap.id}', ${i.assisted})" class="${i.assisted ? 'bg-green-500' : 'bg-gray-300'} text-white text-[9px] px-2 py-1 rounded">MARCAR</button>
-                        <button onclick="reprint(${count})" class="bg-blue-500 text-white text-[9px] px-2 py-1 rounded">🖨️</button>
-                    </td>
-                </tr>`;
-                count++;
+                const i = snap.data(), id = snap.id;
+                b.innerHTML += `<tr class="border-b"><td class="p-2 text-[10px] font-bold">${i.date}</td><td class="p-2 text-[11px]">${i.student}<br><span class="text-purple-600 text-[9px] font-bold">${i.course}</span></td><td class="p-2 text-right"><button onclick="toggle('${id}', ${i.assisted})" class="${i.assisted ? 'bg-green-500' : 'bg-gray-300'} text-white text-[9px] font-bold px-3 py-1 rounded shadow-sm">${i.assisted ? 'ASISTIÓ' : 'MARCAR'}</button></td></tr>`;
             });
         });
 
-        window.toggleAsist = async (id, current) => { await updateDoc(doc(db, "citaciones", id), { assisted: !current }); showToast("Asistencia actualizada"); };
-        window.reprint = (idx) => generateVoucher(lastRecords[idx]);
-
-        function generateVoucher(d) {
-            document.getElementById('printable-area').innerHTML = `
-                <div class="citation-slip">
-                    <div class="slip-left">
-                        <div style="display:flex; align-items:center; gap:15px; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:15px;">
-                            <img src="logo.jpg" style="height:70px;" onerror="this.alt='Logo Escuela'">
-                            <div><h2 style="margin:0; font-size:18px; font-weight:bold;">CITACIÓN DE APODERADO</h2><p style="margin:0; font-size:11px;">Escuela Agrícola Sagrados Corazones</p></div>
-                        </div>
-                        <p style="font-size:15px; margin-bottom:20px;">Se cita al apoderado de: <b>${d.student}</b> del curso <b>${d.course}</b>.</p>
-                        <div style="font-size:13px; line-height:2.5;">
-                            <p>📅 <b>FECHA:</b> ${d.date} &nbsp;&nbsp; ⏰ <b>HORA:</b> ${d.time}</p>
-                            <p>👤 <b>SOLICITA:</b> ${d.teacher}</p>
-                        </div>
-                    </div>
-                    <div class="slip-right"><p style="font-size:10px; font-weight:bold;">TOMA DE CONOCIMIENTO</p><div style="flex-grow:1; border-bottom:1px solid #000; margin: 60px 0 10px 0;"></div><p style="font-size:9px;">Firma del Apoderado</p></div>
-                </div>`;
-            setTimeout(() => window.print(), 800);
-        }
-
+        window.toggle = async (id, current) => { await updateDoc(doc(db, "citaciones", id), { assisted: !current }); showToast("Asistencia actualizada"); };
         function showToast(m) { const b = document.getElementById('message-box'); b.innerText = m; b.classList.remove('hidden'); setTimeout(() => b.classList.add('hidden'), 3000); }
     </script>
 </body>
