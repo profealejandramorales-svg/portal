@@ -16,11 +16,9 @@
             @page { size: Letter portrait; margin: 0.5cm; }
             body > *:not(#printable-area) { display: none !important; }
             #printable-area { display: block !important; width: 100%; position: absolute; top:0; left:0; }
-            /* Estilo para el Voucher Individual */
             .citation-slip { border: 2px solid #000; padding: 25px; display: flex; height: 10cm; background: white; margin-bottom: 20px; color: black; }
             .slip-left { width: 70%; border-right: 1px dashed #000; padding-right: 20px; }
             .slip-right { width: 30%; padding-left: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
-            /* Estilo para el Reporte de Tabla */
             .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; color: black; }
             .print-table th, .print-table td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 12px; }
             .print-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
@@ -39,7 +37,7 @@
                     <p class="text-xs text-purple-600 font-bold uppercase">Escuela Agrícola Sagrados Corazones</p>
                 </div>
             </div>
-            <div id="status-indicator" class="text-xs font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-200">⌛ Conectando con Google...</div>
+            <div id="status-indicator" class="text-xs font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-200">⌛ Conectando...</div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -55,6 +53,8 @@
                 <select id="teacher-input" class="w-full p-2 border rounded text-sm">
                     <option value="Profesor Jefe">Profesor Jefe</option>
                     <option value="Docente PIE">Docente PIE</option>
+                    <option value="Psicóloga">Psicóloga</option>
+                    <option value="Inspectoría de Docencia">Inspectoría de Docencia</option>
                     <option value="Inspectoría General">Inspectoría General</option>
                     <option value="UTP">UTP</option>
                 </select>
@@ -65,18 +65,18 @@
             </div>
 
             <div class="card space-y-4">
-                <h2 class="font-bold text-gray-700 border-b pb-2">Reportes y Estadísticas</h2>
+                <h2 class="font-bold text-gray-700 border-b pb-2">Reportes</h2>
                 <div class="grid grid-cols-2 gap-2">
                     <input type="date" id="filter-date" class="p-2 border rounded text-xs">
                     <select id="filter-course" class="p-2 border rounded text-xs"><option value="">Todos los Cursos</option></select>
                 </div>
                 <div class="flex gap-2">
                     <button id="report-btn" class="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded hover:bg-blue-700">FILTRAR</button>
-                    <button id="print-screen-btn" class="px-3 bg-gray-800 text-white text-xs font-bold py-2 rounded hover:bg-black">🖨️ IMPRIMIR TABLA</button>
+                    <button id="print-screen-btn" class="px-3 bg-gray-800 text-white text-xs font-bold py-2 rounded hover:bg-black">🖨️ TABLA</button>
                 </div>
                 <div class="grid grid-cols-2 gap-4 pt-2">
                     <div class="bg-blue-50 p-3 rounded border border-blue-100 text-center">
-                        <p class="text-[10px] text-blue-600 font-bold uppercase">Total Citados</p>
+                        <p class="text-[10px] text-blue-600 font-bold uppercase">Citados</p>
                         <p id="stat-total" class="text-2xl font-bold text-blue-800">0</p>
                     </div>
                     <div class="bg-green-50 p-3 rounded border border-green-100 text-center">
@@ -87,7 +87,7 @@
             </div>
 
             <div class="card flex flex-col h-[520px]">
-                <h2 class="font-bold text-gray-700 border-b pb-2 mb-2">Historial Reciente</h2>
+                <h2 class="font-bold text-gray-700 border-b pb-2 mb-2">Historial en Vivo</h2>
                 <div class="flex-1 overflow-y-auto">
                     <table class="w-full text-sm">
                         <tbody id="report-body" class="divide-y"></tbody>
@@ -111,8 +111,8 @@
         const API_KEY = 'AIzaSyBE2aVDXS6lGH_GqlhBe9a3LbCk2zG7yRU';
 
         let tokenClient, gapiInited = false, gisInited = false;
-        let recordsMemory = []; // Memoria para reimpresión
-        let currentFilterList = []; // Memoria para reporte de tabla
+        let recordsMemory = []; 
+        let currentFilterList = [];
 
         async function initGapi() { 
             await gapi.client.init({ apiKey: API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] }); 
@@ -146,32 +146,27 @@
         Object.keys(schoolData).forEach(c => { cS.innerHTML += `<option value="${c}">${c}</option>`; fC.innerHTML += `<option value="${c}">${c}</option>`; });
         cS.onchange = () => { sS.innerHTML = '<option>Seleccione Alumno...</option>'; if(schoolData[cS.value]) { schoolData[cS.value].forEach(s => sS.innerHTML += `<option value="${s}">${s}</option>`); sS.disabled = false; } };
 
-        // LIMPIAR PANTALLA: Resetea campos visuales, no borra Firebase
         document.getElementById('clear-btn').onclick = () => {
-            document.querySelectorAll('input, select').forEach(el => { 
-                if(el.id !== 'course-select' && el.id !== 'student-select') el.value = ''; 
-            });
-            showToast("Campos del formulario limpiados");
+            document.querySelectorAll('input, select').forEach(el => { if(el.id !== 'course-select' && el.id !== 'student-select') el.value = ''; });
+            showToast("Formulario limpio");
         };
 
-        // REGISTRAR E IMPRIMIR VOUCHER
         document.getElementById('add-btn').onclick = async () => {
             const d = { course: cS.value, student: sS.value, email: document.getElementById('parent-email').value, date: document.getElementById('citation-date').value, time: document.getElementById('citation-time').value, teacher: document.getElementById('teacher-input').value, assisted: false, timestamp: Date.now() };
-            if(!d.student || !d.date) return alert("Faltan datos obligatorios.");
+            if(!d.student || !d.date) return alert("Faltan datos");
 
             tokenClient.callback = async (resp) => {
                 if (resp.error) return;
                 try {
                     await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': `Cita: ${d.student}`, 'description': `Solicita: ${d.teacher}`, 'start': { 'dateTime': `${d.date}T${d.time}:00`, 'timeZone': 'America/Santiago' }, 'end': { 'dateTime': `${d.date}T${d.time}:30`, 'timeZone': 'America/Santiago' }, 'attendees': d.email ? [{ 'email': d.email }] : [] }, 'sendUpdates': 'all' });
                     await addDoc(collection(db, "citaciones"), d);
-                    showToast("✅ Registro exitoso");
+                    showToast("✅ Registrado");
                     generateVoucher(d);
                 } catch (e) { console.error(e); }
             };
             tokenClient.requestAccessToken({prompt: 'consent'});
         };
 
-        // REPORTES Y FILTRADO
         document.getElementById('report-btn').onclick = async () => {
             const fDate = document.getElementById('filter-date').value, fCourse = fC.value;
             const snap = await getDocs(collection(db, "citaciones"));
@@ -179,75 +174,36 @@
             currentFilterList = [];
             snap.forEach(doc => {
                 const d = doc.data();
-                if((!fDate || d.date === fDate) && (!fCourse || d.course === fCourse)) {
-                    t++; if(d.assisted) a++;
-                    currentFilterList.push(d);
-                }
+                if((!fDate || d.date === fDate) && (!fCourse || d.course === fCourse)) { t++; if(d.assisted) a++; currentFilterList.push(d); }
             });
             document.getElementById('stat-total').innerText = t;
             document.getElementById('stat-present').innerText = a;
-            showToast("Reporte generado en pantalla");
         };
 
-        // IMPRIMIR LISTADO GENERAL (REPORTE DE PANTALLA)
         document.getElementById('print-screen-btn').onclick = () => {
-            if(currentFilterList.length === 0) return alert("Primero aplica un filtro para generar el reporte.");
-            let html = `
-                <div class="print-header">
-                    <img src="logo.jpg" style="height:60px; float:left;">
-                    <h2 style="margin:0;">LISTADO DE CITACIONES</h2>
-                    <p style="margin:0;">Escuela Agrícola Sagrados Corazones</p>
-                    <div style="clear:both;"></div>
-                </div>
-                <table class="print-table">
-                    <thead><tr><th>Fecha</th><th>Alumno</th><th>Curso</th><th>Solicita</th><th>Estado</th></tr></thead>
-                    <tbody>`;
-            currentFilterList.forEach(i => {
-                html += `<tr><td>${i.date}</td><td>${i.student}</td><td>${i.course}</td><td>${i.teacher}</td><td>${i.assisted ? 'Asistió' : 'Pendiente'}</td></tr>`;
-            });
+            if(currentFilterList.length === 0) return alert("Filtra primero.");
+            let html = `<div class="print-header"><h2>REPORTE DE CITACIONES</h2><p>Escuela Agrícola Sagrados Corazones</p></div><table class="print-table"><thead><tr><th>Fecha</th><th>Alumno</th><th>Curso</th><th>Solicita</th><th>Asistió</th></tr></thead><tbody>`;
+            currentFilterList.forEach(i => { html += `<tr><td>${i.date}</td><td>${i.student}</td><td>${i.course}</td><td>${i.teacher}</td><td>${i.assisted ? 'SI' : 'NO'}</td></tr>`; });
             html += `</tbody></table>`;
             document.getElementById('printable-area').innerHTML = html;
             window.print();
         };
 
-        // HISTORIAL EN VIVO CON REIMPRESIÓN
         onSnapshot(query(collection(db, "citaciones"), orderBy('timestamp', 'desc'), limit(15)), (s) => {
             const b = document.getElementById('report-body'); b.innerHTML = '';
             recordsMemory = []; let count = 0;
             s.forEach(snap => {
                 const i = snap.data(); recordsMemory.push(i);
-                b.innerHTML += `
-                <tr class="border-b">
-                    <td class="p-2 text-[10px] font-bold">${i.date}</td>
-                    <td class="p-2 text-[11px]">${i.student}<br><span class="text-purple-600 text-[9px] font-bold">${i.course}</span></td>
-                    <td class="p-2 text-center flex gap-1 justify-center mt-1">
-                        <button onclick="toggleAsist('${snap.id}', ${i.assisted})" class="${i.assisted ? 'bg-green-500' : 'bg-gray-300'} text-white text-[9px] font-bold px-2 py-1 rounded">MARCAR</button>
-                        <button onclick="reprint(${count})" class="bg-blue-500 text-white text-[9px] px-2 py-1 rounded">🖨️</button>
-                    </td>
-                </tr>`;
+                b.innerHTML += `<tr class="border-b"><td class="p-2 text-[10px] font-bold">${i.date}</td><td class="p-2 text-[11px]">${i.student}<br><span class="text-purple-600 text-[9px] font-bold">${i.course}</span></td><td class="p-2 text-right flex gap-1 justify-end"><button onclick="toggleAsist('${snap.id}', ${i.assisted})" class="${i.assisted ? 'bg-green-500' : 'bg-gray-300'} text-white text-[9px] px-2 py-1 rounded">MARCAR</button><button onclick="reprint(${count})" class="bg-blue-500 text-white text-[9px] px-2 py-1 rounded">🖨️</button></td></tr>`;
                 count++;
             });
         });
 
-        window.toggleAsist = async (id, current) => { await updateDoc(doc(db, "citaciones", id), { assisted: !current }); showToast("Estado actualizado"); };
+        window.toggleAsist = async (id, current) => { await updateDoc(doc(db, "citaciones", id), { assisted: !current }); showToast("Actualizado"); };
         window.reprint = (idx) => generateVoucher(recordsMemory[idx]);
 
         function generateVoucher(d) {
-            document.getElementById('printable-area').innerHTML = `
-                <div class="citation-slip">
-                    <div class="slip-left">
-                        <div style="display:flex; align-items:center; gap:15px; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:15px;">
-                            <img src="logo.jpg" style="height:70px;">
-                            <div><h2 style="margin:0; font-size:18px; font-weight:bold;">CITACIÓN DE APODERADO</h2><p style="margin:0; font-size:11px;">Escuela Agrícola Sagrados Corazones</p></div>
-                        </div>
-                        <p style="font-size:15px; margin-bottom:20px;">Por la presente se cita al apoderado del alumno(a):<br><b>${d.student}</b> del curso <b>${d.course}</b>.</p>
-                        <div style="font-size:13px; line-height:2.5;">
-                            <p>📅 <b>FECHA:</b> ${d.date} &nbsp;&nbsp; ⏰ <b>HORA:</b> ${d.time}</p>
-                            <p>👤 <b>SOLICITA:</b> ${d.teacher}</p>
-                        </div>
-                    </div>
-                    <div class="slip-right"><p style="font-size:10px; font-weight:bold;">FIRMA APODERADO</p><div style="flex-grow:1; border-bottom:1px solid #000; margin: 60px 0 10px 0;"></div></div>
-                </div>`;
+            document.getElementById('printable-area').innerHTML = `<div class="citation-slip"><div class="slip-left"><div style="display:flex; align-items:center; gap:15px; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:15px;"><img src="logo.jpg" style="height:70px;"><div><h2 style="margin:0; font-size:18px;">CITACIÓN</h2><p style="margin:0; font-size:11px;">Escuela Agrícola</p></div></div><p>Alumno: <b>${d.student}</b> Curso: <b>${d.course}</b></p><p>Fecha: ${d.date} Hora: ${d.time}</p><p>Solicita: <b>${d.teacher}</b></p></div><div class="slip-right"><p>FIRMA</p><div style="border-bottom:1px solid #000; margin-top:60px;"></div></div></div>`;
             setTimeout(() => window.print(), 800);
         }
 
