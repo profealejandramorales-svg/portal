@@ -25,10 +25,10 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-4">
+<body class="bg-gray-100 min-h-screen p-4 flex flex-col">
     <div id="message-box" class="fixed top-5 right-5 bg-purple-600 text-white px-6 py-3 rounded shadow-lg hidden z-50"></div>
 
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div class="max-w-7xl mx-auto space-y-6 flex-grow">
         <div class="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border-b-4 border-purple-600">
             <div class="flex items-center gap-4">
                 <img src="logo.jpg" alt="Logo" class="h-16 w-auto object-contain" onerror="this.alt='Escuela Agrícola'">
@@ -96,6 +96,15 @@
             </div>
         </div>
     </div>
+
+    <footer class="mt-8 py-6 text-center border-t border-gray-200 bg-white/50">
+        <p class="text-sm text-gray-600">
+            <strong>Portal Administrativo de Citaciones</strong> • © 2026 Escuela Agrícola Sagrados Corazones
+        </p>
+        <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-widest">
+            Desarrollado para el Departamento de UTP e Inspectoría
+        </p>
+    </footer>
 
     <div id="printable-area" class="hidden"></div>
 
