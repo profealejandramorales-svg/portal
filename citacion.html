@@ -23,7 +23,6 @@
             }
             .slip-left { width: 70%; border-right: 1px dashed #000; padding-right: 15px; }
             .slip-right { width: 30%; padding-left: 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
-            img { max-height: 60px !important; }
         }
     </style>
 </head>
@@ -113,7 +112,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = { 
             apiKey: "AIzaSyBnSMVCH0yyYUWk5z54kTIPTrWkyoeWs-I", 
             authDomain: "suspenciones-40d0c.firebaseapp.com", 
@@ -125,7 +123,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // CONFIGURACIÓN GOOGLE
         const CLIENT_ID = '434804825732-kg1u195e555j7odsvd8gons8njk9u24i.apps.googleusercontent.com';
         const API_KEY = 'AIzaSyBE2aVDXS6lGH_GqlhBe9a3LbCk2zG7yRU';
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
@@ -150,9 +147,13 @@
         }
 
         async function initGapi() {
-            await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
-            gapiInited = true;
-            checkInit();
+            try {
+                await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
+                gapiInited = true;
+                checkInit();
+            } catch (err) {
+                console.error("Error inicializando GAPI", err);
+            }
         }
 
         window.onload = () => {
@@ -206,7 +207,6 @@
                 }
 
                 try {
-                    // 1. Google Calendar
                     await gapi.client.calendar.events.insert({
                         'calendarId': 'primary',
                         'resource': {
@@ -219,16 +219,13 @@
                         'sendUpdates': 'all'
                     });
 
-                    // 2. Firebase
                     await addDoc(collection(db, "citaciones"), data);
-                    
                     showToast("✅ Registrado con éxito");
                     updatePrintArea(data);
                     setTimeout(() => { window.print(); }, 1000);
-
                 } catch (e) { 
                     console.error(e);
-                    showToast("❌ Error al guardar. Verifica el permiso de Calendar."); 
+                    showToast("❌ Error al guardar."); 
                 }
             };
 
