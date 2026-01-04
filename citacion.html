@@ -19,11 +19,10 @@
             #printable-area { display: block !important; width: 100%; }
             .citation-slip { 
                 border: 2px solid #000; padding: 20px; margin-bottom: 2cm; 
-                display: flex; height: 9cm; background: white;
+                display: flex; height: 9.5cm; background: white; color: black;
             }
             .slip-left { width: 70%; border-right: 1px dashed #000; padding-right: 15px; }
             .slip-right { width: 30%; padding-left: 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
-            img { max-height: 60px !important; display: block !important; }
         }
     </style>
 </head>
@@ -33,14 +32,14 @@
     <div class="main-wrapper">
         <div class="flex items-center justify-between mb-8 border-b pb-4 bg-white p-4 rounded-xl shadow-sm">
             <div class="flex items-center gap-4">
-                <img src="logo.jpg" alt="Logo" class="h-16 w-auto object-contain" onerror="this.alt='Logo'">
+                <img src="logo.jpg" alt="Logo" class="h-16 w-auto object-contain" onerror="this.style.display='none'">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-800">Citación de Apoderados</h1>
                     <p class="text-xs text-gray-500 font-medium uppercase">Escuela Agrícola Sagrados Corazones</p>
                 </div>
             </div>
-            <div class="text-right">
-                <span class="text-xs font-bold text-purple-600">Nómina 2026 Activa</span>
+            <div id="status-indicator" class="text-right text-xs font-bold text-red-500">
+                Iniciando Google API...
             </div>
         </div>
 
@@ -50,10 +49,10 @@
                 <div class="space-y-4">
                     <select id="course-select" class="w-full p-2 border rounded bg-gray-50 text-sm"></select>
                     <select id="student-select" class="w-full p-2 border rounded bg-gray-50 text-sm" disabled>
-                        <option>Seleccione Curso primero...</option>
+                        <option>Seleccione Curso...</option>
                     </select>
                     
-                    <input type="email" id="parent-email" class="w-full p-2 border border-purple-200 rounded text-sm" placeholder="Email Apoderado (Para invitación Calendar)">
+                    <input type="email" id="parent-email" class="w-full p-2 border border-purple-200 rounded text-sm" placeholder="Email Apoderado (Invitación Calendar)">
                     
                     <div class="grid grid-cols-2 gap-3">
                         <input type="date" id="citation-date" class="w-full p-2 border rounded text-sm">
@@ -82,15 +81,15 @@
                         <option value="Psicóloga">Psicóloga</option>
                     </select>
 
-                    <button id="add-btn" class="w-full bg-purple-600 text-white font-bold py-3 rounded shadow hover:bg-purple-700 transition active:scale-95">
-                        REGISTRAR E IMPRIMIR
+                    <button id="add-btn" disabled class="w-full bg-gray-400 text-white font-bold py-3 rounded shadow transition">
+                        ESPERANDO CARGA...
                     </button>
                 </div>
             </div>
             
-            <div class="card border-t-4 border-gray-500 flex flex-col h-full overflow-hidden">
+            <div class="card border-t-4 border-gray-500 flex flex-col h-[500px]">
                 <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-2">Historial de Citaciones</h2>
-                <div class="flex-1 overflow-y-auto max-h-[450px]">
+                <div class="flex-1 overflow-y-auto">
                     <table class="w-full text-left text-sm">
                         <tbody id="report-body" class="divide-y divide-gray-100"></tbody>
                     </table>
@@ -105,7 +104,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // CONFIGURACIONES
+        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = { 
             apiKey: "AIzaSyBnSMVCH0yyYUWk5z54kTIPTrWkyoeWs-I", 
             authDomain: "suspenciones-40d0c.firebaseapp.com", 
@@ -117,12 +116,46 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // CONFIGURACIÓN GOOGLE
         const CLIENT_ID = '434804825732-kg1u195e555j7odsvd8gons8njk9u24i.apps.googleusercontent.com';
         const API_KEY = 'AIzaSyBE2aVDXS6lGH_GqlhBe9a3LbCk2zG7yRU';
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
 
-        // DATOS ESCUELA
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+
+        // 1. CARGAR LIBRERÍAS DE GOOGLE DE FORMA SECUENCIAL
+        function checkInit() {
+            if (gapiInited && gisInited) {
+                const btn = document.getElementById('add-btn');
+                btn.disabled = false;
+                btn.classList.replace('bg-gray-400', 'bg-purple-600');
+                btn.innerText = "REGISTRAR E IMPRIMIR";
+                document.getElementById('status-indicator').innerText = "Google API Conectada";
+                document.getElementById('status-indicator').classList.replace('text-red-500', 'text-green-500');
+            }
+        }
+
+        async function initializeGapiClient() {
+            await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
+            gapiInited = true;
+            checkInit();
+        }
+
+        window.gapiLoaded = () => { gapi.load('client', initializeGapiClient); };
+        window.gisLoaded = () => {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: '', // se define al hacer click
+            });
+            gisInited = true;
+            checkInit();
+        };
+
+        // DATOS NÓMINA
         const schoolData = {
             'Primero Medio A': ["ÁLVAREZ FAÚNDEZ MATEO VICENTE", "CASTILLO ARAVENA MAITE PASCAL", "COLLADO PUENTES SANTINO ALEXANDER", "CONCHA TORREALBA JOAQUÍN IGNACIO", "DÍAZ MALUENDA ESTEFANÍA ANTONIA", "DONAIRE ROJAS MAITE EMILIA ESTER", "ESPINOZA CACHAÑA LISBET ALEXANDRA", "FERRADA ALBORNOZ AGUSTÍN ALEXIS", "FUENTEMAVIDA BARROS OSCAR ANTONIO", "JAQUE PACHECO DAMIÁN IGNACIO", "JARAMILLO VILLAR MATT HOST", "LÓPEZ ACUÑA MARCO EMILIO", "LÓPEZ VILLAR FRANCO IGNACIO", "MESA DÍAZ GONZALO IGNACIO", "MEZA CARRASCO CRISTIAN ALFONSO", "MORALES GARRIDO NICOLÁS ANTONIO", "ORTEGA DA SILVA EMILIA CATALINA SOPHIA", "PEREIRA TAPIA KEVIN RUBÉN", "RAMÍREZ SEPÚLVEDA LUIS JUSTIN JESÚS", "RAMÍREZ VALDÉS MARTINA POLETTE", "RECABAL YÁÑEZ TOMÁS IGNACIO", "RODRÍGUEZ SEPÚLVEDA SIMONEY ISAMAR", "ROJAS ÓRDENES TRACY MAIDEN", "SÁNCHEZ MUNIZAGA ALONDRA ANAÍS", "SOLIZ OLGUIN BRAYAN", "VALENZUELA MUÑOZ MAGDALENA BELÉN"],
             'Segundo Medio A': ["ALBURQUENQUE DEL GRECCO EMILYA ANTONIA", "ANABALÓN BELTRÁN BENJAMÍN NICOLÁS", "ARAVENA ZÚÑIGA NOEMÍ JESÚS", "ARAYA DOMÍNGUEZ ALEX FABIÁN", "ASTUDILLO CAMPOS CRISTÓBAL ANTONIO", "BAEZ DONOSO LUKAS ALFONSO", "CARO BUSTOS KRISCHNA ESTEFANIA", "CUMINAO VIDAL CATALINA ANDREA", "DÍAZ MALUENDA MIGUEL ALBERTO", "IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA", "LAGOS LASTRA ALEXANDRA DANAE", "LÓPEZ NOVOA EYDAN DAMIÁN", "MALDONADO FLORES ANTONELLA BELÉN", "MONTECINO DÍAZ VALESKA BELÉN", "MUÑOZ CONTRERAS LUIS GABRIEL", "OSES CAMPOS VALENTINA ABIGAIL", "PALMA ORELLANA ANTONELLA FRANCISCA", "PÉREZ QUEVEDO CONSTANZA TRINIDAD", "RIQUELME SANTOS BENJAMÍN ALONSO", "ROJAS LEIVA EDUARDO JAVIER", "SALAZAR SALAS PEDRO JOSÉ", "SANTANDER LÓPEZ MARÍA JOSÉ", "VÁSQUEZ AGUILERA SCARLET NICOLE", "VERA BRAVO FLORENCIA ANTONIA", "YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN"],
@@ -148,54 +181,32 @@
             }
         };
 
-        // INICIALIZACIÓN GOOGLE
-        let tokenClient;
-        window.gapiLoaded = async () => {
-            await gapi.load('client', async () => {
-                await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
-            });
-        };
-        window.gisLoaded = () => {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: '', 
-            });
-        };
-
-        // ACCIÓN PRINCIPAL
+        // BOTÓN REGISTRAR
         document.getElementById('add-btn').onclick = async () => {
             const data = {
-                course: courseSelect.value, 
-                student: studentSelect.value, 
-                parentEmail: document.getElementById('parent-email').value,
-                citationDate: document.getElementById('citation-date').value, 
-                citationTime: document.getElementById('citation-time').value,
-                reason: document.getElementById('reason-select').value, 
-                mode: document.getElementById('mode-select').value,
-                teacher: document.getElementById('teacher-input').value, 
-                timestamp: Date.now()
+                course: courseSelect.value, student: studentSelect.value, parentEmail: document.getElementById('parent-email').value,
+                citationDate: document.getElementById('citation-date').value, citationTime: document.getElementById('citation-time').value,
+                reason: document.getElementById('reason-select').value, mode: document.getElementById('mode-select').value,
+                teacher: document.getElementById('teacher-input').value, timestamp: Date.now()
             };
             
-            if(!data.student || !data.citationDate || !data.citationTime) {
-                return showToast("Faltan datos (Fecha, Hora o Alumno)");
-            }
+            if(!data.student || !data.citationDate || !data.citationTime) return showToast("Faltan datos requeridos.");
 
-            // Callback que se ejecuta cuando Google autoriza
+            // 1. Manejo del Callback de Google
             tokenClient.callback = async (resp) => {
                 if (resp.error !== undefined) {
-                    showToast("Error de acceso a Google");
+                    showToast("Error de acceso a Google.");
                     console.error(resp);
                     return;
                 }
 
                 try {
-                    // 1. Crear evento en Google Calendar
+                    // 2. Insertar en Google Calendar
                     await gapi.client.calendar.events.insert({
                         'calendarId': 'primary',
                         'resource': {
                             'summary': `Citación: ${data.student} (${data.course})`,
-                            'description': `Motivo: ${data.reason}\nSolicita: ${data.teacher}\nModalidad: ${data.mode}`,
+                            'description': `Motivo: ${data.reason}\nSolicita: ${data.teacher}`,
                             'start': { 'dateTime': `${data.citationDate}T${data.citationTime}:00`, 'timeZone': 'America/Santiago' },
                             'end': { 'dateTime': `${data.citationDate}T${data.citationTime}:30`, 'timeZone': 'America/Santiago' },
                             'attendees': data.parentEmail ? [{ 'email': data.parentEmail }] : []
@@ -203,22 +214,22 @@
                         'sendUpdates': 'all'
                     });
 
-                    // 2. Guardar en Firebase
+                    // 3. Guardar en Firebase
                     await addDoc(collection(db, "citaciones"), data);
                     
-                    showToast("✅ Registrado en Calendar y Firebase");
+                    showToast("✅ Registrado en Firebase y Calendar");
 
-                    // 3. Preparar e Imprimir
+                    // 4. Imprimir
                     updatePrintArea(data);
-                    setTimeout(() => { window.print(); }, 800);
+                    setTimeout(() => { window.print(); }, 1000);
 
                 } catch (e) { 
-                    console.error("Error al registrar:", e);
-                    showToast("❌ Error al guardar. Revisa la consola."); 
+                    console.error(e);
+                    showToast("❌ Error al guardar datos."); 
                 }
             };
 
-            // Solicitar el token de acceso
+            // Solicitar acceso
             if (gapi.client.getToken() === null) {
                 tokenClient.requestAccessToken({prompt: 'consent'});
             } else {
@@ -244,6 +255,7 @@
                             <p><b>📝 MOTIVO:</b> ${d.reason}</p>
                             <p><b>👤 SOLICITA:</b> ${d.teacher}</p>
                         </div>
+                        <p style="font-size:10px; margin-top:30px; border-top:1px solid #eee; padding-top:5px;"><i>Nota: Se ruega puntualidad.</i></p>
                     </div>
                     <div class="slip-right">
                         <p style="font-size:10px; font-weight:bold;">TOMA DE CONOCIMIENTO</p>
@@ -253,7 +265,7 @@
                 </div>`;
         }
 
-        // Carga de historial en tiempo real
+        // Historial en tiempo real
         onSnapshot(query(collection(db, "citaciones"), orderBy('timestamp', 'desc'), limit(15)), (snap) => {
             const body = document.getElementById('report-body'); body.innerHTML = '';
             snap.forEach(doc => {
@@ -262,16 +274,13 @@
             });
         });
 
-        function showToast(m) { 
-            const b = document.getElementById('message-box'); 
-            b.innerText = m; 
-            b.classList.remove('hidden'); 
-            setTimeout(() => b.classList.add('hidden'), 4000); 
-        }
+        function showToast(m) { const b = document.getElementById('message-box'); b.innerText = m; b.classList.remove('hidden'); setTimeout(() => b.classList.add('hidden'), 4000); }
         
-        // Ejecutar cargas de scripts de Google
-        window.gapiLoaded();
-        window.gisLoaded();
+        // Disparar carga de scripts
+        setTimeout(() => {
+            if(typeof gapi !== 'undefined') window.gapiLoaded();
+            if(typeof google !== 'undefined') window.gisLoaded();
+        }, 1000);
     </script>
 </body>
 </html>
