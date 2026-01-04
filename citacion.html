@@ -23,6 +23,7 @@
             }
             .slip-left { width: 70%; border-right: 1px dashed #000; padding-right: 15px; }
             .slip-right { width: 30%; padding-left: 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
+            img { max-height: 60px !important; }
         }
     </style>
 </head>
@@ -38,13 +39,13 @@
                     <p class="text-xs text-gray-500 font-medium uppercase">Escuela Agrícola Sagrados Corazones</p>
                 </div>
             </div>
-            <div id="status-indicator" class="text-right text-xs font-bold text-red-500">
-                Iniciando Google API...
+            <div id="status-indicator" class="text-xs font-bold text-red-500 bg-red-50 px-3 py-1 rounded-full border border-red-200">
+                ⌛ Conectando con Google...
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="card border-t-4 border-purple-500">
+            <div class="card border-t-4 border-purple-600">
                 <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Nueva Citación</h2>
                 <div class="space-y-4">
                     <select id="course-select" class="w-full p-2 border rounded bg-gray-50 text-sm"></select>
@@ -81,16 +82,24 @@
                         <option value="Psicóloga">Psicóloga</option>
                     </select>
 
-                    <button id="add-btn" disabled class="w-full bg-gray-400 text-white font-bold py-3 rounded shadow transition">
-                        ESPERANDO CARGA...
+                    <button id="add-btn" disabled class="w-full bg-gray-400 text-white font-bold py-3 rounded shadow transition-all cursor-not-allowed">
+                        ESPERANDO CONEXIÓN...
                     </button>
                 </div>
             </div>
             
-            <div class="card border-t-4 border-gray-500 flex flex-col h-[500px]">
+            <div class="card border-t-4 border-gray-600 flex flex-col h-[500px]">
                 <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-2">Historial de Citaciones</h2>
                 <div class="flex-1 overflow-y-auto">
                     <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="p-2 text-[10px] uppercase text-gray-500">Fecha</th>
+                                <th class="p-2 text-[10px] uppercase text-gray-500">Alumno/Curso</th>
+                                <th class="p-2 text-[10px] uppercase text-gray-500">Solicita</th>
+                                <th class="p-2 text-[10px] uppercase text-gray-500 text-right">Motivo</th>
+                            </tr>
+                        </thead>
                         <tbody id="report-body" class="divide-y divide-gray-100"></tbody>
                     </table>
                 </div>
@@ -126,36 +135,35 @@
         let gapiInited = false;
         let gisInited = false;
 
-        // 1. CARGAR LIBRERÍAS DE GOOGLE DE FORMA SECUENCIAL
         function checkInit() {
             if (gapiInited && gisInited) {
                 const btn = document.getElementById('add-btn');
                 btn.disabled = false;
                 btn.classList.replace('bg-gray-400', 'bg-purple-600');
+                btn.classList.remove('cursor-not-allowed');
                 btn.innerText = "REGISTRAR E IMPRIMIR";
-                document.getElementById('status-indicator').innerText = "Google API Conectada";
-                document.getElementById('status-indicator').classList.replace('text-red-500', 'text-green-500');
+                const status = document.getElementById('status-indicator');
+                status.innerText = "🟢 Google API Lista";
+                status.classList.replace('text-red-500', 'text-green-600');
+                status.classList.replace('bg-red-50', 'bg-green-50');
             }
         }
 
-        async function initializeGapiClient() {
+        async function initGapi() {
             await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
             gapiInited = true;
             checkInit();
         }
 
-        window.gapiLoaded = () => { gapi.load('client', initializeGapiClient); };
-        window.gisLoaded = () => {
+        window.onload = () => {
+            gapi.load('client', initGapi);
             tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: '', // se define al hacer click
+                client_id: CLIENT_ID, scope: SCOPES, callback: '' 
             });
             gisInited = true;
             checkInit();
         };
 
-        // DATOS NÓMINA
         const schoolData = {
             'Primero Medio A': ["ÁLVAREZ FAÚNDEZ MATEO VICENTE", "CASTILLO ARAVENA MAITE PASCAL", "COLLADO PUENTES SANTINO ALEXANDER", "CONCHA TORREALBA JOAQUÍN IGNACIO", "DÍAZ MALUENDA ESTEFANÍA ANTONIA", "DONAIRE ROJAS MAITE EMILIA ESTER", "ESPINOZA CACHAÑA LISBET ALEXANDRA", "FERRADA ALBORNOZ AGUSTÍN ALEXIS", "FUENTEMAVIDA BARROS OSCAR ANTONIO", "JAQUE PACHECO DAMIÁN IGNACIO", "JARAMILLO VILLAR MATT HOST", "LÓPEZ ACUÑA MARCO EMILIO", "LÓPEZ VILLAR FRANCO IGNACIO", "MESA DÍAZ GONZALO IGNACIO", "MEZA CARRASCO CRISTIAN ALFONSO", "MORALES GARRIDO NICOLÁS ANTONIO", "ORTEGA DA SILVA EMILIA CATALINA SOPHIA", "PEREIRA TAPIA KEVIN RUBÉN", "RAMÍREZ SEPÚLVEDA LUIS JUSTIN JESÚS", "RAMÍREZ VALDÉS MARTINA POLETTE", "RECABAL YÁÑEZ TOMÁS IGNACIO", "RODRÍGUEZ SEPÚLVEDA SIMONEY ISAMAR", "ROJAS ÓRDENES TRACY MAIDEN", "SÁNCHEZ MUNIZAGA ALONDRA ANAÍS", "SOLIZ OLGUIN BRAYAN", "VALENZUELA MUÑOZ MAGDALENA BELÉN"],
             'Segundo Medio A': ["ALBURQUENQUE DEL GRECCO EMILYA ANTONIA", "ANABALÓN BELTRÁN BENJAMÍN NICOLÁS", "ARAVENA ZÚÑIGA NOEMÍ JESÚS", "ARAYA DOMÍNGUEZ ALEX FABIÁN", "ASTUDILLO CAMPOS CRISTÓBAL ANTONIO", "BAEZ DONOSO LUKAS ALFONSO", "CARO BUSTOS KRISCHNA ESTEFANIA", "CUMINAO VIDAL CATALINA ANDREA", "DÍAZ MALUENDA MIGUEL ALBERTO", "IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA", "LAGOS LASTRA ALEXANDRA DANAE", "LÓPEZ NOVOA EYDAN DAMIÁN", "MALDONADO FLORES ANTONELLA BELÉN", "MONTECINO DÍAZ VALESKA BELÉN", "MUÑOZ CONTRERAS LUIS GABRIEL", "OSES CAMPOS VALENTINA ABIGAIL", "PALMA ORELLANA ANTONELLA FRANCISCA", "PÉREZ QUEVEDO CONSTANZA TRINIDAD", "RIQUELME SANTOS BENJAMÍN ALONSO", "ROJAS LEIVA EDUARDO JAVIER", "SALAZAR SALAS PEDRO JOSÉ", "SANTANDER LÓPEZ MARÍA JOSÉ", "VÁSQUEZ AGUILERA SCARLET NICOLE", "VERA BRAVO FLORENCIA ANTONIA", "YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN"],
@@ -181,7 +189,6 @@
             }
         };
 
-        // BOTÓN REGISTRAR
         document.getElementById('add-btn').onclick = async () => {
             const data = {
                 course: courseSelect.value, student: studentSelect.value, parentEmail: document.getElementById('parent-email').value,
@@ -192,16 +199,14 @@
             
             if(!data.student || !data.citationDate || !data.citationTime) return showToast("Faltan datos requeridos.");
 
-            // 1. Manejo del Callback de Google
             tokenClient.callback = async (resp) => {
                 if (resp.error !== undefined) {
                     showToast("Error de acceso a Google.");
-                    console.error(resp);
                     return;
                 }
 
                 try {
-                    // 2. Insertar en Google Calendar
+                    // 1. Google Calendar
                     await gapi.client.calendar.events.insert({
                         'calendarId': 'primary',
                         'resource': {
@@ -214,22 +219,19 @@
                         'sendUpdates': 'all'
                     });
 
-                    // 3. Guardar en Firebase
+                    // 2. Firebase
                     await addDoc(collection(db, "citaciones"), data);
                     
-                    showToast("✅ Registrado en Firebase y Calendar");
-
-                    // 4. Imprimir
+                    showToast("✅ Registrado con éxito");
                     updatePrintArea(data);
                     setTimeout(() => { window.print(); }, 1000);
 
                 } catch (e) { 
                     console.error(e);
-                    showToast("❌ Error al guardar datos."); 
+                    showToast("❌ Error al guardar. Verifica el permiso de Calendar."); 
                 }
             };
 
-            // Solicitar acceso
             if (gapi.client.getToken() === null) {
                 tokenClient.requestAccessToken({prompt: 'consent'});
             } else {
@@ -255,7 +257,6 @@
                             <p><b>📝 MOTIVO:</b> ${d.reason}</p>
                             <p><b>👤 SOLICITA:</b> ${d.teacher}</p>
                         </div>
-                        <p style="font-size:10px; margin-top:30px; border-top:1px solid #eee; padding-top:5px;"><i>Nota: Se ruega puntualidad.</i></p>
                     </div>
                     <div class="slip-right">
                         <p style="font-size:10px; font-weight:bold;">TOMA DE CONOCIMIENTO</p>
@@ -265,22 +266,21 @@
                 </div>`;
         }
 
-        // Historial en tiempo real
         onSnapshot(query(collection(db, "citaciones"), orderBy('timestamp', 'desc'), limit(15)), (snap) => {
             const body = document.getElementById('report-body'); body.innerHTML = '';
             snap.forEach(doc => {
                 const i = doc.data();
-                body.innerHTML += `<tr><td class="p-2 text-xs font-bold">${i.citationDate}</td><td class="p-2 text-xs">${i.student}<br><span class="text-[10px] text-purple-600">${i.course}</span></td><td class="p-2 text-[10px] text-right">${i.reason}</td></tr>`;
+                body.innerHTML += `
+                <tr class="hover:bg-purple-50 transition">
+                    <td class="p-2 text-[11px] font-bold text-gray-600">${i.citationDate}</td>
+                    <td class="p-2 text-[11px]">${i.student}<br><span class="text-[9px] font-bold text-purple-600">${i.course}</span></td>
+                    <td class="p-2 text-[10px] text-gray-500">${i.teacher}</td>
+                    <td class="p-2 text-[10px] text-right font-medium text-gray-700">${i.reason}</td>
+                </tr>`;
             });
         });
 
         function showToast(m) { const b = document.getElementById('message-box'); b.innerText = m; b.classList.remove('hidden'); setTimeout(() => b.classList.add('hidden'), 4000); }
-        
-        // Disparar carga de scripts
-        setTimeout(() => {
-            if(typeof gapi !== 'undefined') window.gapiLoaded();
-            if(typeof google !== 'undefined') window.gisLoaded();
-        }, 1000);
     </script>
 </body>
 </html>
