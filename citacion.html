@@ -112,7 +112,11 @@
             gisInited = true; checkInit();
         };
 
-        const schoolData = { 'Primero Medio A': ["ÁLVAREZ FAÚNDEZ MATEO VICENTE", "CASTILLO ARAVENA MAITE PASCAL"], 'Segundo Medio A': ["ARAVENA ZÚÑIGA NOEMÍ JESÚS"] };
+        const schoolData = { 
+            'Primero Medio A': ["ÁLVAREZ FAÚNDEZ MATEO VICENTE", "CASTILLO ARAVENA MAITE PASCAL"], 
+            'Primero Medio B': ["QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO", "ORELLANA GARRIDO MATÍAS LEANDRO"],
+            'Segundo Medio A': ["ARAVENA ZÚÑIGA NOEMÍ JESÚS"] 
+        };
         const cS = document.getElementById('course-select'), sS = document.getElementById('student-select');
         cS.innerHTML = '<option value="">Curso...</option>';
         Object.keys(schoolData).forEach(c => cS.innerHTML += `<option value="${c}">${c}</option>`);
@@ -136,7 +140,7 @@
 
         onSnapshot(query(collection(db, "citaciones"), orderBy('ts', 'desc'), limit(15)), (s) => {
             const b = document.getElementById('report-body'); b.innerHTML = '';
-            s.forEach(doc => { const i = doc.data(); b.innerHTML += `<tr class="hover:bg-purple-50"><td class="p-2 text-[11px] font-bold">${i.date}</td><td class="p-2 text-[11px]">${i.student}<br><span class="text-[9px] text-purple-600">${i.course}</span></td><td class="p-2 text-[10px]">${i.teacher}</td></tr>`; });
+            s.forEach(doc => { const i = doc.data(); b.innerHTML += `<tr class="hover:bg-purple-50"><td class="p-2 text-[11px] font-bold text-gray-600">${i.date}</td><td class="p-2 text-[11px]">${i.student}<br><span class="text-[9px] text-purple-600 font-bold">${i.course}</span></td><td class="p-2 text-[10px] text-gray-500">${i.teacher}</td></tr>`; });
         });
     </script>
 </body>
