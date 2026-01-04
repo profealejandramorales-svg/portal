@@ -2,475 +2,245 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Control de Inventario - QR Completo</title>
+  <title>Inventario Pro - Escuela Agrícola Sagrados Corazones</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
-    h1 { text-align: center; margin-top: 0; color: #333; }
-    
-    .card {
-      max-width: 1100px; margin: 0 auto 20px; background: #fff; padding: 20px;
-      border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    body { font-family: 'Inter', sans-serif; background: #f4f6f8; }
+    .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .qty-input { width: 55px; padding: 4px; text-align: center; border: 1px solid #e5e7eb; border-radius: 4px; font-weight: bold; }
+    .totales-footer { background: #1f2937; color: white; padding: 15px; border-radius: 0 0 8px 8px; display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
+    @media print {
+        @page { size: Letter portrait; margin: 0; }
+        body > *:not(#printable-area) { display: none !important; }
+        #printable-area { display: block !important; }
+        .sheet { display: grid; grid-template-columns: repeat(3, 64mm); grid-auto-rows: 50mm; gap: 2mm; padding: 5mm; justify-content: center; }
+        .label { border: 1px dashed #ccc; width: 64mm; height: 50mm; padding: 3mm; display: flex; gap: 5px; align-items: center; page-break-inside: avoid; color: black; }
+        .qr-code img { width: 24mm; height: 24mm; }
+        .meta { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+        .title { font-size: 10px; font-weight: bold; line-height: 1.1; margin-bottom: 4px; }
+        .info { font-size: 9px; line-height: 1.2; }
     }
-
-    /* Estilos Generales */
-    label { font-size: 13px; font-weight: bold; display: block; margin-top: 10px; color: #555; }
-    input[type="text"], input[type="number"], select {
-      width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 5px;
-      border: 1px solid #ccc; border-radius: 4px;
-    }
-    
-    /* Botones */
-    .btn {
-      padding: 10px 15px; border-radius: 5px; border: none; font-size: 14px;
-      cursor: pointer; color: #fff; margin-right: 5px; margin-bottom: 5px; font-weight: bold;
-    }
-    .btn-blue { background: #007bff; }
-    .btn-success { background: #28a745; }
-    .btn-danger { background: #dc3545; }
-    .btn-warning { background: #ffc107; color: #333; }
-    .btn-dark { background: #343a40; }
-
-    /* PANEL DE IMPRESIÓN QR */
-    .qr-panel {
-        background-color: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 0; overflow: hidden;
-    }
-    .qr-header {
-        background: #2196f3; color: white; padding: 10px 20px; font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 10px;
-    }
-    .qr-body { padding: 20px; }
-    .qr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-    
-    .filter-group { background: white; padding: 15px; border-radius: 6px; border: 1px solid #bbdefb; }
-    .filter-title { font-size: 12px; text-transform: uppercase; color: #1976d2; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-
-    .radio-card {
-        display: flex; align-items: flex-start; gap: 10px; padding: 10px;
-        border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px; cursor: pointer; transition: 0.2s;
-    }
-    .radio-card:hover { background: #f5f5f5; }
-    .radio-card input { margin-top: 4px; }
-    .radio-card div { font-size: 13px; }
-    .radio-card strong { display: block; color: #333; margin-bottom: 2px; }
-    .radio-card small { color: #666; }
-
-    /* Tablas */
-    .table-wrapper { overflow-x: auto; margin-top: 15px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background: #f8f9fa; font-weight: bold; }
-    
-    .totales { padding: 15px; background: #343a40; color: white; border-radius: 5px; margin-top: 15px; font-weight: bold; text-align: right; }
   </style>
 </head>
-<body>
+<body class="p-4 md:p-8">
 
-  <h1>📦 Control de Inventario</h1>
+  <div id="message-box" class="fixed top-5 right-5 bg-green-600 text-white px-6 py-3 rounded shadow-lg hidden z-50"></div>
 
-  <div class="card">
-    <details open>
-        <summary style="cursor:pointer; font-weight:bold; color:#007bff;">📂 Importar CSV (Clic para cerrar)</summary>
-        <div style="margin-top:10px; padding:10px; background:#f9f9f9; border:1px solid #eee;">
-            <p style="margin:0 0 5px;">Sube el archivo <b>tal cual lo tienes</b>.</p>
-            <input type="file" id="fileInput" accept=".csv" />
-            <div id="importStatus" style="font-size:12px; color:green; margin-top:5px;"></div>
-        </div>
-    </details>
-  </div>
+  <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">📦 Gestión de Inventario Institucional</h1>
 
-  <div class="card">
-    <h3 style="margin-top:0;">➕ Agregar Nuevo Ítem Manual</h3>
-    <form id="itemForm" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; align-items:end;">
-      <div><label>Descripción</label><input type="text" id="descripcion" required /></div>
-      <div><label>Ubicación</label><input type="text" id="ubicacion" required /></div>
-      <div><label>Cantidad</label><input type="number" id="cantidadForm" min="1" value="1" /></div>
-      <div>
-          <label>Estado</label>
-          <select id="estado">
-            <option>Usado</option><option>Nuevo</option><option>En reparación</option>
-          </select>
-      </div>
-      <div><label>Procedencia</label><input type="text" id="subvencion" placeholder="Ej: SEP, Donación" /></div>
-      <div><label>Categoría</label><input type="text" id="categoria" /></div>
-      <div style="padding-bottom:8px;">
-          <label style="display:inline-flex; align-items:center; gap:5px;">
-            <input type="checkbox" id="darDeBaja" style="width:auto; margin:0;"> Marcar Baja
-          </label>
-      </div>
-      <div><button type="submit" class="btn btn-blue" style="width:100%">Guardar</button></div>
-    </form>
-  </div>
-
-  <div class="card" style="padding:0; overflow:hidden;">
-    <div class="qr-panel">
-        <div class="qr-header">
-            <span style="font-size:20px;">🖨️</span> Generador de Etiquetas (Con Procedencia)
-        </div>
-        <div class="qr-body">
-            <div class="qr-grid">
-                <div class="filter-group">
-                    <div class="filter-title">1. Selecciona qué imprimir</div>
-                    <label>Filtrar por Ubicación:</label>
-                    <select id="qrFilterUbicacion"><option value="all">-- Todas --</option></select>
-                    <label>Filtrar por Procedencia:</label>
-                    <select id="qrFilterProcedencia"><option value="all">-- Todas --</option></select>
-                    <label>Filtrar por Estado:</label>
-                    <select id="qrFilterEstado">
-                        <option value="all">-- Todos --</option>
-                        <option value="Nuevo">Solo Nuevos</option>
-                        <option value="Usado">Solo Usados</option>
-                        <option value="En reparación">En reparación</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <div class="filter-title">2. Elige el formato</div>
-                    <label class="radio-card">
-                        <input type="radio" name="qrMode" value="individual" checked>
-                        <div><strong>Modo Individual</strong><small>Una etiqueta por cada objeto físico.</small></div>
-                    </label>
-                    <label class="radio-card">
-                        <input type="radio" name="qrMode" value="summary">
-                        <div><strong>Modo Resumen</strong><small>Una sola etiqueta con el total.</small></div>
-                    </label>
-                </div>
-
-                <div style="display:flex; flex-direction:column; justify-content:center;">
-                    <button id="btnGenerateQR" class="btn btn-success" style="width:100%; padding:20px; font-size:18px;">GENERAR ETIQUETAS</button>
-                </div>
+  <div class="max-w-7xl mx-auto space-y-6">
+    
+    <div class="card border-t-4 border-gray-500">
+        <details>
+            <summary class="cursor-pointer font-bold text-gray-700 text-sm uppercase">📂 Cargar Datos desde Excel (CSV)</summary>
+            <div class="mt-4 p-4 bg-gray-50 border rounded border-dashed border-gray-300">
+                <input type="file" id="fileInput" accept=".csv" class="text-sm" />
+                <p class="text-[10px] text-gray-500 mt-2 italic">Format: ID; descripcion; Cantidad; Estado; procedencia; ubicacion; Categoria...</p>
             </div>
+        </details>
+    </div>
+
+    <div class="card border-t-4 border-blue-600">
+        <h3 class="font-bold text-sm uppercase text-blue-800 mb-4 tracking-wider">➕ Registro Manual</h3>
+        <form id="itemForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="md:col-span-2">
+                <label class="block text-[10px] font-bold uppercase text-gray-500">Descripción</label>
+                <input type="text" id="descripcion" class="w-full p-2 border rounded text-sm" required>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-500">Ubicación</label>
+                <input type="text" id="ubicacion" class="w-full p-2 border rounded text-sm">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-500">Categoría</label>
+                <input type="text" id="categoria" class="w-full p-2 border rounded text-sm">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-500">Estado</label>
+                <select id="estado" class="w-full p-2 border rounded text-sm">
+                    <option value="NUEVO">NUEVO</option>
+                    <option value="USADO">USADO</option>
+                    <option value="REPARACIÓN">REPARACIÓN</option>
+                    <option value="MALO">MALO</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-500">Procedencia</label>
+                <input type="text" id="subvencion" class="w-full p-2 border rounded text-sm">
+            </div>
+            <div class="flex items-end gap-2 md:col-span-2">
+                <button type="submit" class="flex-1 bg-blue-600 text-white font-bold p-2 rounded text-sm hover:bg-blue-700 shadow transition">GUARDAR EN NUBE</button>
+                <button type="button" id="clear-btn" class="px-4 bg-gray-200 text-gray-700 font-bold p-2 rounded text-sm hover:bg-gray-300">LIMPIAR</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card p-0 overflow-hidden">
+        <div class="p-4 flex flex-wrap gap-2">
+            <button id="btnListByUnit" class="bg-gray-800 text-white text-xs font-bold px-3 py-2 rounded">📋 POR UNIDAD</button>
+            <button id="btnListByState" class="bg-gray-800 text-white text-xs font-bold px-3 py-2 rounded">📋 POR ESTADO</button>
+            <button id="btnPurgeEmpty" class="bg-red-600 text-white text-xs font-bold px-3 py-2 rounded ml-auto">🗑️ LIMPIAR VACÍOS</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm border-collapse">
+                <thead class="bg-gray-100 font-bold text-gray-600 uppercase text-[11px]">
+                    <tr>
+                        <th class="p-3">Descripción</th>
+                        <th class="p-3">Ubicación</th>
+                        <th class="p-3">Estado</th>
+                        <th class="p-3">Procedencia</th>
+                        <th class="p-3">Categoría</th>
+                        <th class="p-3 text-center">Total</th>
+                        <th class="p-3 text-center">Baja</th>
+                        <th class="p-3 text-center bg-green-50">Real</th>
+                        <th class="p-3 text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTbody" class="divide-y divide-gray-100"></tbody>
+            </table>
+        </div>
+        <div class="totales-footer" id="totalesBox">
+            <span>REGISTROS EN TOTAL: <span id="totalRegistros">0</span></span>
+            <span>STOCK REAL ACUMULADO: <span id="totalStockReal">0</span></span>
         </div>
     </div>
   </div>
 
-  <div class="card">
-    <div style="margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:10px;">
-        <label>Herramientas:</label>
-        <button id="btnListByUnit" class="btn btn-dark">📋 Por Unidad</button>
-        <button id="btnListByState" class="btn btn-dark">📋 Por Estado</button>
-        <button id="btnListByCategory" class="btn btn-dark">📋 Por Categoría</button>
-        <button id="btnPurgeEmpty" class="btn btn-danger" style="margin-left:10px;">🗑️ Limpiar Vacíos</button>
-    </div>
-
-    <h3 style="margin-bottom:5px;">Inventario Actual</h3>
-    <div style="display:flex; gap:10px; background:#eee; padding:10px; border-radius:5px;">
-        <select id="viewFilterProcedencia"><option value="all">Ver toda Procedencia</option><option value="SEP">SEP</option></select>
-        <select id="viewFilterEstado"><option value="all">Ver todo Estado</option><option value="Nuevo">Nuevo</option><option value="Usado">Usado</option></select>
-    </div>
-
-    <div class="table-wrapper">
-      <table id="itemsTable">
-        <thead>
-          <tr>
-            <th>Descripción</th>
-            <th>Ubicación</th>
-            <th>Estado</th>
-            <th>Procedencia</th>
-            <th>Categoría</th>
-            <th style="width:80px; text-align:center;">Total</th>
-            <th style="width:80px; text-align:center;">Baja</th>
-            <th style="width:80px; text-align:center; background:#e8f5e9;">Real</th>
-            <th>Acción</th>
-          </tr>
-        </thead>
-        <tbody id="itemsTbody"></tbody>
-      </table>
-    </div>
-    <div class="totales" id="totalesBox">Cargando totales...</div>
-  </div>
+  <div id="printable-area" class="hidden"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, setDoc, doc, deleteDoc, updateDoc, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs",
-      authDomain: "attendance-ai-s81lt.firebaseapp.com",
-      projectId: "attendance-ai-s81lt",
-      storageBucket: "attendance-ai-s81lt.firebasestorage.app",
-      messagingSenderId: "935781953186",
-      appId: "1:935781953186:web:6c8a7a93ffad180d33b1fb"
+    const firebaseConfig = { 
+        apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs", 
+        authDomain: "attendance-ai-s81lt.firebaseapp.com", 
+        projectId: "attendance-ai-s81lt", 
+        storageBucket: "attendance-ai-s81lt.firebasestorage.app", 
+        messagingSenderId: "935781953186", 
+        appId: "1:935781953186:web:6c8a7a93ffad180d33b1fb" 
     };
-
+    
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const COL = "inventarioItems";
-    const KEY = "inv_local_v2";
-
     let items = [];
 
-    const parseNum = (v) => { const n = parseFloat(v); return isNaN(n) || n < 0 ? 0 : n; };
-    const cleanStr = (s) => (s || "").toString().trim();
-    
-    // --- LÓGICA DE DATOS ---
-    const loadData = async () => {
-        try {
-            const snap = await getDocs(collection(db, COL));
-            let data = [];
-            snap.forEach(d => data.push({ ...d.data(), id: parseFloat(d.id) }));
-            if(data.length > 0) items = data;
-            else items = JSON.parse(localStorage.getItem(KEY) || "[]");
-        } catch (e) { items = JSON.parse(localStorage.getItem(KEY) || "[]"); }
-        updateFilters();
-        renderTable();
-    };
-
-    const saveData = async (item, isNew = false) => {
-        if (isNew) items.push(item);
-        else {
-            const idx = items.findIndex(i => i.id === item.id);
-            if(idx > -1) items[idx] = item;
-        }
-        localStorage.setItem(KEY, JSON.stringify(items));
-        updateFilters();
-        try {
-            if (isNew) await setDoc(doc(db, COL, String(item.id)), item);
-            else await updateDoc(doc(db, COL, String(item.id)), item);
-        } catch (e) {}
-    };
-
-    const deleteData = async (id) => {
-        items = items.filter(i => i.id !== id);
-        localStorage.setItem(KEY, JSON.stringify(items));
-        renderTable();
-        try { await deleteDoc(doc(db, COL, String(id))); } catch(e){}
-    };
-
-    // --- IMPORTADOR CSV ---
-    const importCSV = (file) => {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                const lines = evt.target.result.split('\n');
-                let count = 0;
-                lines.forEach((line, idx) => {
-                    if(idx === 0) return;
-                    const delim = line.includes(';') ? ';' : ',';
-                    const c = line.split(delim);
-                    
-                    if(c.length >= 6) {
-                        const desc = cleanStr(c[1]);
-                        if(desc.length > 0) {
-                            const cant = parseNum(c[2]); 
-                            saveData({
-                                id: Date.now() + Math.random(),
-                                descripcion: desc,
-                                ubicacion: cleanStr(c[5]),
-                                cantidadTotal: cant,
-                                cantidadBaja: 0,
-                                cantidadReal: cant,
-                                estado: cleanStr(c[3] || "Usado"),
-                                subvencion: cleanStr(c[4] || ""),
-                                categoria: cleanStr(c[6] || ""),
-                                darDeBaja: false
-                            }, true);
-                            count++;
-                        }
-                    }
-                });
-                resolve(count);
-            };
-            reader.readAsText(file);
+    onSnapshot(query(collection(db, COL), orderBy("timestamp", "desc")), (snap) => {
+        items = [];
+        snap.forEach(d => { 
+            const data = d.data();
+            if(data.descripcion) {
+                items.push({ 
+                    ...data, 
+                    id: d.id,
+                    estado: data.estado || "S/I",
+                    subvencion: data.subvencion || "S/I",
+                    categoria: data.categoria || "-",
+                    ubicacion: data.ubicacion || "S/U",
+                    cantidadTotal: data.cantidadTotal || 0,
+                    cantidadBaja: data.cantidadBaja || 0
+                }); 
+            }
         });
-    };
-
-    document.getElementById("fileInput").addEventListener("change", (e) => {
-        const f = e.target.files[0];
-        if(!f) return;
-        document.getElementById("importStatus").textContent = "Cargando...";
-        importCSV(f).then(count => {
-            alert(`Importados ${count} ítems.`);
-            renderTable();
-            document.getElementById("importStatus").textContent = "Listo";
-            e.target.value = '';
-        });
+        renderTable();
     });
-
-    const updateFilters = () => {
-        const fillSelect = (id, key) => {
-            const sel = document.getElementById(id);
-            const current = sel.value;
-            const vals = [...new Set(items.map(i => cleanStr(i[key])).filter(x => x))].sort();
-            const firstOpt = sel.options[0];
-            sel.innerHTML = ''; sel.appendChild(firstOpt);
-            vals.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v; opt.textContent = v;
-                sel.appendChild(opt);
-            });
-            if ([...sel.options].some(o => o.value === current)) sel.value = current;
-        };
-        fillSelect("qrFilterUbicacion", "ubicacion");
-        fillSelect("qrFilterProcedencia", "subvencion");
-    };
 
     const renderTable = () => {
         const tbody = document.getElementById("itemsTbody");
-        const fProc = document.getElementById("viewFilterProcedencia").value.toLowerCase();
-        const fEst = document.getElementById("viewFilterEstado").value.toLowerCase();
-        const filtered = items.filter(i => {
-            if(!i.descripcion || i.descripcion.trim() === "") return false;
-            const p = cleanStr(i.subvencion).toLowerCase();
-            const e = cleanStr(i.estado).toLowerCase();
-            return (fProc === 'all' || p.includes(fProc)) && (fEst === 'all' || e.includes(fEst));
-        });
+        let stockAcumulado = 0;
 
-        tbody.innerHTML = filtered.map(i => {
-            const real = (i.cantidadTotal||0) - (i.cantidadBaja||0);
+        tbody.innerHTML = items.map(i => {
+            const total = parseInt(i.cantidadTotal) || 0;
+            const baja = parseInt(i.cantidadBaja) || 0;
+            const real = total - baja;
+            stockAcumulado += real;
+
             return `
-            <tr data-id="${i.id}">
-                <td>${i.descripcion}</td>
-                <td>${i.ubicacion}</td>
-                <td>${i.estado}</td>
-                <td>${i.subvencion}</td>
-                <td>${i.categoria}</td>
-                <td style="text-align:center"><input type="number" class="qty-input total" value="${i.cantidadTotal}" min="0" style="width:50px"></td>
-                <td style="text-align:center"><input type="number" class="qty-input baja" value="${i.cantidadBaja}" min="0" style="width:50px"></td>
-                <td style="text-align:center; font-weight:bold; color:${real<1?'red':'green'}">${real}</td>
-                <td style="text-align:center"><button class="btn btn-danger btn-sm" onclick="window.delItem(${i.id})">X</button></td>
+            <tr data-id="${i.id}" class="hover:bg-gray-50 transition-colors">
+                <td class="p-3 font-bold text-gray-700">${i.descripcion}</td>
+                <td class="p-3 text-gray-500 uppercase text-[10px]">${i.ubicacion}</td>
+                <td class="p-3 text-[10px] font-bold uppercase">${i.estado}</td>
+                <td class="p-3 text-gray-500 text-[10px] uppercase">${i.subvencion}</td>
+                <td class="p-3 text-gray-500 text-[10px] uppercase">${i.categoria}</td>
+                <td class="p-3 text-center"><input type="number" class="qty-input total" value="${total}" min="0"></td>
+                <td class="p-3 text-center"><input type="number" class="qty-input baja" value="${baja}" min="0"></td>
+                <td class="p-3 text-center font-bold ${real < 1 ? 'text-red-500' : 'text-green-600'} bg-green-50/50">${real}</td>
+                <td class="p-3 text-center"><button onclick="window.delItem('${i.id}')" class="bg-red-500 text-white px-2 py-1 rounded font-bold text-xs hover:bg-red-700">X</button></td>
             </tr>`;
         }).join("");
 
-        const validItems = items.filter(i => i.descripcion && i.descripcion.trim() !== "");
-        const real = validItems.reduce((acc, i) => acc + ((i.cantidadTotal||0) - (i.cantidadBaja||0)), 0);
-        document.getElementById("totalesBox").textContent = `TOTAL ACTIVOS: ${real}`;
+        // Actualizar totales en el footer
+        document.getElementById("totalRegistros").textContent = items.length;
+        document.getElementById("totalStockReal").textContent = stockAcumulado;
     };
 
-    window.delItem = (id) => { if(confirm("¿Eliminar?")) deleteData(id); };
-    
-    document.getElementById("itemsTbody").addEventListener("change", (e) => {
+    // EDICIÓN DIRECTA EN TABLA
+    document.getElementById("itemsTbody").addEventListener("change", async (e) => {
         if(e.target.classList.contains("qty-input")) {
             const tr = e.target.closest("tr");
-            const item = items.find(i => i.id === parseFloat(tr.dataset.id));
-            if(!item) return;
-            const val = parseNum(e.target.value);
-            if(e.target.classList.contains("total")) item.cantidadTotal = val;
-            if(e.target.classList.contains("baja")) item.cantidadBaja = val;
-            if(item.cantidadBaja > item.cantidadTotal) item.cantidadBaja = item.cantidadTotal;
-            item.cantidadReal = item.cantidadTotal - item.cantidadBaja;
-            saveData(item);
-            renderTable();
+            const id = tr.dataset.id;
+            const val = parseInt(e.target.value) || 0;
+            let update = {};
+            if(e.target.classList.contains("total")) update.cantidadTotal = val;
+            if(e.target.classList.contains("baja")) update.cantidadBaja = val;
+            await updateDoc(doc(db, COL, id), update);
+            showToast("✅ Sincronizado");
         }
     });
 
-    document.getElementById("itemForm").addEventListener("submit", (e) => {
-        e.preventDefault();
-        const desc = document.getElementById("descripcion").value;
-        if(!desc.trim()) return alert("Falta descripción");
-        saveData({
-            id: Date.now(),
-            descripcion: desc,
-            ubicacion: document.getElementById("ubicacion").value,
-            cantidadTotal: parseNum(document.getElementById("cantidadForm").value),
-            cantidadBaja: 0,
-            cantidadReal: parseNum(document.getElementById("cantidadForm").value),
-            estado: document.getElementById("estado").value,
-            subvencion: document.getElementById("subvencion").value,
-            categoria: document.getElementById("categoria").value,
-            darDeBaja: document.getElementById("darDeBaja").checked
-        }, true);
-        renderTable();
-        e.target.reset();
-        alert("Guardado!");
-    });
-
-    document.getElementById("btnPurgeEmpty").addEventListener("click", async () => {
-        const garbage = items.filter(i => !i.descripcion || i.descripcion.trim() === "");
-        if(garbage.length === 0) return alert("Todo limpio.");
-        if(confirm(`Borrar ${garbage.length} registros vacíos?`)) {
-            for(const g of garbage) await deleteDoc(doc(db, COL, String(g.id)));
-            items = items.filter(i => i.descripcion && i.descripcion.trim() !== "");
-            localStorage.setItem(KEY, JSON.stringify(items));
-            renderTable();
-            alert("Limpieza completada.");
-        }
-    });
-
-    // --- GENERADOR QR (Versión Definitiva con UBIC + PROC + CANT) ---
-    document.getElementById("btnGenerateQR").addEventListener("click", () => {
-        const loc = document.getElementById("qrFilterUbicacion").value;
-        const est = document.getElementById("qrFilterEstado").value;
-        const pro = document.getElementById("qrFilterProcedencia").value;
-        const mode = document.querySelector('input[name="qrMode"]:checked').value; 
-
-        const itemsToPrint = items.filter(i => {
-            if(!i.descripcion || (i.cantidadTotal - i.cantidadBaja) <= 0) return false;
-            return (loc === 'all' || i.ubicacion === loc) && 
-                   (est === 'all' || i.estado === est) && 
-                   (pro === 'all' || i.subvencion === pro);
-        });
-
-        if (itemsToPrint.length === 0) return alert("Nada para imprimir con estos filtros.");
-        
-        let labelsHtml = "";
-        itemsToPrint.forEach(item => {
-            const stock = item.cantidadTotal - item.cantidadBaja;
-            const loops = (mode === 'individual') ? stock : 1;
-            
-            const shortDesc = item.descripcion.substring(0, 25) + (item.descripcion.length>25?"...":"");
-            const cleanUbic = item.ubicacion.substring(0, 20);
-            const cleanProc = item.subvencion ? item.subvencion.substring(0,15) : "S/I";
-            
-            // AQUI AGREGAMOS "PROC" AL CODIGO QR
-            const qrText = `ITEM: ${shortDesc}\nUBIC: ${cleanUbic}\nPROC: ${cleanProc}\nCANT: ${stock}`;
-
-            for(let i=0; i<loops; i++) {
-                const counter = (mode === 'individual') ? `(${i+1}/${stock})` : `(Total: ${stock})`;
-                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrText)}`;
-                
-                labelsHtml += `
-                <div class="label">
-                    <div class="qr-code"><img src="${qrUrl}"></div>
-                    <div class="meta">
-                        <div class="title">${escapeHtml(item.descripcion).substring(0,40)}</div>
-                        <div class="info">
-                            <b>UBIC: ${escapeHtml(item.ubicacion)}</b><br>
-                            PROC: ${cleanProc} | CANT: ${stock}
-                        </div>
-                        <div class="id">ID: ${item.id} ${counter}</div>
-                    </div>
-                </div>`;
+    // IMPORTACIÓN CSV AJUSTADA
+    document.getElementById("fileInput").addEventListener("change", (e) => {
+        const f = e.target.files[0]; if(!f) return;
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            const lines = evt.target.result.split('\n');
+            for(let i=1; i<lines.length; i++) {
+                const c = lines[i].split(';');
+                if(c.length >= 7 && c[1]) {
+                    const id = "INV-" + (Date.now() + i);
+                    await setDoc(doc(db, COL, id), {
+                        descripcion: c[1].trim().toUpperCase(),
+                        cantidadTotal: parseInt(c[2]) || 1,
+                        cantidadBaja: 0,
+                        estado: (c[3] || "USADO").trim().toUpperCase(),
+                        subvencion: (c[4] || "S/I").trim().toUpperCase(),
+                        ubicacion: (c[5] || "S/U").trim().toUpperCase(),
+                        categoria: (c[6] || "-").trim().toUpperCase(),
+                        timestamp: Date.now()
+                    });
+                }
             }
-        });
-
-        const w = window.open("", "_blank");
-        w.document.write(`<html><head><style>
-            body{margin:0} .sheet{display:grid;grid-template-columns:repeat(3,64mm);grid-auto-rows:50mm;gap:2mm;padding-top:5mm;justify-content:center}
-            .label{border:1px dashed #ccc;width:64mm;height:50mm;padding:3mm;display:flex;gap:5px;overflow:hidden;align-items:center}
-            .qr-code img{width:22mm;height:22mm} .meta{flex:1;overflow:hidden; display:flex; flex-direction:column; justify-content:center;}
-            .title{font-size:11px;font-weight:bold;margin-bottom:4px;max-height:26px;overflow:hidden;line-height:1.1}
-            .info{font-size:10px; color:#333; margin-bottom:3px; line-height:1.3} 
-            .id{font-size:8px;color:#666;font-family:monospace}
-            @media print{.label{border:none}}
-        </style><script>window.onload=()=>{setTimeout(()=>window.print(),2000)}<\/script></head><body><div class="sheet">${labelsHtml}</div></body></html>`);
-        w.document.close();
+            alert("✅ Importación completada");
+        };
+        reader.readAsText(f);
     });
 
-    const printList = (key) => {
-        let html = `<h1>Listado por ${key.toUpperCase()}</h1>`;
-        const groups = {};
-        items.forEach(i => { if((i.cantidadTotal-i.cantidadBaja)>0) { const k=i[key]||"Otros"; if(!groups[k]) groups[k]=[]; groups[k].push(i); }});
-        Object.keys(groups).sort().forEach(k => {
-            html += `<h3>${k}</h3><table border="1" style="width:100%;border-collapse:collapse;font-size:12px">
-            <tr><th>Item</th><th>Ubic</th><th>Cant</th></tr>
-            ${groups[k].map(x=>`<tr><td>${escapeHtml(x.descripcion)}</td><td>${escapeHtml(x.ubicacion)}</td><td>${x.cantidadReal}</td></tr>`).join('')}</table>`;
+    document.getElementById("itemForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = "INV-" + Date.now();
+        await setDoc(doc(db, COL, id), {
+            descripcion: document.getElementById("descripcion").value.toUpperCase(),
+            ubicacion: (document.getElementById("ubicacion").value || "S/U").toUpperCase(),
+            categoria: (document.getElementById("categoria").value || "-").toUpperCase(),
+            cantidadTotal: parseInt(document.getElementById("cantidadForm").value) || 1,
+            cantidadBaja: 0,
+            estado: document.getElementById("estado").value,
+            subvencion: (document.getElementById("subvencion").value || "S/I").toUpperCase(),
+            timestamp: Date.now()
         });
-        const w=window.open("","_blank"); w.document.write(html); w.document.close();
+        e.target.reset();
+        showToast("✅ Registrado");
+    });
+
+    window.delItem = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, COL, id)); };
+    document.getElementById("btnPurgeEmpty").onclick = async () => {
+        const q = await getDocs(collection(db, COL));
+        q.forEach(async (d) => { if(!d.data().descripcion) await deleteDoc(doc(db, COL, d.id)); });
     };
-
-    function escapeHtml(text) {
-        if (!text) return "";
-        return text.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    }
-    
-    document.getElementById("btnListByUnit").onclick = () => printList("ubicacion");
-    document.getElementById("btnListByState").onclick = () => printList("estado");
-    document.getElementById("btnListByCategory").onclick = () => printList("categoria");
-    document.getElementById("viewFilterProcedencia").onchange = renderTable;
-    document.getElementById("viewFilterEstado").onchange = renderTable;
-
-    loadData();
+    document.getElementById("clear-btn").onclick = () => document.getElementById("itemForm").reset();
+    function showToast(m) { const b = document.getElementById('message-box'); b.innerText = m; b.classList.remove('hidden'); setTimeout(() => b.classList.add('hidden'), 3000); }
   </script>
 </body>
 </html>
