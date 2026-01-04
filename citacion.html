@@ -10,68 +10,74 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .main-wrapper { max-width: 1200px; margin: 0 auto; padding: 2rem; }
         .card { background-color: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; }
         @media print {
-            @page { size: Letter portrait; margin: 0.5cm; }
             body > *:not(#printable-area) { display: none !important; }
             #printable-area { display: block !important; width: 100%; }
-            .citation-slip { border: 2px solid #000; padding: 25px; display: flex; height: 10cm; background: white; color: black; }
+            .citation-slip { border: 2px solid #000; padding: 25px; display: flex; height: 10cm; background: white; }
             .slip-left { width: 70%; border-right: 1px dashed #000; padding-right: 20px; }
-            .slip-right { width: 30%; padding-left: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
-            img { max-height: 70px !important; }
+            .slip-right { width: 30%; padding-left: 20px; text-align: center; }
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen p-4">
     <div id="message-box" class="fixed top-5 right-5 bg-purple-600 text-white px-6 py-3 rounded shadow-lg hidden z-50"></div>
 
-    <div class="main-wrapper">
-        <div class="flex items-center justify-between mb-8 border-b pb-4 bg-white p-4 rounded-xl shadow-sm">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <div class="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm">
             <div class="flex items-center gap-4">
-                <img src="logo.jpg" alt="Logo" class="h-16 w-auto object-contain" onerror="this.style.display='none'">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-800">Citación de Apoderados</h1>
-                    <p class="text-xs text-purple-600 font-bold uppercase">Escuela Agrícola Sagrados Corazones</p>
-                </div>
+                <img src="logo.jpg" alt="Logo" class="h-12" onerror="this.style.display='none'">
+                <h1 class="text-xl font-bold text-gray-800">Panel Administrativo de Citaciones</h1>
             </div>
             <div id="status-indicator" class="text-xs font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-200">⌛ Conectando...</div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="card border-t-4 border-purple-600">
-                <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Nueva Citación</h2>
-                <div class="space-y-4">
-                    <select id="course-select" class="w-full p-2 border rounded bg-gray-50 text-sm"></select>
-                    <select id="student-select" class="w-full p-2 border rounded bg-gray-50 text-sm" disabled><option>Seleccione Alumno...</option></select>
-                    <input type="email" id="parent-email" class="w-full p-2 border border-purple-200 rounded text-sm" placeholder="Email Apoderado (Invitación Calendar)">
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="date" id="citation-date" class="w-full p-2 border rounded text-sm">
-                        <input type="time" id="citation-time" class="w-full p-2 border rounded text-sm">
-                    </div>
-                    <select id="teacher-input" class="w-full p-2 border rounded text-sm">
-                        <option value="Profesor Jefe">Profesor Jefe</option>
-                        <option value="Docente PIE">Docente PIE</option>
-                        <option value="Inspectoría General">Inspectoría General</option>
-                        <option value="UTP">UTP</option>
-                    </select>
-                    <button id="add-btn" disabled class="w-full bg-gray-400 text-white font-bold py-3 rounded shadow cursor-not-allowed">ESPERANDO CONEXIÓN...</button>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="card border-t-4 border-purple-600 space-y-4">
+                <h2 class="font-bold text-gray-700">Nueva Citación</h2>
+                <select id="course-select" class="w-full p-2 border rounded text-sm"></select>
+                <select id="student-select" class="w-full p-2 border rounded text-sm" disabled><option>Seleccione Alumno...</option></select>
+                <input type="email" id="parent-email" class="w-full p-2 border border-purple-200 rounded text-sm" placeholder="Email Apoderado">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="date" id="citation-date" class="w-full p-2 border rounded text-sm">
+                    <input type="time" id="citation-time" class="w-full p-2 border rounded text-sm">
+                </div>
+                <select id="teacher-input" class="w-full p-2 border rounded text-sm">
+                    <option value="Profesor Jefe">Profesor Jefe</option>
+                    <option value="Docente PIE">Docente PIE</option>
+                    <option value="UTP">UTP</option>
+                </select>
+                
+                <div class="flex gap-2">
+                    <button id="add-btn" disabled class="flex-1 bg-gray-400 text-white font-bold py-3 rounded shadow cursor-not-allowed">REGISTRAR</button>
+                    <button id="clear-btn" class="px-4 bg-gray-200 text-gray-700 font-bold rounded hover:bg-gray-300">LIMPIAR</button>
                 </div>
             </div>
-            
+
+            <div class="card border-t-4 border-blue-500 space-y-4">
+                <h2 class="font-bold text-gray-700">Generar Reporte</h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="date" id="filter-date" class="p-2 border rounded text-xs">
+                    <select id="filter-course" class="p-2 border rounded text-xs"><option value="">Todos los Cursos</option></select>
+                </div>
+                <button id="report-btn" class="w-full bg-blue-600 text-white text-xs font-bold py-2 rounded">FILTRAR DATOS</button>
+                <div id="stats-area" class="grid grid-cols-2 gap-4 pt-4 text-center">
+                    <div class="bg-blue-50 p-2 rounded border border-blue-100">
+                        <p class="text-[10px] text-blue-600 uppercase font-bold">Total Citados</p>
+                        <p id="stat-total" class="text-2xl font-bold text-blue-800">0</p>
+                    </div>
+                    <div class="bg-green-50 p-2 rounded border border-green-100">
+                        <p class="text-[10px] text-green-600 uppercase font-bold">Asistencias</p>
+                        <p id="stat-present" class="text-2xl font-bold text-green-800">0</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="card border-t-4 border-gray-600 flex flex-col h-[500px]">
-                <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-2">Historial de Citaciones</h2>
-                <div class="flex-1 overflow-y-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-gray-50 sticky top-0">
-                            <tr>
-                                <th class="p-2 text-[10px] uppercase text-gray-500">Fecha</th>
-                                <th class="p-2 text-[10px] uppercase text-gray-500">Alumno/Curso</th>
-                                <th class="p-2 text-[10px] uppercase text-gray-500">Solicita</th>
-                                <th class="p-2 text-[10px] uppercase text-gray-500 text-center">Imprimir</th>
-                            </tr>
-                        </thead>
-                        <tbody id="report-body" class="divide-y divide-gray-100"></tbody>
+                <h2 class="font-bold text-gray-700 mb-2">Historial y Asistencia</h2>
+                <div class="overflow-y-auto">
+                    <table class="w-full text-sm">
+                        <tbody id="report-body" class="divide-y"></tbody>
                     </table>
                 </div>
             </div>
@@ -81,7 +87,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, updateDoc, doc, where, getDocs } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyBnSMVCH0yyYUWk5z54kTIPTrWkyoeWs-I", authDomain: "suspenciones-40d0c.firebaseapp.com", projectId: "suspenciones-40d0c", storageBucket: "suspenciones-40d0c.firebasestorage.app", messagingSenderId: "853418739042", appId: "1:853418739042:web:d051befb99cd2acdd4583b" };
         const app = initializeApp(firebaseConfig);
@@ -91,111 +97,95 @@
         const API_KEY = 'AIzaSyBE2aVDXS6lGH_GqlhBe9a3LbCk2zG7yRU';
 
         let tokenClient, gapiInited = false, gisInited = false;
-        let lastCitaciones = []; // Almacén para reimprimir
+        let allCitaciones = [];
 
-        function checkInit() {
-            if (gapiInited && gisInited) {
-                const btn = document.getElementById('add-btn');
-                btn.disabled = false; btn.classList.replace('bg-gray-400', 'bg-purple-600');
-                btn.classList.remove('cursor-not-allowed'); btn.innerText = "REGISTRAR E IMPRIMIR";
-                const status = document.getElementById('status-indicator');
-                status.innerText = "🟢 Google API Lista"; status.className = "text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-200";
-            }
-        }
-
+        // Inicialización
         async function initGapi() {
             await gapi.client.init({ apiKey: API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] });
-            gapiInited = true; checkInit();
+            gapiInited = true; check();
         }
-
         window.onload = () => {
             gapi.load('client', initGapi);
             tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: 'https://www.googleapis.com/auth/calendar.events', callback: '' });
-            gisInited = true; checkInit();
+            gisInited = true; check();
         };
+        function check() { if(gapiInited && gisInited) { const b = document.getElementById('add-btn'); b.disabled = false; b.classList.replace('bg-gray-400', 'bg-purple-600'); b.classList.remove('cursor-not-allowed'); document.getElementById('status-indicator').innerText = "🟢 Conectado"; } }
 
-        const schoolData = { 
-            'Primero Medio A': ["ÁLVAREZ FAÚNDEZ MATEO VICENTE", "CASTILLO ARAVENA MAITE PASCAL"], 
-            'Segundo Medio A': ["ARAVENA ZÚÑIGA NOEMÍ JESÚS"] 
-        };
-        const cS = document.getElementById('course-select'), sS = document.getElementById('student-select');
-        cS.innerHTML = '<option value="">Curso...</option>';
-        Object.keys(schoolData).forEach(c => cS.innerHTML += `<option value="${c}">${c}</option>`);
+        // Nómina
+        const schoolData = { 'Primero Medio A': ["ÁLVAREZ FAÚNDEZ MATEO VICENTE", "CASTILLO ARAVENA MAITE PASCAL"], 'Primero Medio B': ["QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO"] };
+        const cS = document.getElementById('course-select'), sS = document.getElementById('student-select'), fC = document.getElementById('filter-course');
+        Object.keys(schoolData).forEach(c => { cS.innerHTML += `<option value="${c}">${c}</option>`; fC.innerHTML += `<option value="${c}">${c}</option>`; });
         cS.onchange = () => { sS.innerHTML = '<option>Alumno...</option>'; if(schoolData[cS.value]) { schoolData[cS.value].forEach(s => sS.innerHTML += `<option value="${s}">${s}</option>`); sS.disabled = false; } };
 
-        // REGISTRAR NUEVA CITACIÓN
+        // Limpiar Pantalla
+        document.getElementById('clear-btn').onclick = () => {
+            document.querySelectorAll('input, select').forEach(el => { if(el.id !== 'course-select' && el.id !== 'student-select') el.value = ''; });
+            showToast("Pantalla limpia");
+        };
+
+        // Registrar
         document.getElementById('add-btn').onclick = async () => {
-            const d = { course: cS.value, student: sS.value, email: document.getElementById('parent-email').value, date: document.getElementById('citation-date').value, time: document.getElementById('citation-time').value, teacher: document.getElementById('teacher-input').value, ts: Date.now() };
+            const d = { course: cS.value, student: sS.value, date: document.getElementById('citation-date').value, time: document.getElementById('citation-time').value, teacher: document.getElementById('teacher-input').value, assisted: false, ts: Date.now() };
             if(!d.student || !d.date) return alert("Faltan datos");
 
             tokenClient.callback = async (resp) => {
                 if (resp.error) return;
                 try {
-                    await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': `Citación: ${d.student}`, 'description': `Curso: ${d.course}\nSolicita: ${d.teacher}`, 'start': { 'dateTime': `${d.date}T${d.time}:00`, 'timeZone': 'America/Santiago' }, 'end': { 'dateTime': `${d.date}T${d.time}:30`, 'timeZone': 'America/Santiago' }, 'attendees': d.email ? [{ 'email': d.email }] : [] }, 'sendUpdates': 'all' });
+                    await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': `Cita: ${d.student}`, 'start': { 'dateTime': `${d.date}T${d.time}:00`, 'timeZone': 'America/Santiago' }, 'end': { 'dateTime': `${d.date}T${d.time}:30`, 'timeZone': 'America/Santiago' } } });
                     await addDoc(collection(db, "citaciones"), d);
-                    showToast("✅ Registrado con éxito");
-                    reprintFromData(d);
-                } catch (e) { console.error("Error:", e); }
+                    showToast("✅ Registrado");
+                } catch (e) { console.error(e); }
             };
             tokenClient.requestAccessToken({prompt: 'consent'});
         };
 
-        // FUNCIÓN REIMPRIMIR
-        window.reprintFromHistory = (index) => {
-            const d = lastCitaciones[index];
-            if(d) reprintFromData(d);
+        // Reporte por Fecha/Curso
+        document.getElementById('report-btn').onclick = async () => {
+            const fDate = document.getElementById('filter-date').value;
+            const fCourse = fC.value;
+            let q = collection(db, "citaciones");
+            
+            const querySnapshot = await getDocs(q);
+            let total = 0, asistieron = 0;
+            
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const matchDate = fDate ? data.date === fDate : true;
+                const matchCourse = fCourse ? data.course === fCourse : true;
+                if(matchDate && matchCourse) {
+                    total++;
+                    if(data.assisted) asistieron++;
+                }
+            });
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-present').innerText = asistieron;
         };
 
-        function reprintFromData(d) {
-            document.getElementById('printable-area').innerHTML = `
-                <div class="citation-slip">
-                    <div class="slip-left">
-                        <div style="display:flex; align-items:center; gap:15px; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:15px;">
-                            <img src="logo.jpg" style="height:70px;">
-                            <div>
-                                <h2 style="margin:0; font-size:18px; font-weight:bold;">CITACIÓN DE APODERADO</h2>
-                                <p style="margin:0; font-size:11px;">Escuela Agrícola Sagrados Corazones</p>
-                            </div>
-                        </div>
-                        <p style="font-size:15px; margin-bottom:20px;">Por la presente se cita al apoderado del alumno(a):<br><b>${d.student}</b> del curso <b>${d.course}</b>.</p>
-                        <div style="font-size:13px; line-height:2;">
-                            <p>📅 <b>FECHA:</b> ${d.date} &nbsp;&nbsp; ⏰ <b>HORA:</b> ${d.time}</p>
-                            <p>👤 <b>SOLICITA:</b> ${d.teacher}</p>
-                        </div>
-                    </div>
-                    <div class="slip-right">
-                        <p style="font-size:10px; font-weight:bold;">TOMA DE CONOCIMIENTO</p>
-                        <div style="flex-grow:1; border-bottom:1px solid #000; margin: 80px 0 10px 0;"></div>
-                        <p style="font-size:9px;">Firma del Apoderado</p>
-                    </div>
-                </div>`;
-            setTimeout(() => window.print(), 500);
-        }
-
-        // CARGA DE HISTORIAL
+        // Historial y Control de Asistencia
         onSnapshot(query(collection(db, "citaciones"), orderBy('ts', 'desc'), limit(15)), (s) => {
             const b = document.getElementById('report-body'); b.innerHTML = '';
-            lastCitaciones = [];
-            let count = 0;
-            s.forEach(doc => { 
-                const i = doc.data(); 
-                lastCitaciones.push(i);
+            s.forEach(snap => {
+                const i = snap.data();
+                const id = snap.id;
                 b.innerHTML += `
-                <tr class="hover:bg-purple-50 transition">
-                    <td class="p-2 text-[11px] font-bold text-gray-600">${i.date}</td>
-                    <td class="p-2 text-[11px]">${i.student}<br><span class="text-[9px] text-purple-600 font-bold">${i.course}</span></td>
-                    <td class="p-2 text-[10px] text-gray-500">${i.teacher}</td>
-                    <td class="p-2 text-center">
-                        <button onclick="reprintFromHistory(${count})" class="text-purple-600 hover:text-purple-800 p-1">
-                            🖨️
+                <tr class="hover:bg-gray-50 p-2">
+                    <td class="py-2 text-[10px] font-bold">${i.date}</td>
+                    <td class="py-2 text-[11px]">${i.student}<br><span class="text-purple-600 text-[9px]">${i.course}</span></td>
+                    <td class="py-2">
+                        <button onclick="toggleAsist('${id}', ${i.assisted})" class="${i.assisted ? 'bg-green-500' : 'bg-gray-300'} text-white text-[9px] px-2 py-1 rounded">
+                            ${i.assisted ? 'LLEGÓ' : 'MARCAR'}
                         </button>
                     </td>
                 </tr>`;
-                count++;
             });
         });
 
-        function showToast(m) { const b = document.getElementById('message-box'); b.innerText = m; b.classList.remove('hidden'); setTimeout(() => b.classList.add('hidden'), 4000); }
+        window.toggleAsist = async (id, current) => {
+            await updateDoc(doc(db, "citaciones", id), { assisted: !current });
+            showToast("Asistencia actualizada");
+        };
+
+        function showToast(m) { const b = document.getElementById('message-box'); b.innerText = m; b.classList.remove('hidden'); setTimeout(() => b.classList.add('hidden'), 3000); }
     </script>
 </body>
 </html>
