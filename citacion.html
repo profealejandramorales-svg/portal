@@ -16,9 +16,10 @@
             @page { size: Letter portrait; margin: 0.5cm; }
             body > *:not(#printable-area) { display: none !important; }
             #printable-area { display: block !important; width: 100%; }
-            .citation-slip { border: 2px solid #000; padding: 20px; display: flex; height: 10cm; background: white; color: black; }
-            .slip-left { width: 70%; border-right: 1px dashed #000; padding-right: 15px; }
-            .slip-right { width: 30%; padding-left: 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
+            .citation-slip { border: 2px solid #000; padding: 25px; display: flex; height: 10cm; background: white; color: black; }
+            .slip-left { width: 70%; border-right: 1px dashed #000; padding-right: 20px; }
+            .slip-right { width: 30%; padding-left: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
+            img { max-height: 70px !important; }
         }
     </style>
 </head>
@@ -31,10 +32,10 @@
                 <img src="logo.jpg" alt="Logo" class="h-16 w-auto object-contain" onerror="this.style.display='none'">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-800">Citación de Apoderados</h1>
-                    <p class="text-xs text-gray-500 font-medium uppercase text-purple-600 font-bold">Escuela Agrícola Sagrados Corazones</p>
+                    <p class="text-xs text-purple-600 font-bold uppercase">Escuela Agrícola Sagrados Corazones</p>
                 </div>
             </div>
-            <div id="status-indicator" class="text-xs font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-200">⌛ Conectando con Google...</div>
+            <div id="status-indicator" class="text-xs font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-200">⌛ Conectando...</div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -42,45 +43,32 @@
                 <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Nueva Citación</h2>
                 <div class="space-y-4">
                     <select id="course-select" class="w-full p-2 border rounded bg-gray-50 text-sm"></select>
-                    <select id="student-select" class="w-full p-2 border rounded bg-gray-50 text-sm" disabled><option>Seleccione Curso...</option></select>
+                    <select id="student-select" class="w-full p-2 border rounded bg-gray-50 text-sm" disabled><option>Seleccione Alumno...</option></select>
                     <input type="email" id="parent-email" class="w-full p-2 border border-purple-200 rounded text-sm" placeholder="Email Apoderado (Invitación Calendar)">
                     <div class="grid grid-cols-2 gap-3">
                         <input type="date" id="citation-date" class="w-full p-2 border rounded text-sm">
                         <input type="time" id="citation-time" class="w-full p-2 border rounded text-sm">
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <select id="reason-select" class="w-full p-2 border rounded text-sm">
-                            <option value="Rendimiento Académico">Rendimiento Académico</option>
-                            <option value="Conducta / Disciplina">Conducta / Disciplina</option>
-                            <option value="Convivencia Escolar">Convivencia Escolar</option>
-                            <option value="Entrevista Regular">Entrevista Regular</option>
-                        </select>
-                        <select id="mode-select" class="w-full p-2 border rounded text-sm">
-                            <option value="Presencial">Presencial</option>
-                            <option value="Telefónica">Telefónica</option>
-                            <option value="Videollamada">Videollamada</option>
-                        </select>
                     </div>
                     <select id="teacher-input" class="w-full p-2 border rounded text-sm">
                         <option value="Profesor Jefe">Profesor Jefe</option>
                         <option value="Docente PIE">Docente PIE</option>
                         <option value="Inspectoría General">Inspectoría General</option>
                         <option value="UTP">UTP</option>
-                        <option value="Psicóloga">Psicóloga</option>
                     </select>
                     <button id="add-btn" disabled class="w-full bg-gray-400 text-white font-bold py-3 rounded shadow cursor-not-allowed">ESPERANDO CONEXIÓN...</button>
                 </div>
             </div>
             
-            <div class="card border-t-4 border-gray-600 flex flex-col h-[520px]">
-                <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-2">Historial Reciente</h2>
+            <div class="card border-t-4 border-gray-600 flex flex-col h-[500px]">
+                <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-2">Historial de Citaciones</h2>
                 <div class="flex-1 overflow-y-auto">
                     <table class="w-full text-left text-sm">
                         <thead class="bg-gray-50 sticky top-0">
                             <tr>
                                 <th class="p-2 text-[10px] uppercase text-gray-500">Fecha</th>
                                 <th class="p-2 text-[10px] uppercase text-gray-500">Alumno/Curso</th>
-                                <th class="p-2 text-[10px] uppercase text-gray-500 text-right">Solicita</th>
+                                <th class="p-2 text-[10px] uppercase text-gray-500">Solicita</th>
+                                <th class="p-2 text-[10px] uppercase text-gray-500 text-center">Imprimir</th>
                             </tr>
                         </thead>
                         <tbody id="report-body" class="divide-y divide-gray-100"></tbody>
@@ -103,6 +91,7 @@
         const API_KEY = 'AIzaSyBE2aVDXS6lGH_GqlhBe9a3LbCk2zG7yRU';
 
         let tokenClient, gapiInited = false, gisInited = false;
+        let lastCitaciones = []; // Almacén para reimprimir
 
         function checkInit() {
             if (gapiInited && gisInited) {
@@ -115,10 +104,8 @@
         }
 
         async function initGapi() {
-            try {
-                await gapi.client.init({ apiKey: API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] });
-                gapiInited = true; checkInit();
-            } catch (e) { console.error("Error GAPI:", e); }
+            await gapi.client.init({ apiKey: API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] });
+            gapiInited = true; checkInit();
         }
 
         window.onload = () => {
@@ -127,63 +114,54 @@
             gisInited = true; checkInit();
         };
 
-        const schoolData = {
-            'Primero Medio A': ["ÁLVAREZ FAÚNDEZ MATEO VICENTE", "CASTILLO ARAVENA MAITE PASCAL", "COLLADO PUENTES SANTINO ALEXANDER", "CONCHA TORREALBA JOAQUÍN IGNACIO", "DÍAZ MALUENDA ESTEFANÍA ANTONIA", "DONAIRE ROJAS MAITE EMILIA ESTER", "ESPINOZA CACHAÑA LISBET ALEXANDRA", "FERRADA ALBORNOZ AGUSTÍN ALEXIS", "FUENTEMAVIDA BARROS OSCAR ANTONIO", "JAQUE PACHECO DAMIÁN IGNACIO", "JARAMILLO VILLAR MATT HOST", "LÓPEZ ACUÑA MARCO EMILIO", "LÓPEZ VILLAR FRANCO IGNACIO", "MESA DÍAZ GONZALO IGNACIO", "MEZA CARRASCO CRISTIAN ALFONSO", "MORALES GARRIDO NICOLÁS ANTONIO", "ORTEGA DA SILVA EMILIA CATALINA SOPHIA", "PEREIRA TAPIA KEVIN RUBÉN", "RAMÍREZ SEPÚLVEDA LUIS JUSTIN JESÚS", "RAMÍREZ VALDÉS MARTINA POLETTE", "RECABAL YÁÑEZ TOMÁS IGNACIO", "RODRÍGUEZ SEPÚLVEDA SIMONEY ISAMAR", "ROJAS ÓRDENES TRACY MAIDEN", "SÁNCHEZ MUNIZAGA ALONDRA ANAÍS", "SOLIZ OLGUIN BRAYAN", "VALENZUELA MUÑOZ MAGDALENA BELÉN"],
-            'Primero Medio B': ["modo prueba"],
-            'Segundo Medio A': ["ALBURQUENQUE DEL GRECCO EMILYA ANTONIA", "ANABALÓN BELTRÁN BENJAMÍN NICOLÁS", "ARAVENA ZÚÑIGA NOEMÍ JESÚS", "ARAYA DOMÍNGUEZ ALEX FABIÁN", "ASTUDILLO CAMPOS CRISTÓBAL ANTONIO", "BAEZ DONOSO LUKAS ALFONSO", "CARO BUSTOS KRISCHNA ESTEFANIA", "CUMINAO VIDAL CATALINA ANDREA", "DÍAZ MALUENDA MIGUEL ALBERTO", "IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA", "LAGOS LASTRA ALEXANDRA DANAE", "LÓPEZ NOVOA EYDAN DAMIÁN", "MALDONADO FLORES ANTONELLA BELÉN", "MONTECINO DÍAZ VALESKA BELÉN", "MUÑOZ CONTRERAS LUIS GABRIEL", "OSES CAMPOS VALENTINA ABIGAIL", "PALMA ORELLANA ANTONELLA FRANCISCA", "PÉREZ QUEVEDO CONSTANZA TRINIDAD", "RIQUELME SANTOS BENJAMÍN ALONSO", "ROJAS LEIVA EDUARDO JAVIER", "SALAZAR SALAS PEDRO JOSÉ", "SANTANDER LÓPEZ MARÍA JOSÉ", "VÁSQUEZ AGUILERA SCARLET NICOLE", "VERA BRAVO FLORENCIA ANTONIA", "YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN"],
-            'Tercero Medio A': ["AHUMADA ROJAS TRINIDAD BELÉN", "CORNEJO CASTILLO OSCAR GABRIEL", "ESPINOZA PEÑALILLO BRAYAN JESÚS", "FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO", "JARAMILLO VILLAR EMILIO SCOTT", "LÓPEZ VILLAR MARTÍN ALONSO", "MEZA COLIMÁN ANGEL BLAS", "MIRANDA MUÑOZ ALEXANDRA JAVIERA", "MORAGA PACHECO RENATO IGNACIO", "MORALES REIMÁN ALFONSO TOMÁS", "ORELLANA GARRIDO MATÍAS LEANDRO", "PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO", "PINTO TOBAR JORDÁN AMARO", "RECABAL YÁÑEZ KEVIN ANDRÉS", "SANDOVAL CERPA VICENTE ESTEBAN", "SOTO NARANJO CHRISTOPHER", "VEKARIC VERDEJO MARTÍN", "VIELMA ZABALAGA JOAN MANUEL"],
-            'Tercero Medio C': ["BRAVO MENARES ALEX JOHAN", "CARRASCO LEIVA BENJAMÍN IGNACIO", "ENCINA PIZARRO DIEGO BENJAMÍN", "ESPINOSA TORRES FERNANDA ELENA", "GONZÁLEZ SALAZAR EMILIA CATALINA", "MEDEL OJEDA LEÓN IGNACIO", "OLIVARES VALENZUELA ALONSO IGNACIO", "PUNOY MEDEL MILLARAY ANGÉLICA", "QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO", "RIQUELME CASTILLO MATÍAS EDUARDO", "RIQUELME COLOMA DALIA CONSTANZA", "RIVERA ABARZA CONSTANZA VICTORIA", "SAAVEDRA BRAVO FLORENCIA ALEJANDRA", "SALGADO ROJAS VICENTE MOISÉS", "SANTIS CASSEUS TEIVA SCARLETT", "SOBARZO YÉVENES KATHERINNE ALEXIA", "TOLEDO ALBORNOZ ANTONELLA INES", "VENEGAS ARRIAGADA ANTONIA EDITH"],
-            'Cuarto Medio A': ["ALCÁNTAR GARCÍA MARTINA ALEJANDRA", "BAHAMONDE MUÑOZ ARIEL LEON", "CAMPOS MUÑOZ CRISTOPHER JESÚS", "CANCINO ORÓSTICA VICENTE GASPAR", "CARO URRUTIA CONSUELO ANTONIA", "CARRASCO GONZÁLEZ CAMILA ANDREA", "COFRÉ CASTILLO ANTONIO ANDRÉS", "GALDAMES VERGARA FELIPE ESTEBAN", "GARCÍA GONZÁLEZ SANTIAGO HUMBERTO", "GONZÁLEZ AMIGO FRANCISCA IGNACIA", "GONZÁLEZ SALAZAR JOAQUÍN ALONSO", "GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN", "HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO", "LOBOS CÁCERES ANTONIA PAZ", "MARTÍNEZ LIZANA AARON ALEJANDRO", "MEZA CARRASCO BENJAMÍN INTI", "MIÑO GONZALEZ CATALINA ANDREA", "PÉREZ CORÓN MANUEL IGNACIO", "SAMANIEGO CORTEZ JAKSON FERGIE", "SEPÚLVEDA SALAZAR SOFÍA ANTONIA", "TAPIA ACUÑA GABRIEL ANTONIO", "TORREALBA MOYA FLORVELIS", "VEGA VIVANCO CRISTÓBAL ANTONIO", "VERA NAVARRETE DANIELA ELIZABETH", "VILLALOBOS ARAVENA KARINA ANGELINA", "VILLALOBOS VILLALOBOS SAMIR LUCIAN"],
-            'Cuarto Medio C': ["ARELLANO ACUÑA MARTÍN ANTONIO", "AROS ÁVILA DAYANA IGNACIA", "CABRERA COLOMBINO MARÍA GRACIA", "COLLAO MEDINA ANAÍS VALENTINA", "DE LA HOZ VALENZUELA FRANCO SEBASTIÁN", "FUENTES CARRASCO YARIXA ALEJANDRA", "GÓMEZ CANCINO DANIELA ALEJANDRA", "GUTIÉRREZ CARRIÓN MILLARAY CAROLINA", "HONORATO TAPIA GLORIA JAVIERA", "LARA RIVERA BENJAMÍN ESTEBAN", "PALACIOS SOTO JOSÉ TOMÁS", "PEZO SANTANDER JOSÉ CRISTÓBAL", "ROCHA ROJAS JOSÉ PABLO WILLIAMS", "ROJAS YÉVENES FABIANA ISIDORA", "SÁNCHEZ PAREJA ANDY ANTONIO", "SANTANDER LÓPEZ SIMÓN ESTEBAN", "TRONCOSO LIZAMA SIOMARA IGNACIA", "WARNKEN ROJAS LUCIANA BERNABELA"]
+        const schoolData = { 
+            'Primero Medio A': ["ÁLVAREZ FAÚNDEZ MATEO VICENTE", "CASTILLO ARAVENA MAITE PASCAL"], 
+            'Segundo Medio A': ["ARAVENA ZÚÑIGA NOEMÍ JESÚS"] 
         };
-
         const cS = document.getElementById('course-select'), sS = document.getElementById('student-select');
-        cS.innerHTML = '<option value="">Seleccione Curso...</option>';
+        cS.innerHTML = '<option value="">Curso...</option>';
         Object.keys(schoolData).forEach(c => cS.innerHTML += `<option value="${c}">${c}</option>`);
-        cS.onchange = () => { sS.innerHTML = '<option>Seleccione Alumno...</option>'; if(schoolData[cS.value]) { schoolData[cS.value].forEach(s => sS.innerHTML += `<option value="${s}">${s}</option>`); sS.disabled = false; } };
+        cS.onchange = () => { sS.innerHTML = '<option>Alumno...</option>'; if(schoolData[cS.value]) { schoolData[cS.value].forEach(s => sS.innerHTML += `<option value="${s}">${s}</option>`); sS.disabled = false; } };
 
+        // REGISTRAR NUEVA CITACIÓN
         document.getElementById('add-btn').onclick = async () => {
-            const d = { course: cS.value, student: sS.value, email: document.getElementById('parent-email').value, date: document.getElementById('citation-date').value, time: document.getElementById('citation-time').value, teacher: document.getElementById('teacher-input').value, reason: document.getElementById('reason-select').value, mode: document.getElementById('mode-select').value, ts: Date.now() };
-            if(!d.student || !d.date || !d.time) return alert("Faltan datos requeridos (Alumno, Fecha u Hora)");
+            const d = { course: cS.value, student: sS.value, email: document.getElementById('parent-email').value, date: document.getElementById('citation-date').value, time: document.getElementById('citation-time').value, teacher: document.getElementById('teacher-input').value, ts: Date.now() };
+            if(!d.student || !d.date) return alert("Faltan datos");
 
             tokenClient.callback = async (resp) => {
                 if (resp.error) return;
                 try {
-                    await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': `Citación: ${d.student} (${d.course})`, 'description': `Motivo: ${d.reason}\nSolicita: ${d.teacher}\nModalidad: ${d.mode}`, 'start': { 'dateTime': `${d.date}T${d.time}:00`, 'timeZone': 'America/Santiago' }, 'end': { 'dateTime': `${d.date}T${d.time}:30`, 'timeZone': 'America/Santiago' }, 'attendees': d.email ? [{ 'email': d.email }] : [] }, 'sendUpdates': 'all' });
+                    await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': `Citación: ${d.student}`, 'description': `Curso: ${d.course}\nSolicita: ${d.teacher}`, 'start': { 'dateTime': `${d.date}T${d.time}:00`, 'timeZone': 'America/Santiago' }, 'end': { 'dateTime': `${d.date}T${d.time}:30`, 'timeZone': 'America/Santiago' }, 'attendees': d.email ? [{ 'email': d.email }] : [] }, 'sendUpdates': 'all' });
                     await addDoc(collection(db, "citaciones"), d);
                     showToast("✅ Registrado con éxito");
-                    updatePrintArea(d);
-                    setTimeout(() => window.print(), 800);
-                } catch (e) { console.error("Error al guardar:", e); }
+                    reprintFromData(d);
+                } catch (e) { console.error("Error:", e); }
             };
-            
-            const token = gapi.client.getToken();
-            if (token && (token.expires_at > Date.now() / 1000)) {
-                tokenClient.callback({ access_token: token.access_token });
-            } else {
-                tokenClient.requestAccessToken({prompt: 'consent'});
-            }
+            tokenClient.requestAccessToken({prompt: 'consent'});
         };
 
-        function updatePrintArea(d) {
+        // FUNCIÓN REIMPRIMIR
+        window.reprintFromHistory = (index) => {
+            const d = lastCitaciones[index];
+            if(d) reprintFromData(d);
+        };
+
+        function reprintFromData(d) {
             document.getElementById('printable-area').innerHTML = `
                 <div class="citation-slip">
                     <div class="slip-left">
                         <div style="display:flex; align-items:center; gap:15px; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:15px;">
                             <img src="logo.jpg" style="height:70px;">
                             <div>
-                                <h2 style="margin:0; font-size:18px; font-weight:bold;">COMPROBANTE DE CITACIÓN</h2>
+                                <h2 style="margin:0; font-size:18px; font-weight:bold;">CITACIÓN DE APODERADO</h2>
                                 <p style="margin:0; font-size:11px;">Escuela Agrícola Sagrados Corazones</p>
                             </div>
                         </div>
-                        <p style="font-size:14px; margin-bottom:15px;">Se cita al apoderado del alumno(a):<br><b>${d.student}</b> del curso <b>${d.course}</b>.</p>
-                        <div style="font-size:12px; line-height:1.8;">
+                        <p style="font-size:15px; margin-bottom:20px;">Por la presente se cita al apoderado del alumno(a):<br><b>${d.student}</b> del curso <b>${d.course}</b>.</p>
+                        <div style="font-size:13px; line-height:2;">
                             <p>📅 <b>FECHA:</b> ${d.date} &nbsp;&nbsp; ⏰ <b>HORA:</b> ${d.time}</p>
-                            <p>📍 <b>MODALIDAD:</b> ${d.mode}</p>
-                            <p>📝 <b>MOTIVO:</b> ${d.reason}</p>
                             <p>👤 <b>SOLICITA:</b> ${d.teacher}</p>
                         </div>
-                        <p style="font-size:10px; margin-top:30px; border-top:1px solid #eee; padding-top:5px;"><i>Nota: Se ruega puntualidad para el buen desarrollo de la entrevista.</i></p>
                     </div>
                     <div class="slip-right">
                         <p style="font-size:10px; font-weight:bold;">TOMA DE CONOCIMIENTO</p>
@@ -191,11 +169,30 @@
                         <p style="font-size:9px;">Firma del Apoderado</p>
                     </div>
                 </div>`;
+            setTimeout(() => window.print(), 500);
         }
 
+        // CARGA DE HISTORIAL
         onSnapshot(query(collection(db, "citaciones"), orderBy('ts', 'desc'), limit(15)), (s) => {
             const b = document.getElementById('report-body'); b.innerHTML = '';
-            s.forEach(doc => { const i = doc.data(); b.innerHTML += `<tr class="hover:bg-purple-50"><td class="p-2 text-[11px] font-bold text-gray-600">${i.date}</td><td class="p-2 text-[11px]">${i.student}<br><span class="text-[9px] text-purple-600 font-bold">${i.course}</span></td><td class="p-2 text-[10px] text-right text-gray-500">${i.teacher}</td></tr>`; });
+            lastCitaciones = [];
+            let count = 0;
+            s.forEach(doc => { 
+                const i = doc.data(); 
+                lastCitaciones.push(i);
+                b.innerHTML += `
+                <tr class="hover:bg-purple-50 transition">
+                    <td class="p-2 text-[11px] font-bold text-gray-600">${i.date}</td>
+                    <td class="p-2 text-[11px]">${i.student}<br><span class="text-[9px] text-purple-600 font-bold">${i.course}</span></td>
+                    <td class="p-2 text-[10px] text-gray-500">${i.teacher}</td>
+                    <td class="p-2 text-center">
+                        <button onclick="reprintFromHistory(${count})" class="text-purple-600 hover:text-purple-800 p-1">
+                            🖨️
+                        </button>
+                    </td>
+                </tr>`;
+                count++;
+            });
         });
 
         function showToast(m) { const b = document.getElementById('message-box'); b.innerText = m; b.classList.remove('hidden'); setTimeout(() => b.classList.add('hidden'), 4000); }
