@@ -13,15 +13,31 @@
         .card { background-color: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; }
         
         @media print {
-            @page { size: Letter portrait; margin: 0.5cm; }
+            @page { size: Letter landscape; margin: 0; }
             body > *:not(#printable-area) { display: none !important; }
-            #printable-area { display: block !important; width: 100%; position: absolute; top:0; left:0; }
-            .citation-slip { border: 2px solid #000; padding: 25px; display: flex; height: 10cm; background: white; margin-bottom: 20px; color: black; }
-            .slip-left { width: 70%; border-right: 1px dashed #000; padding-right: 20px; }
-            .slip-right { width: 30%; padding-left: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
-            .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; color: black; }
-            .print-table th, .print-table td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 12px; }
-            .print-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+            #printable-area { display: block !important; padding: 40px; }
+            
+            .citation-card {
+                width: 18cm;
+                height: 10cm;
+                border: 3px solid #4c1d95;
+                border-radius: 15px;
+                padding: 30px;
+                display: flex;
+                background: white;
+                color: black;
+                box-shadow: 10px 10px 0px #f3e8ff;
+                position: relative;
+            }
+            .card-body { width: 70%; border-right: 2px dashed #ccc; padding-right: 25px; }
+            .card-side { width: 30%; padding-left: 25px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+            
+            .header-title { color: #4c1d95; font-size: 24px; font-weight: 800; text-transform: uppercase; margin: 0; }
+            .school-name { font-size: 14px; color: #6b21a8; margin-bottom: 20px; font-weight: 600; }
+            .data-label { font-weight: 700; color: #374151; font-size: 12px; text-transform: uppercase; }
+            .data-value { font-size: 16px; margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
+            .signature-line { border-top: 2px solid #000; margin-top: 80px; padding-top: 10px; font-size: 11px; font-weight: bold; }
+            .print-footer-credit { position: absolute; bottom: 10px; right: 20px; font-size: 8px; color: #9ca3af; }
         }
     </style>
 </head>
@@ -51,8 +67,8 @@
                     <input type="time" id="citation-time" class="w-full p-2 border rounded text-sm">
                 </div>
                 <select id="teacher-input" class="w-full p-2 border rounded text-sm">
-                    <option value="Profesor Jefe">Profesor Jefe</option>
-                    <option value="Docente PIE">Docente PIE</option>
+                    [cite_start]<option value="Profesor Jefe">Profesor Jefe [cite: 1]</option>
+                    [cite_start]<option value="Docente PIE">Docente PIE [cite: 1]</option>
                     <option value="Psicóloga">Psicóloga</option>
                     <option value="Inspectoría de Docencia">Inspectoría de Docencia</option>
                     <option value="Inspectoría General">Inspectoría General</option>
@@ -74,12 +90,12 @@
                     <button id="report-btn" class="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded hover:bg-blue-700">FILTRAR</button>
                     <button id="print-screen-btn" class="px-3 bg-gray-800 text-white text-xs font-bold py-2 rounded hover:bg-black">🖨️ TABLA</button>
                 </div>
-                <div class="grid grid-cols-2 gap-4 pt-2">
-                    <div class="bg-blue-50 p-3 rounded border border-blue-100 text-center">
+                <div class="grid grid-cols-2 gap-4 pt-2 text-center">
+                    <div class="bg-blue-50 p-3 rounded border border-blue-100">
                         <p class="text-[10px] text-blue-600 font-bold uppercase">Citados</p>
                         <p id="stat-total" class="text-2xl font-bold text-blue-800">0</p>
                     </div>
-                    <div class="bg-green-50 p-3 rounded border border-green-100 text-center">
+                    <div class="bg-green-50 p-3 rounded border border-green-100">
                         <p class="text-[10px] text-green-600 font-bold uppercase">Asistencias</p>
                         <p id="stat-present" class="text-2xl font-bold text-green-800">0</p>
                     </div>
@@ -99,10 +115,10 @@
 
     <footer class="mt-8 py-6 text-center border-t border-gray-200 bg-white/50">
         <p class="text-sm text-gray-600">
-            <strong>Portal Administrativo de Citaciones</strong> • © 2026 Escuela Agrícola Sagrados Corazones
+            [cite_start]<strong>Portal Administrativo de Citaciones</strong> • © 2026 Escuela Agrícola Sagrados Corazones [cite: 1]
         </p>
-        <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-widest">
-            Desarrollado para el Departamento de UTP e Inspectoría
+        <p class="text-xs text-purple-700 mt-1 font-bold tracking-wide">
+            Desarrollado por ProfeAle
         </p>
     </footer>
 
@@ -121,7 +137,6 @@
 
         let tokenClient, gapiInited = false, gisInited = false;
         let recordsMemory = []; 
-        let currentFilterList = [];
 
         async function initGapi() { 
             await gapi.client.init({ apiKey: API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] }); 
@@ -142,12 +157,8 @@
         }
 
         const schoolData = { 
-            'Primero Medio A': ["ÁLVAREZ FAÚNDEZ MATEO VICENTE", "CASTILLO ARAVENA MAITE PASCAL", "COLLADO PUENTES SANTINO ALEXANDER", "CONCHA TORREALBA JOAQUÍN IGNACIO", "DÍAZ MALUENDA ESTEFANÍA ANTONIA", "DONAIRE ROJAS MAITE EMILIA ESTER", "ESPINOZA CACHAÑA LISBET ALEXANDRA", "FERRADA ALBORNOZ AGUSTÍN ALEXIS", "FUENTEMAVIDA BARROS OSCAR ANTONIO", "JAQUE PACHECO DAMIÁN IGNACIO", "JARAMILLO VILLAR MATT HOST", "LÓPEZ ACUÑA MARCO EMILIO", "LÓPEZ VILLAR FRANCO IGNACIO", "MESA DÍAZ GONZALO IGNACIO", "MEZA CARRASCO CRISTIAN ALFONSO", "MORALES GARRIDO NICOLÁS ANTONIO", "ORTEGA DA SILVA EMILIA CATALINA SOPHIA", "PEREIRA TAPIA KEVIN RUBÉN", "RAMÍREZ SEPÚLVEDA LUIS JUSTIN JESÚS", "RAMÍREZ VALDÉS MARTINA POLETTE", "RECABAL YÁÑEZ TOMÁS IGNACIO", "RODRÍGUEZ SEPÚLVEDA SIMONEY ISAMAR", "ROJAS ÓRDENES TRACY MAIDEN", "SÁNCHEZ MUNIZAGA ALONDRA ANAÍS", "SOLIZ OLGUIN BRAYAN", "VALENZUELA MUÑOZ MAGDALENA BELÉN"],
-            'Segundo Medio A': ["ALBURQUENQUE DEL GRECCO EMILYA ANTONIA", "ANABALÓN BELTRÁN BENJAMÍN NICOLÁS", "ARAVENA ZÚÑIGA NOEMÍ JESÚS", "ARAYA DOMÍNGUEZ ALEX FABIÁN", "ASTUDILLO CAMPOS CRISTÓBAL ANTONIO", "BAEZ DONOSO LUKAS ALFONSO", "CARO BUSTOS KRISCHNA ESTEFANIA", "CUMINAO VIDAL CATALINA ANDREA", "DÍAZ MALUENDA MIGUEL ALBERTO", "IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA", "LAGOS LASTRA ALEXANDRA DANAE", "LÓPEZ NOVOA EYDAN DAMIÁN", "MALDONADO FLORES ANTONELLA BELÉN", "MONTECINO DÍAZ VALESKA BELÉN", "MUÑOZ CONTRERAS LUIS GABRIEL", "OSES CAMPOS VALENTINA ABIGAIL", "PALMA ORELLANA ANTONELLA FRANCISCA", "PÉREZ QUEVEDO CONSTANZA TRINIDAD", "RIQUELME SANTOS BENJAMÍN ALONSO", "ROJAS LEIVA EDUARDO JAVIER", "SALAZAR SALAS PEDRO JOSÉ", "SANTANDER LÓPEZ MARÍA JOSÉ", "VÁSQUEZ AGUILERA SCARLET NICOLE", "VERA BRAVO FLORENCIA ANTONIA", "YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN"],
-            'Tercero Medio A': ["AHUMADA ROJAS TRINIDAD BELÉN", "CORNEJO CASTILLO OSCAR GABRIEL", "ESPINOZA PEÑALILLO BRAYAN JESÚS", "FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO", "JARAMILLO VILLAR EMILIO SCOTT", "LÓPEZ VILLAR MARTÍN ALONSO", "MEZA COLIMÁN ANGEL BLAS", "MIRANDA MUÑOZ ALEXANDRA JAVIERA", "MORAGA PACHECO RENATO IGNACIO", "MORALES REIMÁN ALFONSO TOMÁS", "ORELLANA GARRIDO MATÍAS LEANDRO", "PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO", "PINTO TOBAR JORDÁN AMARO", "RECABAL YÁÑEZ KEVIN ANDRÉS", "SANDOVAL CERPA VICENTE ESTEBAN", "SOTO NARANJO CHRISTOPHER", "VEKARIC VERDEJO MARTÍN", "VIELMA ZABALAGA JOAN MANUEL"],
-            'Tercero Medio C': ["BRAVO MENARES ALEX JOHAN", "CARRASCO LEIVA BENJAMÍN IGNACIO", "ENCINA PIZARRO DIEGO BENJAMÍN", "ESPINOSA TORRES FERNANDA ELENA", "GONZÁLEZ SALAZAR EMILIA CATALINA", "MEDEL OJEDA LEÓN IGNACIO", "OLIVARES VALENZUELA ALONSO IGNACIO", "PUNOY MEDEL MILLARAY ANGÉLICA", "QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO", "RIQUELME CASTILLO MATÍAS EDUARDO", "RIQUELME COLOMA DALIA CONSTANZA", "RIVERA ABARZA CONSTANZA VICTORIA", "SAAVEDRA BRAVO FLORENCIA ALEJANDRA", "SALGADO ROJAS VICENTE MOISÉS", "SANTIS CASSEUS TEIVA SCARLETT", "SOBARZO YÉVENES KATHERINNE ALEXIA", "TOLEDO ALBORNOZ ANTONELLA INES", "VENEGAS ARRIAGADA ANTONIA EDITH"],
-            'Cuarto Medio A': ["ALCÁNTAR GARCÍA MARTINA ALEJANDRA", "BAHAMONDE MUÑOZ ARIEL LEON", "CAMPOS MUÑOZ CRISTOPHER JESÚS", "CANCINO ORÓSTICA VICENTE GASPAR", "CARO URRUTIA CONSUELO ANTONIA", "CARRASCO GONZÁLEZ CAMILA ANDREA", "COFRÉ CASTILLO ANTONIO ANDRÉS", "GALDAMES VERGARA FELIPE ESTEBAN", "GARCÍA GONZÁLEZ SANTIAGO HUMBERTO", "GONZÁLEZ AMIGO FRANCISCA IGNACIA", "GONZÁLEZ SALAZAR JOAQUÍN ALONSO", "GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN", "HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO", "LOBOS CÁCERES ANTONIA PAZ", "MARTÍNEZ LIZANA AARON ALEJANDRO", "MEZA CARRASCO BENJAMÍN INTI", "MIÑO GONZALEZ CATALINA ANDREA", "PÉREZ CORÓN MANUEL IGNACIO", "SAMANIEGO CORTEZ JAKSON FERGIE", "SEPÚLVEDA SALAZAR SOFÍA ANTONIA", "TAPIA ACUÑA GABRIEL ANTONIO", "TORREALBA MOYA FLORVELIS", "VEGA VIVANCO CRISTÓBAL ANTONIO", "VERA NAVARRETE DANIELA ELIZABETH", "VILLALOBOS ARAVENA KARINA ANGELINA", "VILLALOBOS VILLALOBOS SAMIR LUCIAN"],
-            'Cuarto Medio C': ["ARELLANO ACUÑA MARTÍN ANTONIO", "AROS ÁVILA DAYANA IGNACIA", "CABRERA COLOMBINO MARÍA GRACIA", "COLLAO MEDINA ANAÍS VALENTINA", "DE LA HOZ VALENZUELA FRANCO SEBASTIÁN", "FUENTES CARRASCO YARIXA ALEJANDRA", "GÓMEZ CANCINO DANIELA ALEJANDRA", "GUTIÉRREZ CARRIÓN MILLARAY CAROLINA", "HONORATO TAPIA GLORIA JAVIERA", "LARA RIVERA BENJAMÍN ESTEBAN", "PALACIOS SOTO JOSÉ TOMÁS", "PEZO SANTANDER JOSÉ CRISTÓBAL", "ROCHA ROJAS JOSÉ PABLO WILLIAMS", "ROJAS YÉVENES FABIANA ISIDORA", "SÁNCHEZ PAREJA ANDY ANTONIO", "SANTANDER LÓPEZ SIMÓN ESTEBAN", "TRONCOSO LIZAMA SIOMARA IGNACIA", "WARNKEN ROJAS LUCIANA BERNABELA"]
+            [cite_start]'Primero Medio A': ["ÁLVAREZ FAÚNDEZ MATEO VICENTE [cite: 1]", "CASTILLO ARAVENA MAITE PASCAL", "COLLADO PUENTES SANTINO ALEXANDER"],
+            'Segundo Medio A': ["ALBURQUENQUE DEL GRECCO EMILYA ANTONIA", "ANABALÓN BELTRÁN BENJAMÍN NICOLÁS"] 
         };
 
         const cS = document.getElementById('course-select'), sS = document.getElementById('student-select'), fC = document.getElementById('filter-course');
@@ -155,19 +166,14 @@
         Object.keys(schoolData).forEach(c => { cS.innerHTML += `<option value="${c}">${c}</option>`; fC.innerHTML += `<option value="${c}">${c}</option>`; });
         cS.onchange = () => { sS.innerHTML = '<option>Seleccione Alumno...</option>'; if(schoolData[cS.value]) { schoolData[cS.value].forEach(s => sS.innerHTML += `<option value="${s}">${s}</option>`); sS.disabled = false; } };
 
-        document.getElementById('clear-btn').onclick = () => {
-            document.querySelectorAll('input, select').forEach(el => { if(el.id !== 'course-select' && el.id !== 'student-select') el.value = ''; });
-            showToast("Formulario limpio");
-        };
-
         document.getElementById('add-btn').onclick = async () => {
-            const d = { course: cS.value, student: sS.value, email: document.getElementById('parent-email').value, date: document.getElementById('citation-date').value, time: document.getElementById('citation-time').value, teacher: document.getElementById('teacher-input').value, assisted: false, timestamp: Date.now() };
+            const d = { course: cS.value, student: sS.value, date: document.getElementById('citation-date').value, time: document.getElementById('citation-time').value, teacher: document.getElementById('teacher-input').value, assisted: false, timestamp: Date.now() };
             if(!d.student || !d.date) return alert("Faltan datos");
 
             tokenClient.callback = async (resp) => {
                 if (resp.error) return;
                 try {
-                    await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': `Cita: ${d.student}`, 'description': `Solicita: ${d.teacher}`, 'start': { 'dateTime': `${d.date}T${d.time}:00`, 'timeZone': 'America/Santiago' }, 'end': { 'dateTime': `${d.date}T${d.time}:30`, 'timeZone': 'America/Santiago' }, 'attendees': d.email ? [{ 'email': d.email }] : [] }, 'sendUpdates': 'all' });
+                    await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': { 'summary': `Cita: ${d.student}`, 'start': { 'dateTime': `${d.date}T${d.time}:00`, 'timeZone': 'America/Santiago' }, 'end': { 'dateTime': `${d.date}T${d.time}:30`, 'timeZone': 'America/Santiago' } } });
                     await addDoc(collection(db, "citaciones"), d);
                     showToast("✅ Registrado");
                     generateVoucher(d);
@@ -176,27 +182,36 @@
             tokenClient.requestAccessToken({prompt: 'consent'});
         };
 
-        document.getElementById('report-btn').onclick = async () => {
-            const fDate = document.getElementById('filter-date').value, fCourse = fC.value;
-            const snap = await getDocs(collection(db, "citaciones"));
-            let t = 0, a = 0;
-            currentFilterList = [];
-            snap.forEach(doc => {
-                const d = doc.data();
-                if((!fDate || d.date === fDate) && (!fCourse || d.course === fCourse)) { t++; if(d.assisted) a++; currentFilterList.push(d); }
-            });
-            document.getElementById('stat-total').innerText = t;
-            document.getElementById('stat-present').innerText = a;
-        };
+        window.reprint = (idx) => generateVoucher(recordsMemory[idx]);
 
-        document.getElementById('print-screen-btn').onclick = () => {
-            if(currentFilterList.length === 0) return alert("Filtra primero.");
-            let html = `<div class="print-header"><h2>REPORTE DE CITACIONES</h2><p>Escuela Agrícola Sagrados Corazones</p></div><table class="print-table"><thead><tr><th>Fecha</th><th>Alumno</th><th>Curso</th><th>Solicita</th><th>Asistió</th></tr></thead><tbody>`;
-            currentFilterList.forEach(i => { html += `<tr><td>${i.date}</td><td>${i.student}</td><td>${i.course}</td><td>${i.teacher}</td><td>${i.assisted ? 'SI' : 'NO'}</td></tr>`; });
-            html += `</tbody></table>`;
-            document.getElementById('printable-area').innerHTML = html;
-            window.print();
-        };
+        function generateVoucher(d) {
+            document.getElementById('printable-area').innerHTML = `
+                <div class="citation-card">
+                    <div class="card-body">
+                        <div style="display:flex; align-items:center; gap:20px; margin-bottom:25px;">
+                            <img src="logo.jpg" style="height:80px;">
+                            <div>
+                                [cite_start]<h2 class="header-title">CITACIÓN DE APODERADO [cite: 1]</h2>
+                                [cite_start]<p class="school-name">Escuela Agrícola Sagrados Corazones [cite: 1]</p>
+                            </div>
+                        </div>
+                        <p class="data-label">Alumno(a) y Curso:</p>
+                        [cite_start]<p class="data-value"><b>${d.student}</b> — ${d.course} [cite: 1]</p>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                            [cite_start]<div><p class="data-label">Fecha de la Cita:</p><p class="data-value">📅 ${d.date} [cite: 1]</p></div>
+                            [cite_start]<div><p class="data-label">Hora Programada:</p><p class="data-value">⏰ ${d.time} [cite: 1]</p></div>
+                        </div>
+                        <p class="data-label">Persona que solicita:</p>
+                        [cite_start]<p class="data-value">👤 ${d.teacher} [cite: 1]</p>
+                    </div>
+                    <div class="card-side">
+                        [cite_start]<p style="font-size: 11px; font-weight: 800; color: #4c1d95;">TOMA DE CONOCIMIENTO [cite: 1]</p>
+                        [cite_start]<div class="signature-line">FIRMA DEL APODERADO [cite: 1]</div>
+                    </div>
+                    <div class="print-footer-credit">Desarrollado por ProfeAle</div>
+                </div>`;
+            setTimeout(() => { window.print(); }, 800);
+        }
 
         onSnapshot(query(collection(db, "citaciones"), orderBy('timestamp', 'desc'), limit(15)), (s) => {
             const b = document.getElementById('report-body'); b.innerHTML = '';
@@ -209,13 +224,6 @@
         });
 
         window.toggleAsist = async (id, current) => { await updateDoc(doc(db, "citaciones", id), { assisted: !current }); showToast("Actualizado"); };
-        window.reprint = (idx) => generateVoucher(recordsMemory[idx]);
-
-        function generateVoucher(d) {
-            document.getElementById('printable-area').innerHTML = `<div class="citation-slip"><div class="slip-left"><div style="display:flex; align-items:center; gap:15px; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:15px;"><img src="logo.jpg" style="height:70px;"><div><h2 style="margin:0; font-size:18px;">CITACIÓN</h2><p style="margin:0; font-size:11px;">Escuela Agrícola</p></div></div><p>Alumno: <b>${d.student}</b> Curso: <b>${d.course}</b></p><p>Fecha: ${d.date} Hora: ${d.time}</p><p>Solicita: <b>${d.teacher}</b></p></div><div class="slip-right"><p>FIRMA</p><div style="border-bottom:1px solid #000; margin-top:60px;"></div></div></div>`;
-            setTimeout(() => window.print(), 800);
-        }
-
         function showToast(m) { const b = document.getElementById('message-box'); b.innerText = m; b.classList.remove('hidden'); setTimeout(() => b.classList.add('hidden'), 3000); }
     </script>
 </body>
