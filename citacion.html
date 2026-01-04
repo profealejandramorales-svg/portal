@@ -105,6 +105,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
+        // CONFIGURACIONES
         const firebaseConfig = { 
             apiKey: "AIzaSyBnSMVCH0yyYUWk5z54kTIPTrWkyoeWs-I", 
             authDomain: "suspenciones-40d0c.firebaseapp.com", 
@@ -121,6 +122,7 @@
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
 
+        // DATOS ESCUELA
         const schoolData = {
             'Primero Medio A': ["ÁLVAREZ FAÚNDEZ MATEO VICENTE", "CASTILLO ARAVENA MAITE PASCAL", "COLLADO PUENTES SANTINO ALEXANDER", "CONCHA TORREALBA JOAQUÍN IGNACIO", "DÍAZ MALUENDA ESTEFANÍA ANTONIA", "DONAIRE ROJAS MAITE EMILIA ESTER", "ESPINOZA CACHAÑA LISBET ALEXANDRA", "FERRADA ALBORNOZ AGUSTÍN ALEXIS", "FUENTEMAVIDA BARROS OSCAR ANTONIO", "JAQUE PACHECO DAMIÁN IGNACIO", "JARAMILLO VILLAR MATT HOST", "LÓPEZ ACUÑA MARCO EMILIO", "LÓPEZ VILLAR FRANCO IGNACIO", "MESA DÍAZ GONZALO IGNACIO", "MEZA CARRASCO CRISTIAN ALFONSO", "MORALES GARRIDO NICOLÁS ANTONIO", "ORTEGA DA SILVA EMILIA CATALINA SOPHIA", "PEREIRA TAPIA KEVIN RUBÉN", "RAMÍREZ SEPÚLVEDA LUIS JUSTIN JESÚS", "RAMÍREZ VALDÉS MARTINA POLETTE", "RECABAL YÁÑEZ TOMÁS IGNACIO", "RODRÍGUEZ SEPÚLVEDA SIMONEY ISAMAR", "ROJAS ÓRDENES TRACY MAIDEN", "SÁNCHEZ MUNIZAGA ALONDRA ANAÍS", "SOLIZ OLGUIN BRAYAN", "VALENZUELA MUÑOZ MAGDALENA BELÉN"],
             'Segundo Medio A': ["ALBURQUENQUE DEL GRECCO EMILYA ANTONIA", "ANABALÓN BELTRÁN BENJAMÍN NICOLÁS", "ARAVENA ZÚÑIGA NOEMÍ JESÚS", "ARAYA DOMÍNGUEZ ALEX FABIÁN", "ASTUDILLO CAMPOS CRISTÓBAL ANTONIO", "BAEZ DONOSO LUKAS ALFONSO", "CARO BUSTOS KRISCHNA ESTEFANIA", "CUMINAO VIDAL CATALINA ANDREA", "DÍAZ MALUENDA MIGUEL ALBERTO", "IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA", "LAGOS LASTRA ALEXANDRA DANAE", "LÓPEZ NOVOA EYDAN DAMIÁN", "MALDONADO FLORES ANTONELLA BELÉN", "MONTECINO DÍAZ VALESKA BELÉN", "MUÑOZ CONTRERAS LUIS GABRIEL", "OSES CAMPOS VALENTINA ABIGAIL", "PALMA ORELLANA ANTONELLA FRANCISCA", "PÉREZ QUEVEDO CONSTANZA TRINIDAD", "RIQUELME SANTOS BENJAMÍN ALONSO", "ROJAS LEIVA EDUARDO JAVIER", "SALAZAR SALAS PEDRO JOSÉ", "SANTANDER LÓPEZ MARÍA JOSÉ", "VÁSQUEZ AGUILERA SCARLET NICOLE", "VERA BRAVO FLORENCIA ANTONIA", "YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN"],
@@ -146,6 +148,7 @@
             }
         };
 
+        // INICIALIZACIÓN GOOGLE
         let tokenClient;
         window.gapiLoaded = async () => {
             await gapi.load('client', async () => {
@@ -160,45 +163,66 @@
             });
         };
 
+        // ACCIÓN PRINCIPAL
         document.getElementById('add-btn').onclick = async () => {
             const data = {
-                course: courseSelect.value, student: studentSelect.value, parentEmail: document.getElementById('parent-email').value,
-                citationDate: document.getElementById('citation-date').value, citationTime: document.getElementById('citation-time').value,
-                reason: document.getElementById('reason-select').value, mode: document.getElementById('mode-select').value,
-                teacher: document.getElementById('teacher-input').value, timestamp: Date.now()
+                course: courseSelect.value, 
+                student: studentSelect.value, 
+                parentEmail: document.getElementById('parent-email').value,
+                citationDate: document.getElementById('citation-date').value, 
+                citationTime: document.getElementById('citation-time').value,
+                reason: document.getElementById('reason-select').value, 
+                mode: document.getElementById('mode-select').value,
+                teacher: document.getElementById('teacher-input').value, 
+                timestamp: Date.now()
             };
             
-            if(!data.student || !data.citationDate || !data.citationTime) return showToast("Faltan datos (Fecha, Hora o Alumno)");
+            if(!data.student || !data.citationDate || !data.citationTime) {
+                return showToast("Faltan datos (Fecha, Hora o Alumno)");
+            }
 
-            try {
-                await addDoc(collection(db, "citaciones"), data);
-                
-                tokenClient.callback = async (resp) => {
-                    if (resp.error !== undefined) throw resp;
-
-                    const event = {
-                        'summary': `Citación: ${data.student} (${data.course})`,
-                        'description': `Motivo: ${data.reason}\nCita: ${data.teacher}\nModalidad: ${data.mode}`,
-                        'start': { 'dateTime': `${data.citationDate}T${data.citationTime}:00`, 'timeZone': 'America/Santiago' },
-                        'end': { 'dateTime': `${data.citationDate}T${data.citationTime}:30`, 'timeZone': 'America/Santiago' },
-                        'attendees': data.parentEmail ? [{ 'email': data.parentEmail }] : []
-                    };
-
-                    await gapi.client.calendar.events.insert({ 'calendarId': 'primary', 'resource': event, 'sendUpdates': 'all' });
-                    
-                    showToast("✅ Registrado en Firebase e Invitación enviada");
-                    updatePrintArea(data);
-                    window.print();
-                };
-
-                if (gapi.client.getToken() === null) {
-                    tokenClient.requestAccessToken({prompt: 'consent'});
-                } else {
-                    tokenClient.requestAccessToken({prompt: ''});
+            // Callback que se ejecuta cuando Google autoriza
+            tokenClient.callback = async (resp) => {
+                if (resp.error !== undefined) {
+                    showToast("Error de acceso a Google");
+                    console.error(resp);
+                    return;
                 }
-            } catch (e) { 
-                console.error(e);
-                showToast("❌ Error al procesar solicitud."); 
+
+                try {
+                    // 1. Crear evento en Google Calendar
+                    await gapi.client.calendar.events.insert({
+                        'calendarId': 'primary',
+                        'resource': {
+                            'summary': `Citación: ${data.student} (${data.course})`,
+                            'description': `Motivo: ${data.reason}\nSolicita: ${data.teacher}\nModalidad: ${data.mode}`,
+                            'start': { 'dateTime': `${data.citationDate}T${data.citationTime}:00`, 'timeZone': 'America/Santiago' },
+                            'end': { 'dateTime': `${data.citationDate}T${data.citationTime}:30`, 'timeZone': 'America/Santiago' },
+                            'attendees': data.parentEmail ? [{ 'email': data.parentEmail }] : []
+                        },
+                        'sendUpdates': 'all'
+                    });
+
+                    // 2. Guardar en Firebase
+                    await addDoc(collection(db, "citaciones"), data);
+                    
+                    showToast("✅ Registrado en Calendar y Firebase");
+
+                    // 3. Preparar e Imprimir
+                    updatePrintArea(data);
+                    setTimeout(() => { window.print(); }, 800);
+
+                } catch (e) { 
+                    console.error("Error al registrar:", e);
+                    showToast("❌ Error al guardar. Revisa la consola."); 
+                }
+            };
+
+            // Solicitar el token de acceso
+            if (gapi.client.getToken() === null) {
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                tokenClient.requestAccessToken({prompt: ''});
             }
         };
 
@@ -229,6 +253,7 @@
                 </div>`;
         }
 
+        // Carga de historial en tiempo real
         onSnapshot(query(collection(db, "citaciones"), orderBy('timestamp', 'desc'), limit(15)), (snap) => {
             const body = document.getElementById('report-body'); body.innerHTML = '';
             snap.forEach(doc => {
@@ -237,8 +262,14 @@
             });
         });
 
-        function showToast(m) { const b = document.getElementById('message-box'); b.innerText = m; b.classList.remove('hidden'); setTimeout(() => b.classList.add('hidden'), 4000); }
+        function showToast(m) { 
+            const b = document.getElementById('message-box'); 
+            b.innerText = m; 
+            b.classList.remove('hidden'); 
+            setTimeout(() => b.classList.add('hidden'), 4000); 
+        }
         
+        // Ejecutar cargas de scripts de Google
         window.gapiLoaded();
         window.gisLoaded();
     </script>
