@@ -5,27 +5,40 @@
   <title>Inventario Pro - Escuela Agrícola Sagrados Corazones</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  
   <style>
     body { font-family: 'Inter', sans-serif; background: #f4f6f8; }
     .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     .qty-input { width: 55px; padding: 4px; text-align: center; border: 1px solid #e5e7eb; border-radius: 4px; font-weight: bold; }
     .totales-footer { background: #1f2937; color: white; padding: 15px; border-radius: 0 0 8px 8px; display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
+    
+    /* ESTILOS DE IMPRESIÓN */
     @media print {
         @page { size: Letter portrait; margin: 0; }
         body > *:not(#printable-area) { display: none !important; }
         #printable-area { display: block !important; }
-        .sheet { display: grid; grid-template-columns: repeat(3, 64mm); grid-auto-rows: 50mm; gap: 2mm; padding: 5mm; justify-content: center; }
-        .label { border: 1px dashed #ccc; width: 64mm; height: 50mm; padding: 3mm; display: flex; gap: 5px; align-items: center; page-break-inside: avoid; color: black; }
-        .qr-code img { width: 24mm; height: 24mm; }
-        .meta { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
-        .title { font-size: 10px; font-weight: bold; line-height: 1.1; margin-bottom: 4px; }
-        .info { font-size: 9px; line-height: 1.2; }
+        .sheet { display: grid; grid-template-columns: repeat(3, 64mm); grid-auto-rows: 50mm; gap: 2mm; padding: 5mm; justify-content: center; page-break-after: always; }
+        .label { border: 2px solid #000; width: 64mm; height: 50mm; padding: 3mm; display: flex; gap: 5px; align-items: center; page-break-inside: avoid; color: black; box-sizing: border-box; }
+        .qr-code img { width: 22mm; height: 22mm; display: block; }
+        .meta { flex: 1; display: flex; flex-direction: column; justify-content: space-between; height: 100%; overflow: hidden; }
+        .title { font-size: 11px; font-weight: 900; line-height: 1.1; margin-bottom: 2px; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 2px;}
+        .info { font-size: 10px; line-height: 1.2; font-weight: 600; }
+        .sku { font-size: 8px; text-align: right; margin-top: auto; font-family: monospace; }
     }
   </style>
 </head>
 <body class="p-4 md:p-8">
 
-  <div id="message-box" class="fixed top-5 right-5 bg-green-600 text-white px-6 py-3 rounded shadow-lg hidden z-50"></div>
+  <div id="message-box" class="fixed top-5 right-5 bg-green-600 text-white px-6 py-3 rounded shadow-lg hidden z-[70]"></div>
+
+  <div id="camera-modal" class="fixed inset-0 bg-black/90 hidden z-[60] flex flex-col items-center justify-center p-4">
+      <h3 class="text-white font-bold mb-4 text-lg">📷 Apunta al Código QR</h3>
+      <div id="reader" class="w-full max-w-sm bg-white rounded-lg overflow-hidden border-4 border-white"></div>
+      <button onclick="window.stopScanner()" class="mt-6 bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-full font-bold shadow-lg text-lg">
+          ❌ CERRAR CÁMARA
+      </button>
+  </div>
 
   <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">📦 Gestión de Inventario Institucional</h1>
 
@@ -43,18 +56,22 @@
 
     <div class="card border-t-4 border-blue-600">
         <h3 class="font-bold text-sm uppercase text-blue-800 mb-4 tracking-wider">➕ Registro Manual</h3>
-        <form id="itemForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form id="itemForm" class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div class="md:col-span-2">
                 <label class="block text-[10px] font-bold uppercase text-gray-500">Descripción</label>
-                <input type="text" id="descripcion" class="w-full p-2 border rounded text-sm" required>
+                <input type="text" id="descripcion" class="w-full p-2 border rounded text-sm" required placeholder="Ej: Monitor Samsung">
             </div>
             <div>
                 <label class="block text-[10px] font-bold uppercase text-gray-500">Ubicación</label>
-                <input type="text" id="ubicacion" class="w-full p-2 border rounded text-sm">
+                <input type="text" id="ubicacion" class="w-full p-2 border rounded text-sm" placeholder="Ej: Lab 1">
             </div>
             <div>
                 <label class="block text-[10px] font-bold uppercase text-gray-500">Categoría</label>
-                <input type="text" id="categoria" class="w-full p-2 border rounded text-sm">
+                <input type="text" id="categoria" class="w-full p-2 border rounded text-sm" placeholder="Ej: Computación">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-500">Cantidad</label>
+                <input type="number" id="cantidadForm" class="w-full p-2 border rounded text-sm" value="1" min="1">
             </div>
             <div>
                 <label class="block text-[10px] font-bold uppercase text-gray-500">Estado</label>
@@ -65,9 +82,9 @@
                     <option value="MALO">MALO</option>
                 </select>
             </div>
-            <div>
+            <div class="md:col-span-2">
                 <label class="block text-[10px] font-bold uppercase text-gray-500">Procedencia</label>
-                <input type="text" id="subvencion" class="w-full p-2 border rounded text-sm">
+                <input type="text" id="subvencion" class="w-full p-2 border rounded text-sm" placeholder="Ej: SEP / PIE">
             </div>
             <div class="flex items-end gap-2 md:col-span-2">
                 <button type="submit" class="flex-1 bg-blue-600 text-white font-bold p-2 rounded text-sm hover:bg-blue-700 shadow transition">GUARDAR EN NUBE</button>
@@ -77,14 +94,36 @@
     </div>
 
     <div class="card p-0 overflow-hidden">
-        <div class="p-4 flex flex-wrap gap-2">
-            <button id="btnListByUnit" class="bg-gray-800 text-white text-xs font-bold px-3 py-2 rounded">📋 POR UNIDAD</button>
-            <button id="btnListByState" class="bg-gray-800 text-white text-xs font-bold px-3 py-2 rounded">📋 POR ESTADO</button>
-            <button id="btnPurgeEmpty" class="bg-red-600 text-white text-xs font-bold px-3 py-2 rounded ml-auto">🗑️ LIMPIAR VACÍOS</button>
+        <div class="p-4 flex flex-wrap gap-2 bg-gray-50 border-b items-center">
+            
+            <button onclick="window.startScanner()" class="bg-indigo-600 hover:bg-indigo-800 text-white text-xs font-bold px-4 py-2 rounded flex items-center gap-2 shadow-md animate-pulse">
+                📷 ESCANEAR CON CÁMARA
+            </button>
+
+            <button id="btnResetFilter" class="hidden bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded">
+                🔄 VER TODOS LOS ITEMS
+            </button>
+            
+            <div class="h-6 w-px bg-gray-300 mx-2"></div>
+
+            <button id="btnListByUnit" class="bg-gray-700 hover:bg-gray-900 text-white text-xs font-bold px-3 py-2 rounded flex items-center gap-2">
+                📍 UBICACIÓN
+            </button>
+            <button id="btnListByState" class="bg-gray-700 hover:bg-gray-900 text-white text-xs font-bold px-3 py-2 rounded flex items-center gap-2">
+                ⚡ ESTADO
+            </button>
+            <button id="btnPrintAll" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-2 rounded flex items-center gap-2">
+                🖨️ ETIQUETAS MASIVAS
+            </button>
+
+            <button id="btnPurgeEmpty" class="bg-red-100 text-red-700 hover:bg-red-200 text-xs font-bold px-3 py-2 rounded ml-auto border border-red-300">
+                🗑️ LIMPIAR
+            </button>
         </div>
+        
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm border-collapse">
-                <thead class="bg-gray-100 font-bold text-gray-600 uppercase text-[11px]">
+                <thead class="bg-white font-bold text-gray-600 uppercase text-[11px] border-b-2 border-gray-200">
                     <tr>
                         <th class="p-3">Descripción</th>
                         <th class="p-3">Ubicación</th>
@@ -94,7 +133,7 @@
                         <th class="p-3 text-center">Total</th>
                         <th class="p-3 text-center">Baja</th>
                         <th class="p-3 text-center bg-green-50">Real</th>
-                        <th class="p-3 text-center">Acción</th>
+                        <th class="p-3 text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="itemsTbody" class="divide-y divide-gray-100"></tbody>
@@ -126,7 +165,9 @@
     const db = getFirestore(app);
     const COL = "inventarioItems";
     let items = [];
+    let html5QrcodeScanner = null;
 
+    // CARGA DE DATOS
     onSnapshot(query(collection(db, COL), orderBy("timestamp", "desc")), (snap) => {
         items = [];
         snap.forEach(d => { 
@@ -144,39 +185,145 @@
                 }); 
             }
         });
-        renderTable();
+        renderTable(items);
     });
 
-    const renderTable = () => {
+    // RENDERIZADO DE TABLA (Acepta una lista opcional para filtrar)
+    const renderTable = (listaItems = items) => {
         const tbody = document.getElementById("itemsTbody");
         let stockAcumulado = 0;
 
-        tbody.innerHTML = items.map(i => {
+        if(listaItems.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-gray-400 italic">No hay resultados o inventario vacío.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = listaItems.map(i => {
             const total = parseInt(i.cantidadTotal) || 0;
             const baja = parseInt(i.cantidadBaja) || 0;
             const real = total - baja;
             stockAcumulado += real;
 
             return `
-            <tr data-id="${i.id}" class="hover:bg-gray-50 transition-colors">
+            <tr data-id="${i.id}" class="hover:bg-gray-50 transition-colors ${listaItems.length === 1 ? 'bg-yellow-50 border-2 border-yellow-300' : ''}">
                 <td class="p-3 font-bold text-gray-700">${i.descripcion}</td>
                 <td class="p-3 text-gray-500 uppercase text-[10px]">${i.ubicacion}</td>
-                <td class="p-3 text-[10px] font-bold uppercase">${i.estado}</td>
+                <td class="p-3 text-[10px] font-bold uppercase">
+                    <span class="px-2 py-1 rounded bg-gray-100 text-gray-600">${i.estado}</span>
+                </td>
                 <td class="p-3 text-gray-500 text-[10px] uppercase">${i.subvencion}</td>
                 <td class="p-3 text-gray-500 text-[10px] uppercase">${i.categoria}</td>
                 <td class="p-3 text-center"><input type="number" class="qty-input total" value="${total}" min="0"></td>
                 <td class="p-3 text-center"><input type="number" class="qty-input baja" value="${baja}" min="0"></td>
                 <td class="p-3 text-center font-bold ${real < 1 ? 'text-red-500' : 'text-green-600'} bg-green-50/50">${real}</td>
-                <td class="p-3 text-center"><button onclick="window.delItem('${i.id}')" class="bg-red-500 text-white px-2 py-1 rounded font-bold text-xs hover:bg-red-700">X</button></td>
+                <td class="p-3 text-center flex justify-center gap-1">
+                    <button onclick="window.printOne('${i.id}')" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600" title="Imprimir Etiqueta">🖨️</button>
+                    <button onclick="window.delItem('${i.id}')" class="bg-red-500 text-white px-2 py-1 rounded font-bold hover:bg-red-700" title="Eliminar">✕</button>
+                </td>
             </tr>`;
         }).join("");
 
-        // Actualizar totales en el footer
-        document.getElementById("totalRegistros").textContent = items.length;
+        document.getElementById("totalRegistros").textContent = listaItems.length;
         document.getElementById("totalStockReal").textContent = stockAcumulado;
     };
 
-    // EDICIÓN DIRECTA EN TABLA
+    // --- LÓGICA DEL ESCÁNER QR ---
+    
+    window.startScanner = () => {
+        document.getElementById("camera-modal").classList.remove("hidden");
+        
+        html5QrcodeScanner = new Html5Qrcode("reader");
+        
+        // Configuración para usar cámara trasera preferentemente
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        
+        html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
+        .catch(err => {
+            console.error(err);
+            alert("Error al iniciar cámara. Asegúrate de dar permisos.");
+            window.stopScanner();
+        });
+    };
+
+    const onScanSuccess = (decodedText, decodedResult) => {
+        // Detener cámara
+        window.stopScanner();
+        
+        // Buscar el item
+        const foundItem = items.find(i => i.id === decodedText);
+        
+        if (foundItem) {
+            showToast("✅ ¡PRODUCTO ENCONTRADO!");
+            renderTable([foundItem]); // Mostrar SOLO ese item
+            document.getElementById("btnResetFilter").classList.remove("hidden"); // Mostrar botón de reset
+        } else {
+            alert("⚠️ Código QR no encontrado en la base de datos: " + decodedText);
+        }
+    };
+
+    window.stopScanner = () => {
+        if(html5QrcodeScanner) {
+            html5QrcodeScanner.stop().then(() => {
+                html5QrcodeScanner.clear();
+                document.getElementById("camera-modal").classList.add("hidden");
+            }).catch(err => console.log(err));
+        } else {
+             document.getElementById("camera-modal").classList.add("hidden");
+        }
+    };
+
+    // Resetear filtro después de escanear
+    document.getElementById("btnResetFilter").onclick = () => {
+        renderTable(items);
+        document.getElementById("btnResetFilter").classList.add("hidden");
+    };
+
+    // --- FUNCIONALIDAD RESTO DEL SISTEMA ---
+    document.getElementById("btnListByUnit").onclick = () => {
+        items.sort((a, b) => (a.ubicacion || "").localeCompare(b.ubicacion || ""));
+        renderTable(items);
+        showToast("📍 Ordenado por Ubicación");
+    };
+
+    document.getElementById("btnListByState").onclick = () => {
+        items.sort((a, b) => (a.estado || "").localeCompare(b.estado || ""));
+        renderTable(items);
+        showToast("⚡ Ordenado por Estado");
+    };
+
+    const createLabelHTML = (item) => {
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${item.id}`;
+        return `
+        <div class="label">
+            <div class="qr-code"><img src="${qrUrl}" alt="QR"></div>
+            <div class="meta">
+                <div>
+                    <div class="title">${item.descripcion.substring(0, 50)}</div>
+                    <div class="info">Ubic: ${item.ubicacion}</div>
+                    <div class="info">Cat: ${item.categoria}</div>
+                    <div class="info">Est: ${item.estado}</div>
+                </div>
+                <div class="sku">ID: ${item.id}</div>
+            </div>
+        </div>`;
+    };
+
+    window.printOne = (id) => {
+        const item = items.find(i => i.id === id);
+        if(!item) return;
+        const area = document.getElementById("printable-area");
+        area.innerHTML = `<div class="sheet">${createLabelHTML(item)}</div>`;
+        window.print();
+    };
+
+    document.getElementById("btnPrintAll").onclick = () => {
+        const area = document.getElementById("printable-area");
+        if(items.length === 0) return showToast("⚠️ No hay items para imprimir");
+        const allLabels = items.map(item => createLabelHTML(item)).join("");
+        area.innerHTML = `<div class="sheet">${allLabels}</div>`;
+        window.print();
+    };
+
     document.getElementById("itemsTbody").addEventListener("change", async (e) => {
         if(e.target.classList.contains("qty-input")) {
             const tr = e.target.closest("tr");
@@ -190,7 +337,6 @@
         }
     });
 
-    // IMPORTACIÓN CSV AJUSTADA
     document.getElementById("fileInput").addEventListener("change", (e) => {
         const f = e.target.files[0]; if(!f) return;
         const reader = new FileReader();
@@ -220,25 +366,38 @@
     document.getElementById("itemForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         const id = "INV-" + Date.now();
+        const qty = parseInt(document.getElementById("cantidadForm").value) || 1; 
+
         await setDoc(doc(db, COL, id), {
             descripcion: document.getElementById("descripcion").value.toUpperCase(),
             ubicacion: (document.getElementById("ubicacion").value || "S/U").toUpperCase(),
             categoria: (document.getElementById("categoria").value || "-").toUpperCase(),
-            cantidadTotal: parseInt(document.getElementById("cantidadForm").value) || 1,
+            cantidadTotal: qty,
             cantidadBaja: 0,
             estado: document.getElementById("estado").value,
             subvencion: (document.getElementById("subvencion").value || "S/I").toUpperCase(),
             timestamp: Date.now()
         });
         e.target.reset();
+        document.getElementById("cantidadForm").value = 1; 
         showToast("✅ Registrado");
     });
 
     window.delItem = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, COL, id)); };
+    
     document.getElementById("btnPurgeEmpty").onclick = async () => {
+        if(!confirm("¿Borrar items sin descripción?")) return;
         const q = await getDocs(collection(db, COL));
-        q.forEach(async (d) => { if(!d.data().descripcion) await deleteDoc(doc(db, COL, d.id)); });
+        let count = 0;
+        q.forEach(async (d) => { 
+            if(!d.data().descripcion) {
+                await deleteDoc(doc(db, COL, d.id));
+                count++;
+            }
+        });
+        showToast(`🗑️ ${count} eliminados`);
     };
+
     document.getElementById("clear-btn").onclick = () => document.getElementById("itemForm").reset();
     function showToast(m) { const b = document.getElementById('message-box'); b.innerText = m; b.classList.remove('hidden'); setTimeout(() => b.classList.add('hidden'), 3000); }
   </script>
