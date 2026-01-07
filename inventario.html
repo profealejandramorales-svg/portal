@@ -15,16 +15,24 @@
     
     /* ESTILOS DE IMPRESIÓN */
     @media print {
-        @page { size: Letter portrait; margin: 0; }
+        @page { size: Letter portrait; margin: 5mm; }
         body > *:not(#printable-area) { display: none !important; }
-        #printable-area { display: block !important; }
-        .sheet { display: grid; grid-template-columns: repeat(3, 64mm); grid-auto-rows: 50mm; gap: 2mm; padding: 5mm; justify-content: center; page-break-after: always; }
+        #printable-area { display: block !important; width: 100%; }
+        
+        /* DISEÑO DE ETIQUETAS (QR) */
+        .sheet { display: grid; grid-template-columns: repeat(3, 64mm); grid-auto-rows: 50mm; gap: 2mm; justify-content: center; page-break-after: always; }
         .label { border: 2px solid #000; width: 64mm; height: 50mm; padding: 3mm; display: flex; gap: 5px; align-items: center; page-break-inside: avoid; color: black; box-sizing: border-box; }
         .qr-code img { width: 22mm; height: 22mm; display: block; }
         .meta { flex: 1; display: flex; flex-direction: column; justify-content: space-between; height: 100%; overflow: hidden; }
         .title { font-size: 11px; font-weight: 900; line-height: 1.1; margin-bottom: 2px; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 2px;}
         .info { font-size: 10px; line-height: 1.2; font-weight: 600; }
         .sku { font-size: 8px; text-align: right; margin-top: auto; font-family: monospace; }
+
+        /* DISEÑO DE LISTADOS (REPORTES) */
+        .report-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .report-table th { background: #ddd; border: 1px solid #000; padding: 5px; text-align: left; }
+        .report-table td { border: 1px solid #000; padding: 4px; }
+        .report-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
     }
   </style>
 </head>
@@ -35,90 +43,70 @@
   <div id="camera-modal" class="fixed inset-0 bg-black/90 hidden z-[60] flex flex-col items-center justify-center p-4">
       <h3 class="text-white font-bold mb-4 text-lg">📷 Apunta al Código QR</h3>
       <div id="reader" class="w-full max-w-sm bg-white rounded-lg overflow-hidden border-4 border-white"></div>
-      <button onclick="window.stopScanner()" class="mt-6 bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-full font-bold shadow-lg text-lg">
-          ❌ CERRAR CÁMARA
-      </button>
+      <button onclick="window.stopScanner()" class="mt-6 bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-full font-bold shadow-lg text-lg">❌ CERRAR</button>
   </div>
 
-  <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">📦 Gestión de Inventario Institucional</h1>
+  <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">📦 Gestión de Inventario</h1>
 
   <div class="max-w-7xl mx-auto space-y-6">
     
-    <div class="card border-t-4 border-gray-500">
-        <details>
-            <summary class="cursor-pointer font-bold text-gray-700 text-sm uppercase">📂 Cargar Datos desde Excel (CSV)</summary>
-            <div class="mt-4 p-4 bg-gray-50 border rounded border-dashed border-gray-300">
-                <input type="file" id="fileInput" accept=".csv" class="text-sm" />
-                <p class="text-[10px] text-gray-500 mt-2 italic">Format: ID; descripcion; Cantidad; Estado; procedencia; ubicacion; Categoria...</p>
-            </div>
-        </details>
-    </div>
-
-    <div class="card border-t-4 border-blue-600">
-        <h3 class="font-bold text-sm uppercase text-blue-800 mb-4 tracking-wider">➕ Registro Manual</h3>
-        <form id="itemForm" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div class="md:col-span-2">
-                <label class="block text-[10px] font-bold uppercase text-gray-500">Descripción</label>
-                <input type="text" id="descripcion" class="w-full p-2 border rounded text-sm" required placeholder="Ej: Monitor Samsung">
-            </div>
-            <div>
-                <label class="block text-[10px] font-bold uppercase text-gray-500">Ubicación</label>
-                <input type="text" id="ubicacion" class="w-full p-2 border rounded text-sm" placeholder="Ej: Lab 1">
-            </div>
-            <div>
-                <label class="block text-[10px] font-bold uppercase text-gray-500">Categoría</label>
-                <input type="text" id="categoria" class="w-full p-2 border rounded text-sm" placeholder="Ej: Computación">
-            </div>
-            <div>
-                <label class="block text-[10px] font-bold uppercase text-gray-500">Cantidad</label>
-                <input type="number" id="cantidadForm" class="w-full p-2 border rounded text-sm" value="1" min="1">
-            </div>
-            <div>
-                <label class="block text-[10px] font-bold uppercase text-gray-500">Estado</label>
-                <select id="estado" class="w-full p-2 border rounded text-sm">
-                    <option value="NUEVO">NUEVO</option>
-                    <option value="USADO">USADO</option>
-                    <option value="REPARACIÓN">REPARACIÓN</option>
-                    <option value="MALO">MALO</option>
-                </select>
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-[10px] font-bold uppercase text-gray-500">Procedencia</label>
-                <input type="text" id="subvencion" class="w-full p-2 border rounded text-sm" placeholder="Ej: SEP / PIE">
-            </div>
-            <div class="flex items-end gap-2 md:col-span-2">
-                <button type="submit" class="flex-1 bg-blue-600 text-white font-bold p-2 rounded text-sm hover:bg-blue-700 shadow transition">GUARDAR EN NUBE</button>
-                <button type="button" id="clear-btn" class="px-4 bg-gray-200 text-gray-700 font-bold p-2 rounded text-sm hover:bg-gray-300">LIMPIAR</button>
-            </div>
-        </form>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="card border-t-4 border-gray-500 py-2">
+            <details>
+                <summary class="cursor-pointer font-bold text-gray-700 text-xs uppercase">📂 Importar Excel (CSV)</summary>
+                <div class="mt-2"><input type="file" id="fileInput" accept=".csv" class="text-xs w-full" /></div>
+            </details>
+        </div>
+        <div class="card border-t-4 border-blue-600 py-2">
+             <details>
+                <summary class="cursor-pointer font-bold text-blue-800 text-xs uppercase">➕ Nuevo Item Manual</summary>
+                <form id="itemForm" class="mt-4 grid grid-cols-2 gap-2">
+                    <input type="text" id="descripcion" class="col-span-2 p-2 border rounded text-xs" required placeholder="Descripción (Ej: Monitor Samsung)">
+                    <input type="text" id="ubicacion" class="p-2 border rounded text-xs" placeholder="Ubicación (Ej: Bodega)">
+                    <input type="text" id="categoria" class="p-2 border rounded text-xs" placeholder="Categoría (Ej: Computación)">
+                    <input type="number" id="cantidadForm" class="p-2 border rounded text-xs" value="1" min="1">
+                    <select id="estado" class="p-2 border rounded text-xs">
+                        <option value="NUEVO">NUEVO</option><option value="USADO">USADO</option>
+                        <option value="REPARACIÓN">REPARACIÓN</option><option value="MALO">MALO</option>
+                    </select>
+                    <input type="text" id="subvencion" class="col-span-2 p-2 border rounded text-xs" placeholder="Procedencia (Ej: SEP)">
+                    <button type="submit" class="col-span-2 bg-blue-600 text-white font-bold p-2 rounded text-xs hover:bg-blue-700">GUARDAR</button>
+                </form>
+            </details>
+        </div>
     </div>
 
     <div class="card p-0 overflow-hidden">
-        <div class="p-4 flex flex-wrap gap-2 bg-gray-50 border-b items-center">
+        <div class="p-4 bg-gray-100 border-b flex flex-col md:flex-row gap-3 items-center justify-between">
             
-            <button onclick="window.startScanner()" class="bg-indigo-600 hover:bg-indigo-800 text-white text-xs font-bold px-4 py-2 rounded flex items-center gap-2 shadow-md animate-pulse">
-                📷 ESCANEAR CON CÁMARA
-            </button>
+            <div class="flex gap-2 items-center w-full md:w-auto">
+                <button onclick="window.startScanner()" class="bg-indigo-600 text-white text-xs font-bold px-3 py-2 rounded flex items-center gap-1 shadow hover:bg-indigo-800">
+                    📷 ESCANEAR
+                </button>
+                <button id="btnResetFilter" class="hidden bg-orange-500 text-white text-xs font-bold px-3 py-2 rounded shadow animate-pulse">
+                    🔄 VER TODO
+                </button>
+            </div>
 
-            <button id="btnResetFilter" class="hidden bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded">
-                🔄 VER TODOS LOS ITEMS
-            </button>
-            
-            <div class="h-6 w-px bg-gray-300 mx-2"></div>
+            <div class="flex flex-1 gap-2 w-full md:justify-center">
+                <select id="filterLocation" class="bg-white border border-gray-300 text-gray-700 text-xs font-bold py-2 px-3 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="ALL">📍 TODAS LAS UBICACIONES</option>
+                </select>
+                <select id="filterState" class="bg-white border border-gray-300 text-gray-700 text-xs font-bold py-2 px-3 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="ALL">⚡ TODOS LOS ESTADOS</option>
+                    <option value="NUEVO">NUEVO</option><option value="USADO">USADO</option>
+                    <option value="REPARACIÓN">REPARACIÓN</option><option value="MALO">MALO</option>
+                </select>
+            </div>
 
-            <button id="btnListByUnit" class="bg-gray-700 hover:bg-gray-900 text-white text-xs font-bold px-3 py-2 rounded flex items-center gap-2">
-                📍 UBICACIÓN
-            </button>
-            <button id="btnListByState" class="bg-gray-700 hover:bg-gray-900 text-white text-xs font-bold px-3 py-2 rounded flex items-center gap-2">
-                ⚡ ESTADO
-            </button>
-            <button id="btnPrintAll" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-2 rounded flex items-center gap-2">
-                🖨️ ETIQUETAS MASIVAS
-            </button>
-
-            <button id="btnPurgeEmpty" class="bg-red-100 text-red-700 hover:bg-red-200 text-xs font-bold px-3 py-2 rounded ml-auto border border-red-300">
-                🗑️ LIMPIAR
-            </button>
+            <div class="flex gap-2 w-full md:w-auto justify-end">
+                <button id="btnPrintList" class="bg-gray-700 hover:bg-gray-900 text-white text-xs font-bold px-3 py-2 rounded flex items-center gap-1 shadow">
+                    📄 LISTADO
+                </button>
+                <button id="btnPrintLabels" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-2 rounded flex items-center gap-1 shadow">
+                    🖨️ ETIQUETAS
+                </button>
+            </div>
         </div>
         
         <div class="overflow-x-auto">
@@ -128,20 +116,19 @@
                         <th class="p-3">Descripción</th>
                         <th class="p-3">Ubicación</th>
                         <th class="p-3">Estado</th>
-                        <th class="p-3">Procedencia</th>
-                        <th class="p-3">Categoría</th>
+                        <th class="p-3">Proc.</th>
                         <th class="p-3 text-center">Total</th>
                         <th class="p-3 text-center">Baja</th>
                         <th class="p-3 text-center bg-green-50">Real</th>
-                        <th class="p-3 text-center">Acciones</th>
+                        <th class="p-3 text-center">Acción</th>
                     </tr>
                 </thead>
                 <tbody id="itemsTbody" class="divide-y divide-gray-100"></tbody>
             </table>
         </div>
         <div class="totales-footer" id="totalesBox">
-            <span>REGISTROS EN TOTAL: <span id="totalRegistros">0</span></span>
-            <span>STOCK REAL ACUMULADO: <span id="totalStockReal">0</span></span>
+            <span>MOSTRANDO: <span id="totalRegistros">0</span> ITEMS</span>
+            <span>STOCK REAL VISIBLE: <span id="totalStockReal">0</span></span>
         </div>
     </div>
   </div>
@@ -164,16 +151,18 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const COL = "inventarioItems";
-    let items = [];
+    
+    let allItems = [];
+    let filteredItems = [];
     let html5QrcodeScanner = null;
 
-    // CARGA DE DATOS
+    // --- CARGA DE DATOS EN TIEMPO REAL ---
     onSnapshot(query(collection(db, COL), orderBy("timestamp", "desc")), (snap) => {
-        items = [];
+        allItems = [];
         snap.forEach(d => { 
             const data = d.data();
             if(data.descripcion) {
-                items.push({ 
+                allItems.push({ 
                     ...data, 
                     id: d.id,
                     estado: data.estado || "S/I",
@@ -185,158 +174,219 @@
                 }); 
             }
         });
-        renderTable(items);
+        updateLocationDropdown(); // Actualizar lista de lugares
+        applyFilters();           // Refrescar tabla
     });
 
-    // RENDERIZADO DE TABLA (Acepta una lista opcional para filtrar)
-    const renderTable = (listaItems = items) => {
+    // --- SISTEMA DE FILTROS ---
+    const updateLocationDropdown = () => {
+        const select = document.getElementById("filterLocation");
+        const currentVal = select.value;
+        const locations = [...new Set(allItems.map(i => i.ubicacion))].sort();
+        select.innerHTML = `<option value="ALL">📍 TODAS LAS UBICACIONES</option>` + 
+                           locations.map(l => `<option value="${l}">${l}</option>`).join("");
+        select.value = currentVal;
+    };
+
+    const applyFilters = () => {
+        const locFilter = document.getElementById("filterLocation").value;
+        const stateFilter = document.getElementById("filterState").value;
+        filteredItems = allItems.filter(item => {
+            return (locFilter === "ALL" || item.ubicacion === locFilter) && 
+                   (stateFilter === "ALL" || item.estado === stateFilter);
+        });
+        renderTable();
+    };
+
+    document.getElementById("filterLocation").addEventListener("change", applyFilters);
+    document.getElementById("filterState").addEventListener("change", applyFilters);
+    document.getElementById("btnResetFilter").onclick = () => {
+        document.getElementById("filterLocation").value = "ALL";
+        document.getElementById("filterState").value = "ALL";
+        applyFilters();
+        document.getElementById("btnResetFilter").classList.add("hidden");
+    };
+
+    // --- RENDERIZADO DE TABLA ---
+    const renderTable = () => {
         const tbody = document.getElementById("itemsTbody");
         let stockAcumulado = 0;
-
-        if(listaItems.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-gray-400 italic">No hay resultados o inventario vacío.</td></tr>`;
+        
+        if(filteredItems.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-400 italic">No hay resultados.</td></tr>`;
+            document.getElementById("totalRegistros").textContent = 0;
+            document.getElementById("totalStockReal").textContent = 0;
             return;
         }
 
-        tbody.innerHTML = listaItems.map(i => {
+        tbody.innerHTML = filteredItems.map(i => {
             const total = parseInt(i.cantidadTotal) || 0;
             const baja = parseInt(i.cantidadBaja) || 0;
             const real = total - baja;
             stockAcumulado += real;
-
             return `
-            <tr data-id="${i.id}" class="hover:bg-gray-50 transition-colors ${listaItems.length === 1 ? 'bg-yellow-50 border-2 border-yellow-300' : ''}">
+            <tr data-id="${i.id}" class="hover:bg-gray-50 transition-colors">
                 <td class="p-3 font-bold text-gray-700">${i.descripcion}</td>
                 <td class="p-3 text-gray-500 uppercase text-[10px]">${i.ubicacion}</td>
-                <td class="p-3 text-[10px] font-bold uppercase">
-                    <span class="px-2 py-1 rounded bg-gray-100 text-gray-600">${i.estado}</span>
-                </td>
+                <td class="p-3 text-[10px] font-bold uppercase"><span class="bg-gray-100 px-1 rounded">${i.estado}</span></td>
                 <td class="p-3 text-gray-500 text-[10px] uppercase">${i.subvencion}</td>
-                <td class="p-3 text-gray-500 text-[10px] uppercase">${i.categoria}</td>
                 <td class="p-3 text-center"><input type="number" class="qty-input total" value="${total}" min="0"></td>
                 <td class="p-3 text-center"><input type="number" class="qty-input baja" value="${baja}" min="0"></td>
                 <td class="p-3 text-center font-bold ${real < 1 ? 'text-red-500' : 'text-green-600'} bg-green-50/50">${real}</td>
                 <td class="p-3 text-center flex justify-center gap-1">
-                    <button onclick="window.printOne('${i.id}')" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600" title="Imprimir Etiqueta">🖨️</button>
-                    <button onclick="window.delItem('${i.id}')" class="bg-red-500 text-white px-2 py-1 rounded font-bold hover:bg-red-700" title="Eliminar">✕</button>
+                    <button onclick="window.printOne('${i.id}')" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">🖨️</button>
+                    <button onclick="window.delItem('${i.id}')" class="bg-red-500 text-white px-2 py-1 rounded font-bold hover:bg-red-700">✕</button>
                 </td>
             </tr>`;
         }).join("");
-
-        document.getElementById("totalRegistros").textContent = listaItems.length;
+        document.getElementById("totalRegistros").textContent = filteredItems.length;
         document.getElementById("totalStockReal").textContent = stockAcumulado;
     };
 
-    // --- LÓGICA DEL ESCÁNER QR ---
+    // --- LÓGICA DE IMPRESIÓN (CON ESPERA DE CARGA) ---
     
-    window.startScanner = () => {
-        document.getElementById("camera-modal").classList.remove("hidden");
-        
-        html5QrcodeScanner = new Html5Qrcode("reader");
-        
-        // Configuración para usar cámara trasera preferentemente
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-        
-        html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
-        .catch(err => {
-            console.error(err);
-            alert("Error al iniciar cámara. Asegúrate de dar permisos.");
-            window.stopScanner();
+    // Función clave: Espera a que las imágenes QR se descarguen antes de imprimir
+    const waitForImages = (container) => {
+        const images = container.querySelectorAll('img');
+        const promises = Array.from(images).map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(resolve => {
+                img.onload = resolve;
+                img.onerror = resolve; 
+            });
         });
-    };
-
-    const onScanSuccess = (decodedText, decodedResult) => {
-        // Detener cámara
-        window.stopScanner();
-        
-        // Buscar el item
-        const foundItem = items.find(i => i.id === decodedText);
-        
-        if (foundItem) {
-            showToast("✅ ¡PRODUCTO ENCONTRADO!");
-            renderTable([foundItem]); // Mostrar SOLO ese item
-            document.getElementById("btnResetFilter").classList.remove("hidden"); // Mostrar botón de reset
-        } else {
-            alert("⚠️ Código QR no encontrado en la base de datos: " + decodedText);
-        }
-    };
-
-    window.stopScanner = () => {
-        if(html5QrcodeScanner) {
-            html5QrcodeScanner.stop().then(() => {
-                html5QrcodeScanner.clear();
-                document.getElementById("camera-modal").classList.add("hidden");
-            }).catch(err => console.log(err));
-        } else {
-             document.getElementById("camera-modal").classList.add("hidden");
-        }
-    };
-
-    // Resetear filtro después de escanear
-    document.getElementById("btnResetFilter").onclick = () => {
-        renderTable(items);
-        document.getElementById("btnResetFilter").classList.add("hidden");
-    };
-
-    // --- FUNCIONALIDAD RESTO DEL SISTEMA ---
-    document.getElementById("btnListByUnit").onclick = () => {
-        items.sort((a, b) => (a.ubicacion || "").localeCompare(b.ubicacion || ""));
-        renderTable(items);
-        showToast("📍 Ordenado por Ubicación");
-    };
-
-    document.getElementById("btnListByState").onclick = () => {
-        items.sort((a, b) => (a.estado || "").localeCompare(b.estado || ""));
-        renderTable(items);
-        showToast("⚡ Ordenado por Estado");
+        return Promise.all(promises);
     };
 
     const createLabelHTML = (item) => {
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${item.id}`;
+        // Datos completos en el QR
+        const qrText = `ITEM: ${item.descripcion}\nUBIC: ${item.ubicacion}\nCANT: ${item.cantidadTotal}\nPROC: ${item.subvencion}\nEST: ${item.estado}\nID: ${item.id}`;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrText)}`;
+        
         return `
         <div class="label">
-            <div class="qr-code"><img src="${qrUrl}" alt="QR"></div>
+            <div class="qr-code"><img src="${qrUrl}" alt="QR" loading="eager"></div>
             <div class="meta">
-                <div>
-                    <div class="title">${item.descripcion.substring(0, 50)}</div>
-                    <div class="info">Ubic: ${item.ubicacion}</div>
-                    <div class="info">Cat: ${item.categoria}</div>
-                    <div class="info">Est: ${item.estado}</div>
-                </div>
+                <div><div class="title">${item.descripcion.substring(0, 50)}</div>
+                <div class="info">Ubic: ${item.ubicacion}</div>
+                <div class="info">Est: ${item.estado} | Cant: ${item.cantidadTotal}</div>
+                <div class="info">Proc: ${item.subvencion}</div></div>
                 <div class="sku">ID: ${item.id}</div>
             </div>
         </div>`;
     };
 
-    window.printOne = (id) => {
-        const item = items.find(i => i.id === id);
-        if(!item) return;
+    // Imprimir Etiquetas (Masivo/Filtrado)
+    document.getElementById("btnPrintLabels").onclick = async () => {
+        if(filteredItems.length === 0) return alert("No hay items para imprimir");
+        
+        const btn = document.getElementById("btnPrintLabels");
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "⏳ CARGANDO..."; // Feedback visual
+        
+        const area = document.getElementById("printable-area");
+        const labelsHTML = filteredItems.map(item => createLabelHTML(item)).join("");
+        area.innerHTML = `<div class="sheet">${labelsHTML}</div>`;
+        
+        await waitForImages(area); // Esperamos la carga
+        
+        btn.innerHTML = originalText;
+        window.print();
+    };
+
+    // Imprimir Etiqueta (Individual)
+    window.printOne = async (id) => {
+        const item = allItems.find(i => i.id === id);
         const area = document.getElementById("printable-area");
         area.innerHTML = `<div class="sheet">${createLabelHTML(item)}</div>`;
+        
+        await waitForImages(area); // Esperamos la carga
+        
         window.print();
     };
 
-    document.getElementById("btnPrintAll").onclick = () => {
+    // Imprimir Listado (Reporte PDF)
+    document.getElementById("btnPrintList").onclick = () => {
+        if(filteredItems.length === 0) return alert("No hay datos para el reporte");
+        
+        const locName = document.getElementById("filterLocation").value === "ALL" ? "General" : document.getElementById("filterLocation").value;
         const area = document.getElementById("printable-area");
-        if(items.length === 0) return showToast("⚠️ No hay items para imprimir");
-        const allLabels = items.map(item => createLabelHTML(item)).join("");
-        area.innerHTML = `<div class="sheet">${allLabels}</div>`;
+        
+        let rows = filteredItems.map(i => `
+            <tr>
+                <td>${i.descripcion}</td>
+                <td>${i.ubicacion}</td>
+                <td>${i.estado}</td>
+                <td>${i.subvencion}</td>
+                <td style="text-align:center">${i.cantidadTotal - i.cantidadBaja}</td>
+                <td></td>
+            </tr>`).join("");
+            
+        area.innerHTML = `
+            <div class="p-8">
+                <div class="report-header">
+                    <h2 class="text-xl font-bold uppercase">Reporte: ${locName}</h2>
+                    <p class="text-sm">Fecha: ${new Date().toLocaleDateString()} | Total: ${filteredItems.length}</p>
+                </div>
+                <table class="report-table">
+                    <thead><tr><th>Descripción</th><th>Ubicación</th><th>Estado</th><th>Procedencia</th><th>Stock Real</th><th>Check</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
         window.print();
     };
 
+    // --- ESCÁNER INTELIGENTE ---
+    window.startScanner = () => {
+        document.getElementById("camera-modal").classList.remove("hidden");
+        html5QrcodeScanner = new Html5Qrcode("reader");
+        html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, (decodedText) => {
+            window.stopScanner();
+            // Busca si el texto escaneado contiene un ID conocido
+            const found = allItems.find(i => decodedText.includes(i.id));
+            if (found) {
+                filteredItems = [found];
+                renderTable();
+                document.getElementById("btnResetFilter").classList.remove("hidden");
+                alert("✅ Item encontrado: " + found.descripcion);
+            } else { 
+                alert("⚠️ QR no registrado en base de datos.\nContenido:\n" + decodedText); 
+            }
+        });
+    };
+    window.stopScanner = () => { if(html5QrcodeScanner) html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); document.getElementById("camera-modal").classList.add("hidden"); }); };
+
+    // --- GUARDADO Y EDICIÓN ---
     document.getElementById("itemsTbody").addEventListener("change", async (e) => {
         if(e.target.classList.contains("qty-input")) {
-            const tr = e.target.closest("tr");
-            const id = tr.dataset.id;
+            const id = e.target.closest("tr").dataset.id;
             const val = parseInt(e.target.value) || 0;
             let update = {};
             if(e.target.classList.contains("total")) update.cantidadTotal = val;
             if(e.target.classList.contains("baja")) update.cantidadBaja = val;
             await updateDoc(doc(db, COL, id), update);
-            showToast("✅ Sincronizado");
         }
     });
 
+    document.getElementById("itemForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = "INV-" + Date.now();
+        await setDoc(doc(db, COL, id), {
+            descripcion: document.getElementById("descripcion").value.toUpperCase(),
+            ubicacion: (document.getElementById("ubicacion").value || "S/U").toUpperCase(),
+            categoria: (document.getElementById("categoria").value || "-").toUpperCase(),
+            cantidadTotal: parseInt(document.getElementById("cantidadForm").value) || 1,
+            cantidadBaja: 0,
+            estado: document.getElementById("estado").value,
+            subvencion: (document.getElementById("subvencion").value || "S/I").toUpperCase(),
+            timestamp: Date.now()
+        });
+        e.target.reset(); document.getElementById("cantidadForm").value = 1; alert("✅ Registrado");
+    });
+    
+    window.delItem = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, COL, id)); };
+    
+    // --- IMPORTACIÓN CSV ---
     document.getElementById("fileInput").addEventListener("change", (e) => {
         const f = e.target.files[0]; if(!f) return;
         const reader = new FileReader();
@@ -344,62 +394,20 @@
             const lines = evt.target.result.split('\n');
             for(let i=1; i<lines.length; i++) {
                 const c = lines[i].split(';');
-                if(c.length >= 7 && c[1]) {
-                    const id = "INV-" + (Date.now() + i);
-                    await setDoc(doc(db, COL, id), {
-                        descripcion: c[1].trim().toUpperCase(),
-                        cantidadTotal: parseInt(c[2]) || 1,
-                        cantidadBaja: 0,
-                        estado: (c[3] || "USADO").trim().toUpperCase(),
-                        subvencion: (c[4] || "S/I").trim().toUpperCase(),
-                        ubicacion: (c[5] || "S/U").trim().toUpperCase(),
-                        categoria: (c[6] || "-").trim().toUpperCase(),
+                if(c.length >= 6) {
+                    await setDoc(doc(db, COL, "INV-" + (Date.now()+i)), {
+                        descripcion: c[1]?.trim().toUpperCase(),
+                        cantidadTotal: parseInt(c[2]) || 1, cantidadBaja: 0,
+                        estado: (c[3]||"USADO").trim().toUpperCase(), subvencion: (c[4]||"").trim().toUpperCase(),
+                        ubicacion: (c[5]||"S/U").trim().toUpperCase(), categoria: (c[6]||"-").trim().toUpperCase(),
                         timestamp: Date.now()
                     });
                 }
             }
-            alert("✅ Importación completada");
+            alert("Importación finalizada");
         };
         reader.readAsText(f);
     });
-
-    document.getElementById("itemForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const id = "INV-" + Date.now();
-        const qty = parseInt(document.getElementById("cantidadForm").value) || 1; 
-
-        await setDoc(doc(db, COL, id), {
-            descripcion: document.getElementById("descripcion").value.toUpperCase(),
-            ubicacion: (document.getElementById("ubicacion").value || "S/U").toUpperCase(),
-            categoria: (document.getElementById("categoria").value || "-").toUpperCase(),
-            cantidadTotal: qty,
-            cantidadBaja: 0,
-            estado: document.getElementById("estado").value,
-            subvencion: (document.getElementById("subvencion").value || "S/I").toUpperCase(),
-            timestamp: Date.now()
-        });
-        e.target.reset();
-        document.getElementById("cantidadForm").value = 1; 
-        showToast("✅ Registrado");
-    });
-
-    window.delItem = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, COL, id)); };
-    
-    document.getElementById("btnPurgeEmpty").onclick = async () => {
-        if(!confirm("¿Borrar items sin descripción?")) return;
-        const q = await getDocs(collection(db, COL));
-        let count = 0;
-        q.forEach(async (d) => { 
-            if(!d.data().descripcion) {
-                await deleteDoc(doc(db, COL, d.id));
-                count++;
-            }
-        });
-        showToast(`🗑️ ${count} eliminados`);
-    };
-
-    document.getElementById("clear-btn").onclick = () => document.getElementById("itemForm").reset();
-    function showToast(m) { const b = document.getElementById('message-box'); b.innerText = m; b.classList.remove('hidden'); setTimeout(() => b.classList.add('hidden'), 3000); }
   </script>
 </body>
 </html>
