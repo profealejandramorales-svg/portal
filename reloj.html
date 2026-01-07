@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Control de Horarios v2.3 (Horas Contrato)</title>
+    <title>Control de Horarios v2.5 (Corrección Total)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #f1f5f9; }
         .cell-input { width: 100%; text-align: center; background: transparent; border: 1px solid transparent; font-weight: bold; }
@@ -149,8 +150,10 @@
                         <span id="totalEarly" class="font-bold text-xl">0</span> min
                     </div>
                     <div class="bg-slate-800 p-2 px-4 rounded border border-slate-900 text-white flex gap-2 items-center shadow-lg">
-                        <span class="text-xs uppercase font-bold text-slate-300">Total a Descontar:</span>
-                        <span id="finalDebt" class="font-bold text-xl text-red-400">0</span> min
+                        <span class="text-xs uppercase font-bold text-slate-300">Total Tiempo No Trabajado:</span>
+                        <div id="finalDebt" class="font-bold text-xl text-red-400 flex items-baseline gap-2">
+                            0 <span>min</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -238,7 +241,7 @@
             sel.disabled = false;
         }
 
-        // 2. CONFIG Y RENDER (CON HORAS CONTRATO)
+        // 2. CONFIG Y RENDER
         window.loadStaffConfig = async () => {
             const listIdx = document.getElementById('staffSelector').value; if(listIdx === "") return;
             currentStaff = uniqueStaffList[listIdx];
@@ -253,7 +256,6 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     ['in','out'].forEach(type => { for(let i=1; i<=5; i++) { const k = ['Mon','Tue','Wed','Thu','Fri'][i-1] + (type === 'in' ? '_In' : '_Out'); document.getElementById(type+i).value = data[k] || ''; } });
-                    // Cargar Horas de Contrato
                     document.getElementById('contractHours').value = data.contractHours || '';
                 } else { 
                     document.querySelectorAll('.input-time').forEach(i => i.value = ''); 
@@ -267,7 +269,6 @@
             if(!currentStaff) return;
             const docId = currentStaff.name.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase(); const data = {};
             for(let i=1; i<=5; i++) { const d = ['Mon','Tue','Wed','Thu','Fri'][i-1]; data[`${d}_In`] = document.getElementById(`in${i}`).value; data[`${d}_Out`] = document.getElementById(`out${i}`).value; }
-            // Guardar Horas Contrato
             data.contractHours = document.getElementById('contractHours').value;
             
             await setDoc(doc(db, "config_horarios", docId), data, { merge: true });
@@ -276,7 +277,6 @@
 
         window.shiftData = (d) => { globalOffset += d; document.getElementById('offsetDisplay').innerText = globalOffset > 0 ? `+${globalOffset}` : globalOffset; renderTable(); };
 
-        // === LOGICA RENDERIZADO ===
         window.renderTable = () => {
             if (!currentStaff) return;
             const schedule = [null]; for(let i=1; i<=5; i++) schedule.push({ in: document.getElementById(`in${i}`).value, out: document.getElementById(`out${i}`).value }); schedule.push(null);
@@ -298,7 +298,6 @@
                 if (foundIndex !== -1) { dayOneIndex = foundIndex; }
             }
             
-            // Debug info
             const targetIdx = dayOneIndex + globalOffset;
             const previewVal = rowData[targetIdx];
             const debugText = `Col. Inicial: ${dayOneIndex} | Ajuste: ${globalOffset} | <strong>Lee en col[${targetIdx}]: ${previewVal ? String(previewVal).substring(0, 15) : '<span class="text-red-500">Vacío</span>'}</strong>`;
@@ -337,14 +336,21 @@
                 
                 currentTableData.push({ d:day, wd:wdNames[wd], pi:pIn, ri:entry, po:pOut, ro:exit, late, early, obs:'' });
             }
-            document.getElementById('totalLate').innerText = sumLate; document.getElementById('totalEarly').innerText = sumEarly; document.getElementById('finalDebt').innerText = sumLate + sumEarly;
+            document.getElementById('totalLate').innerText = sumLate; document.getElementById('totalEarly').innerText = sumEarly;
+            
+            // === CALCULO DE HORAS EN PANTALLA ===
+            const totalDebt = sumLate + sumEarly;
+            const debtHrs = Math.floor(totalDebt / 60);
+            const debtMins = totalDebt % 60;
+            document.getElementById('finalDebt').innerHTML = `${totalDebt} <span class="text-sm">min</span> <span class="text-xs text-slate-300 ml-1 font-normal">(${debtHrs}:${String(debtMins).padStart(2,'0')} hrs)</span>`;
+            
             const btn = document.getElementById('btnExport'); btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
         };
 
         window.updateObs = (idx, val) => { if(currentTableData[idx]) currentTableData[idx].obs = val; };
         function toMins(t) { if (!t) return 0; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
 
-        // 3. EXPORTAR EXCEL (ACTUALIZADO CON HORAS CONTRATO)
+        // 3. EXPORTAR EXCEL (CON LOGICA CORREGIDA)
         window.exportExcelWithLogo = async () => {
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Asistencia');
@@ -373,11 +379,42 @@
                 const row = worksheet.getRow(currentRowIdx); row.values = [r.d, r.wd, r.pi, r.ri, r.po, r.ro, r.late || 0, r.early || 0, r.obs];
                 row.eachCell((cell, colNumber) => { cell.alignment = { vertical: 'middle', horizontal: 'center' }; cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} }; if (colNumber === 7 && cell.value > 0) { cell.font = { color: { argb: 'FFDC2626' }, bold: true }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } }; } if (colNumber === 8 && cell.value > 0) { cell.font = { color: { argb: 'FFEA580C' }, bold: true }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEDD5' } }; } }); currentRowIdx++;
             });
+            
+            // TOTALES MINUTOS
             currentRowIdx++; const totalRow = worksheet.getRow(currentRowIdx); totalRow.getCell(6).value = "TOTALES (min):"; totalRow.getCell(6).font = { bold: true }; totalRow.getCell(6).alignment = { horizontal: 'right' };
             const tLate = totalRow.getCell(7); tLate.value = parseInt(document.getElementById('totalLate').innerText); tLate.font = { color: { argb: 'FFDC2626' }, bold: true }; tLate.border = { top: {style:'double'} };
             const tEarly = totalRow.getCell(8); tEarly.value = parseInt(document.getElementById('totalEarly').innerText); tEarly.font = { color: { argb: 'FFEA580C' }, bold: true }; tEarly.border = { top: {style:'double'} };
-            currentRowIdx++; const grandTotalRow = worksheet.getRow(currentRowIdx); grandTotalRow.getCell(6).value = "TOTAL DESCUENTO:"; grandTotalRow.getCell(6).font = { bold: true };
-            const gTotal = grandTotalRow.getCell(7); gTotal.value = document.getElementById('finalDebt').innerText + " min"; gTotal.font = { size: 12, bold: true, color: { argb: 'FFDC2626' } }; gTotal.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE4E6' } };
+            
+            // === TOTAL TIEMPO NO TRABAJADO ===
+            // Asegura que la celda muestre "TOTAL TIEMPO NO TRABAJADO" y no "TOTAL DESCUENTO"
+            currentRowIdx++; const grandTotalRow = worksheet.getRow(currentRowIdx); 
+            grandTotalRow.getCell(6).value = "TOTAL TIEMPO NO TRABAJADO:"; grandTotalRow.getCell(6).font = { bold: true };
+            
+            // Recalculamos desde los elementos ID por seguridad
+            const finalMins = (parseInt(document.getElementById('totalLate').innerText) || 0) + (parseInt(document.getElementById('totalEarly').innerText) || 0);
+            
+            const gTotal = grandTotalRow.getCell(7); 
+            gTotal.value = finalMins + " min"; 
+            gTotal.font = { size: 12, bold: true, color: { argb: 'FFDC2626' } }; 
+            gTotal.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE4E6' } };
+
+            // === EQUIVALENTE EN HORAS (NUEVA FILA) ===
+            currentRowIdx++; 
+            const hoursRow = worksheet.getRow(currentRowIdx);
+            hoursRow.getCell(6).value = "EQUIVALENTE EN HORAS:";
+            hoursRow.getCell(6).font = { bold: true, italic: true };
+            hoursRow.getCell(6).alignment = { horizontal: 'right' };
+
+            const hrs = Math.floor(finalMins / 60);
+            const mins = finalMins % 60;
+            const timeString = `${hrs}:${mins.toString().padStart(2, '0')} hrs`;
+
+            const hTotal = hoursRow.getCell(7);
+            hTotal.value = timeString;
+            hTotal.font = { size: 11, bold: true, color: { argb: 'FF1E293B' } };
+            hTotal.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } }; 
+            hTotal.border = { bottom: {style:'medium'} };
+
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             saveAs(blob, `Reporte_Oficial_${currentStaff.name.replace(/\s+/g, '_')}.xlsx`);
