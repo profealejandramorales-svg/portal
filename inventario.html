@@ -13,6 +13,13 @@
     .qty-input { width: 55px; padding: 4px; text-align: center; border: 1px solid #e5e7eb; border-radius: 4px; font-weight: bold; }
     .totales-footer { background: #1f2937; color: white; padding: 15px; border-radius: 0 0 8px 8px; display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
     
+    /* Highlight visual para cuando el escáner rellena el formulario */
+    @keyframes highlight {
+        0% { border-color: #2563eb; box-shadow: 0 0 10px rgba(37, 99, 235, 0.5); }
+        100% { border-color: #e5e7eb; box-shadow: none; }
+    }
+    .form-highlight { animation: highlight 2s ease-out; }
+
     /* ESTILOS DE IMPRESIÓN */
     @media print {
         @page { size: Letter portrait; margin: 5mm; }
@@ -58,7 +65,7 @@
             </details>
         </div>
         <div class="card border-t-4 border-blue-600 py-2">
-             <details>
+             <details id="detailsManual">
                 <summary class="cursor-pointer font-bold text-blue-800 text-xs uppercase">➕ Nuevo Item Manual</summary>
                 <form id="itemForm" class="mt-4 grid grid-cols-2 gap-2">
                     <input type="text" id="descripcion" class="col-span-2 p-2 border rounded text-xs" required placeholder="Descripción (Ej: Monitor Samsung)">
@@ -200,12 +207,16 @@
 
     document.getElementById("filterLocation").addEventListener("change", applyFilters);
     document.getElementById("filterState").addEventListener("change", applyFilters);
-    document.getElementById("btnResetFilter").onclick = () => {
+    
+    // Función para resetear filtros (ahora accesible globalmente)
+    window.resetFilters = () => {
         document.getElementById("filterLocation").value = "ALL";
         document.getElementById("filterState").value = "ALL";
         applyFilters();
         document.getElementById("btnResetFilter").classList.add("hidden");
     };
+    
+    document.getElementById("btnResetFilter").onclick = window.resetFilters;
 
     // --- RENDERIZADO DE TABLA ---
     const renderTable = () => {
@@ -244,8 +255,6 @@
     };
 
     // --- LÓGICA DE IMPRESIÓN (CON ESPERA DE CARGA) ---
-    
-    // Función clave: Espera a que las imágenes QR se descarguen antes de imprimir
     const waitForImages = (container) => {
         const images = container.querySelectorAll('img');
         const promises = Array.from(images).map(img => {
@@ -259,7 +268,6 @@
     };
 
     const createLabelHTML = (item) => {
-        // Datos completos en el QR
         const qrText = `ITEM: ${item.descripcion}\nUBIC: ${item.ubicacion}\nCANT: ${item.cantidadTotal}\nPROC: ${item.subvencion}\nEST: ${item.estado}\nID: ${item.id}`;
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrText)}`;
         
@@ -276,42 +284,31 @@
         </div>`;
     };
 
-    // Imprimir Etiquetas (Masivo/Filtrado)
     document.getElementById("btnPrintLabels").onclick = async () => {
         if(filteredItems.length === 0) return alert("No hay items para imprimir");
-        
         const btn = document.getElementById("btnPrintLabels");
         const originalText = btn.innerHTML;
-        btn.innerHTML = "⏳ CARGANDO..."; // Feedback visual
-        
+        btn.innerHTML = "⏳ CARGANDO...";
         const area = document.getElementById("printable-area");
         const labelsHTML = filteredItems.map(item => createLabelHTML(item)).join("");
         area.innerHTML = `<div class="sheet">${labelsHTML}</div>`;
-        
-        await waitForImages(area); // Esperamos la carga
-        
+        await waitForImages(area);
         btn.innerHTML = originalText;
         window.print();
     };
 
-    // Imprimir Etiqueta (Individual)
     window.printOne = async (id) => {
         const item = allItems.find(i => i.id === id);
         const area = document.getElementById("printable-area");
         area.innerHTML = `<div class="sheet">${createLabelHTML(item)}</div>`;
-        
-        await waitForImages(area); // Esperamos la carga
-        
+        await waitForImages(area);
         window.print();
     };
 
-    // Imprimir Listado (Reporte PDF)
     document.getElementById("btnPrintList").onclick = () => {
         if(filteredItems.length === 0) return alert("No hay datos para el reporte");
-        
         const locName = document.getElementById("filterLocation").value === "ALL" ? "General" : document.getElementById("filterLocation").value;
         const area = document.getElementById("printable-area");
-        
         let rows = filteredItems.map(i => `
             <tr>
                 <td>${i.descripcion}</td>
@@ -321,7 +318,6 @@
                 <td style="text-align:center">${i.cantidadTotal - i.cantidadBaja}</td>
                 <td></td>
             </tr>`).join("");
-            
         area.innerHTML = `
             <div class="p-8">
                 <div class="report-header">
@@ -336,21 +332,61 @@
         window.print();
     };
 
-    // --- ESCÁNER INTELIGENTE ---
+    // --- ESCÁNER INTELIGENTE MEJORADO ---
     window.startScanner = () => {
         document.getElementById("camera-modal").classList.remove("hidden");
         html5QrcodeScanner = new Html5Qrcode("reader");
         html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, (decodedText) => {
-            window.stopScanner();
-            // Busca si el texto escaneado contiene un ID conocido
+            
+            // 1. Buscamos si el ID escaneado existe
             const found = allItems.find(i => decodedText.includes(i.id));
+            
             if (found) {
+                window.stopScanner();
+                // Si existe, filtramos para mostrarlo
                 filteredItems = [found];
                 renderTable();
                 document.getElementById("btnResetFilter").classList.remove("hidden");
-                alert("✅ Item encontrado: " + found.descripcion);
+                
+                // Feedback visual: color verde momentáneo en la tabla
+                const row = document.querySelector(`tr[data-id="${found.id}"]`);
+                if(row) {
+                    row.style.backgroundColor = "#dcfce7";
+                    setTimeout(() => row.style.backgroundColor = "", 2000);
+                }
+                alert("✅ Item ENCONTRADO:\n" + found.descripcion);
+
             } else { 
-                alert("⚠️ QR no registrado en base de datos.\nContenido:\n" + decodedText); 
+                // 2. Si NO existe, preguntamos si queremos crearlo
+                // Usamos un sonido o vibración si es posible (opcional) en móviles
+                if(navigator.vibrate) navigator.vibrate(200);
+
+                if(confirm(`⚠️ El código no está en la base de datos.\n\nContenido: "${decodedText}"\n\n¿Quieres registrar este item ahora?`)) {
+                    
+                    window.stopScanner(); // Detenemos cámara
+                    window.resetFilters(); // Limpiamos filtros para que se vea el nuevo item al guardar
+
+                    // ABRIR FORMULARIO
+                    const details = document.getElementById("detailsManual");
+                    details.open = true;
+                    
+                    // LLENAR INPUT
+                    const descInput = document.getElementById("descripcion");
+                    descInput.value = decodedText + " - "; // Agregamos el texto escaneado
+                    descInput.focus(); // Ponemos el cursor ahí
+                    
+                    // SCROLL hacia el formulario para que el usuario sepa dónde está
+                    details.scrollIntoView({ behavior: "smooth", block: "center" });
+
+                    // Highlight visual
+                    document.getElementById("itemForm").classList.add("form-highlight");
+                    setTimeout(() => document.getElementById("itemForm").classList.remove("form-highlight"), 2000);
+
+                } else {
+                    // Si dice que NO, solo mostramos el alert normal y seguimos escaneando (o paramos)
+                     alert("⚠️ QR no registrado."); 
+                     window.stopScanner();
+                }
             }
         });
     };
@@ -381,7 +417,14 @@
             subvencion: (document.getElementById("subvencion").value || "S/I").toUpperCase(),
             timestamp: Date.now()
         });
-        e.target.reset(); document.getElementById("cantidadForm").value = 1; alert("✅ Registrado");
+        e.target.reset(); 
+        document.getElementById("cantidadForm").value = 1; 
+        
+        // Feedback de éxito
+        const msg = document.getElementById("message-box");
+        msg.textContent = "✅ Item Guardado Exitosamente";
+        msg.classList.remove("hidden");
+        setTimeout(() => msg.classList.add("hidden"), 3000);
     });
     
     window.delItem = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, COL, id)); };
