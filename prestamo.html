@@ -13,6 +13,7 @@
             transition: all 0.2s; 
             cursor: pointer; 
             user-select: none;
+            overflow: hidden; 
         }
         .resource-box:active { transform: scale(0.95); }
         
@@ -36,6 +37,10 @@
             #report-area { position: absolute; top: 0; left: 0; width: 100%; }
             .no-print { display: none !important; }
         }
+        
+        /* Scrollbar para lista alumnos */
+        .student-list-container::-webkit-scrollbar { width: 6px; }
+        .student-list-container::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4 md:p-8">
@@ -53,8 +58,11 @@
                 </div>
             </div>
             
-            <div class="flex gap-4 mt-4 md:mt-0">
-                <div class="text-center px-4 border-r">
+            <div class="flex gap-4 mt-4 md:mt-0 items-center">
+                <button onclick="openRosterModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-3 rounded flex items-center gap-2 text-sm shadow-sm border border-gray-300">
+                    ⚙️ Gestión Cursos
+                </button>
+                <div class="text-center px-4 border-l border-r">
                     <span class="block text-2xl font-bold text-green-600" id="count-available">0</span>
                     <span class="text-xs text-gray-500 uppercase">Disponibles</span>
                 </div>
@@ -164,15 +172,32 @@
             <div class="space-y-3">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Curso</label>
-                    <select id="modal-course" class="w-full border p-2 rounded"></select>
+                    <select id="modal-course" class="w-full border p-2 rounded">
+                        <option value="">-- Seleccionar Curso --</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Profesor Responsable</label>
                     <input type="text" id="modal-teacher" class="w-full border p-2 rounded" placeholder="Docente a cargo">
                 </div>
-                <div class="bg-blue-50 p-2 rounded border border-blue-100">
-                    <label class="block text-xs font-bold text-blue-800 uppercase mb-1">Alumno (Opcional)</label>
-                    <input type="text" id="modal-student" class="w-full border p-2 rounded bg-white text-sm" placeholder="Dejar en blanco si es préstamo masivo">
+
+                <div id="assign-method-container" class="hidden bg-indigo-50 p-3 rounded border border-indigo-100 flex items-start gap-3">
+                    <div class="flex h-5 items-center">
+                        <input type="checkbox" id="chk-by-list" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300" onchange="toggleStudentInput()">
+                    </div>
+                    <div class="text-sm">
+                        <label for="chk-by-list" class="font-bold text-indigo-900 cursor-pointer select-none">
+                            Asignar automáticamente por N° de Lista
+                        </label>
+                        <p class="text-xs text-indigo-600 font-normal">PC 1 → Alumno 1, PC 2 → Alumno 2, etc. (Los PCs sobrantes no se prestarán).</p>
+                    </div>
+                </div>
+
+                <div id="manual-student-container" class="bg-blue-50 p-2 rounded border border-blue-100 relative">
+                    <label class="block text-xs font-bold text-blue-800 uppercase mb-1">Alumno (Opcional / Manual)</label>
+                    <input type="text" id="modal-student" list="student-list" class="w-full border p-2 rounded bg-white text-sm" placeholder="Escribe para buscar..." autocomplete="off">
+                    <datalist id="student-list"></datalist>
+                    <p class="text-[10px] text-gray-500 mt-1">Este campo se usa solo si la asignación automática está desactivada.</p>
                 </div>
             </div>
 
@@ -183,9 +208,51 @@
         </div>
     </div>
 
+    <div id="roster-modal" class="modal fixed inset-0 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-2xl h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 class="text-xl font-bold text-gray-800">⚙️ Gestión de Cursos y Alumnos</h2>
+                <button onclick="document.getElementById('roster-modal').classList.add('hidden')" class="text-gray-400 hover:text-red-500 font-bold text-xl">✕</button>
+            </div>
+
+            <div class="bg-blue-50 p-3 rounded mb-4 border border-blue-100">
+                <h3 class="text-sm font-bold text-blue-800 mb-2">📂 Carga Inicial (CSV)</h3>
+                <div class="flex gap-2">
+                    <input type="file" id="csv-input" accept=".csv" class="text-xs border p-1 rounded bg-white flex-1">
+                    <button onclick="processCSV()" class="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded hover:bg-blue-700">Cargar Nómina</button>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1">Sube el archivo CSV. El sistema corregirá nombres y ordenará la lista.</p>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Seleccionar Curso para Editar</label>
+                <select id="roster-course-select" class="w-full border p-2 rounded font-bold text-gray-700 bg-gray-50 focus:bg-white transition"></select>
+            </div>
+
+            <div class="flex-1 overflow-hidden flex flex-col">
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-xs font-bold text-gray-500">LISTADO DE ALUMNOS (<span id="edit-count">0</span>)</span>
+                    <div class="flex gap-1">
+                         <input type="text" id="new-student-name" placeholder="Nombre Nuevo Alumno" class="border p-1 text-xs rounded w-48">
+                         <button onclick="addSingleStudent()" class="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded hover:bg-green-700">➕ Agregar</button>
+                    </div>
+                </div>
+                
+                <div class="border rounded bg-white flex-1 overflow-y-auto student-list-container p-2" id="roster-list-container">
+                    <p class="text-center text-gray-400 text-sm mt-10">Selecciona un curso para ver y editar sus alumnos.</p>
+                </div>
+            </div>
+
+            <div class="mt-4 text-right">
+                <span id="roster-status" class="text-xs font-bold text-green-600 mr-2"></span>
+                <button onclick="document.getElementById('roster-modal').classList.add('hidden')" class="px-6 py-2 bg-gray-800 text-white font-bold rounded hover:bg-gray-900">Listo</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, addDoc, getDocs, getDoc, arrayUnion, arrayRemove, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const firebaseConfig = { apiKey: "AIzaSyBnSMVCH0yyYUWk5z54kTIPTrWkyoeWs-I", authDomain: "suspenciones-40d0c.firebaseapp.com", projectId: "suspenciones-40d0c", storageBucket: "suspenciones-40d0c.firebasestorage.app", messagingSenderId: "853418739042", appId: "1:853418739042:web:d051befb99cd2acdd4583b" };
@@ -200,12 +267,21 @@
         };
 
         const COLL_LOGS = "inventario_logs";
+        const COLL_ROSTERS = "config_cursos";
+
         let currentRes = RESOURCES['tablets']; 
         let tabletsData = {}; 
         let selectedIds = new Set();
         let unsubscribe = null;
 
-        const schoolData = {
+        const courseMapping = {
+            "1A": "Primero Medio A", "1B": "Primero Medio B",
+            "2A": "Segundo Medio A", "2B": "Segundo Medio B",
+            "3A": "Tercero Medio A", "3C": "Tercero Medio C",
+            "4A": "Cuarto Medio A", "4C": "Cuarto Medio C"
+        };
+
+        let schoolData = {
             'Primero Medio A': [], 'Primero Medio B': [], 'Segundo Medio A': [], 'Segundo Medio B': [],
             'Tercero Medio A': [], 'Tercero Medio C': [], 'Cuarto Medio A': [], 'Cuarto Medio C': [],
             'Sala de Profesores': [], 'Biblioteca': []
@@ -214,20 +290,20 @@
         document.addEventListener('DOMContentLoaded', () => {
             signInAnonymously(auth).then(() => {
                 loadResource(currentRes.id);
+                loadRosters();
             });
 
-            const sel = document.getElementById('modal-course');
-            for(const c in schoolData) {
-                const opt = document.createElement('option'); opt.value = c; opt.textContent = c; sel.appendChild(opt);
-            }
+            populateCourseSelects();
 
             document.getElementById('btn-loan').addEventListener('click', openLoanModal);
             document.getElementById('confirm-loan-btn').addEventListener('click', executeLoan);
             document.getElementById('btn-maintenance').addEventListener('click', setMaintenance);
-            document.getElementById('btn-return-mass').addEventListener('click', returnSelected); // Nuevo botón masivo
+            document.getElementById('btn-return-mass').addEventListener('click', returnSelected);
             document.getElementById('btn-generate-report').addEventListener('click', generateReport);
+            document.getElementById('modal-course').addEventListener('change', updateStudentDatalist);
+            
+            document.getElementById('roster-course-select').addEventListener('change', renderEditList);
 
-            // Fechas reporte
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('report-start').value = today;
             document.getElementById('report-end').value = today;
@@ -243,7 +319,234 @@
             };
             window.clearSelection = () => { selectedIds.clear(); updateGridUI(); };
             window.closeModal = () => document.getElementById('loan-modal').classList.add('hidden');
+            window.openRosterModal = () => document.getElementById('roster-modal').classList.remove('hidden');
+            window.processCSV = processCSV;
+            window.removeStudent = removeStudent;
+            window.addSingleStudent = addSingleStudent;
+            window.toggleStudentInput = toggleStudentInput; 
         });
+
+        function populateCourseSelects() {
+            const selLoan = document.getElementById('modal-course');
+            const selRoster = document.getElementById('roster-course-select');
+            selLoan.innerHTML = '<option value="">-- Seleccionar Curso --</option>';
+            selRoster.innerHTML = '<option value="">-- Seleccionar Curso para Editar --</option>';
+
+            Object.keys(schoolData).forEach(c => {
+                const opt1 = document.createElement('option'); opt1.value = c; opt1.textContent = c; selLoan.appendChild(opt1);
+                const opt2 = document.createElement('option'); opt2.value = c; opt2.textContent = c; selRoster.appendChild(opt2);
+            });
+        }
+
+        async function loadRosters() {
+            try {
+                const snap = await getDocs(collection(db, COLL_ROSTERS));
+                snap.forEach(d => {
+                    if (schoolData[d.id] !== undefined) {
+                        schoolData[d.id] = d.data().students || [];
+                    }
+                });
+            } catch(e) { console.error("Error cargando nóminas", e); }
+        }
+
+        // FUNCION DE LIMPIEZA DE NOMBRES
+        function cleanName(name) {
+            if (!name) return "";
+            // Reemplazos manuales para errores comunes de encoding
+            return name
+                .replace(/µ/g, 'Á')
+                .replace(/¥/g, 'Ñ')
+                .replace(/¾/g, 'Ó')
+                .replace(/Ã‘/g, 'Ñ') // UTF-8 mal interpretado
+                .replace(/Ã/g, 'Á')  // UTF-8 mal interpretado
+                .toUpperCase();
+        }
+
+        async function processCSV() {
+            const fileInput = document.getElementById('csv-input');
+            const file = fileInput.files[0];
+            if (!file) return alert("Por favor selecciona el archivo CSV.");
+
+            const reader = new FileReader();
+            
+            // Volvemos a 'ibm850' que parece ser el origen, pero APLICAMOS LIMPIEZA MANUAL
+            reader.readAsText(file, 'ibm850');
+
+            reader.onload = async (e) => {
+                const text = e.target.result;
+                const lines = text.split('\n');
+                const batchData = {}; 
+
+                let startLine = 0;
+                if(lines[0].toLowerCase().includes("run") || lines[0].toLowerCase().includes("nombre")) startLine = 1;
+
+                let count = 0;
+                for (let i = startLine; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const parts = line.split(';');
+                    if (parts.length < 3) continue;
+
+                    const code = parts[0].trim();
+                    
+                    // AQUI APLICAMOS LA LIMPIEZA
+                    const rawName = parts[2].trim();
+                    const name = cleanName(rawName);
+
+                    const courseName = courseMapping[code] || code;
+
+                    if (schoolData[courseName] !== undefined) {
+                        if (!batchData[courseName]) batchData[courseName] = [];
+                        batchData[courseName].push(name);
+                        count++;
+                    }
+                }
+
+                if (count === 0) return alert("No se encontraron datos. Verifica el CSV.");
+
+                if(!confirm(`Se encontraron ${count} alumnos. ¿Importar y actualizar nombres?`)) return;
+
+                document.getElementById('roster-status').textContent = "⏳ Guardando nombres corregidos...";
+                
+                try {
+                    const promises = Object.keys(batchData).map(async (course) => {
+                         // ORDENAMIENTO INTELIGENTE (localeCompare)
+                         // Esto asegura que ÁLVAREZ vaya antes que CASTILLO aunque tenga tilde
+                         batchData[course].sort((a, b) => {
+                             return a.localeCompare(b, 'es', { sensitivity: 'base' });
+                         });
+                         
+                         await setDoc(doc(db, COLL_ROSTERS, course), { students: batchData[course] });
+                         schoolData[course] = batchData[course];
+                    });
+                    
+                    await Promise.all(promises);
+                    alert("✅ Importación completada. Nombres limpiados y reordenados.");
+                    document.getElementById('roster-status').textContent = "✅ Nombres corregidos";
+                    fileInput.value = "";
+                    renderEditList();
+                } catch (err) {
+                    console.error(err);
+                    alert("Error guardando en base de datos.");
+                }
+            };
+        }
+
+        function renderEditList() {
+            const course = document.getElementById('roster-course-select').value;
+            const container = document.getElementById('roster-list-container');
+            const countSpan = document.getElementById('edit-count');
+            
+            container.innerHTML = '';
+            countSpan.textContent = '0';
+
+            if (!course || !schoolData[course]) {
+                container.innerHTML = '<p class="text-center text-gray-400 text-sm mt-10">Selecciona un curso...</p>';
+                return;
+            }
+
+            // Usamos localeCompare también aquí para visualizar
+            const students = schoolData[course].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+            countSpan.textContent = students.length;
+
+            if (students.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 text-sm mt-4">No hay alumnos registrados en este curso.</p>';
+                return;
+            }
+
+            const ul = document.createElement('ul');
+            ul.className = "divide-y divide-gray-100";
+            
+            students.forEach(student => {
+                const li = document.createElement('li');
+                li.className = "py-2 px-2 flex justify-between items-center hover:bg-gray-50 text-xs";
+                li.innerHTML = `
+                    <span class="font-medium text-gray-700 uppercase">${student}</span>
+                    <button onclick="removeStudent('${course}', '${student}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded font-bold ml-2" title="Eliminar Alumno">🗑️</button>
+                `;
+                ul.appendChild(li);
+            });
+            container.appendChild(ul);
+        }
+
+        async function addSingleStudent() {
+            const course = document.getElementById('roster-course-select').value;
+            const nameInput = document.getElementById('new-student-name');
+            // Limpiamos también el input manual por si acaso
+            const name = cleanName(nameInput.value.trim());
+
+            if (!course) return alert("Selecciona un curso primero.");
+            if (!name) return alert("Escribe el nombre del alumno.");
+
+            try {
+                await updateDoc(doc(db, COLL_ROSTERS, course), { students: arrayUnion(name) });
+                if (!schoolData[course].includes(name)) schoolData[course].push(name);
+                nameInput.value = "";
+                renderEditList();
+                showToast(`Alumno agregado a ${course}`);
+            } catch (e) {
+                if (e.code === 'not-found') {
+                    await setDoc(doc(db, COLL_ROSTERS, course), { students: [name] });
+                    schoolData[course] = [name];
+                    renderEditList();
+                } else {
+                    console.error(e);
+                    alert("Error al agregar.");
+                }
+            }
+        }
+
+        async function removeStudent(course, studentName) {
+            if(!confirm(`¿Eliminar a ${studentName}?`)) return;
+            try {
+                await updateDoc(doc(db, COLL_ROSTERS, course), { students: arrayRemove(studentName) });
+                schoolData[course] = schoolData[course].filter(s => s !== studentName);
+                renderEditList();
+            } catch(e) { console.error(e); alert("Error al eliminar."); }
+        }
+
+        function updateStudentDatalist() {
+            const course = document.getElementById('modal-course').value;
+            const datalist = document.getElementById('student-list');
+            const input = document.getElementById('modal-student');
+            const methodContainer = document.getElementById('assign-method-container');
+            const checkbox = document.getElementById('chk-by-list');
+
+            datalist.innerHTML = ''; 
+            input.value = ''; 
+
+            if(course && schoolData[course] && schoolData[course].length > 0) {
+                methodContainer.classList.remove('hidden');
+                checkbox.checked = true; 
+                toggleStudentInput(); 
+
+                schoolData[course].forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    datalist.appendChild(opt);
+                });
+                input.placeholder = `Buscar entre ${schoolData[course].length} alumnos...`;
+            } else {
+                methodContainer.classList.add('hidden');
+                checkbox.checked = false;
+                toggleStudentInput();
+                input.placeholder = "Escribe el nombre...";
+            }
+        }
+
+        function toggleStudentInput() {
+            const isChecked = document.getElementById('chk-by-list').checked;
+            const container = document.getElementById('manual-student-container');
+            const input = document.getElementById('modal-student');
+
+            if (isChecked) {
+                container.classList.add('opacity-50', 'pointer-events-none');
+                input.value = ''; 
+            } else {
+                container.classList.remove('opacity-50', 'pointer-events-none');
+            }
+        }
 
         function switchResource(type) {
             document.getElementById('tab-tablets').className = `flex-1 py-3 font-bold text-center rounded-l-xl transition ${type === 'tablets' ? 'tab-active' : 'tab-inactive'}`;
@@ -297,15 +600,27 @@
                 if (selectedIds.has(t.id)) div.classList.add('status-selected');
 
                 let subText = "";
+                let subClass = "bg-black/10 text-gray-600";
+
                 if(t.status === 'loaned') {
-                    subText = t.loanData.student ? t.loanData.student.split(' ')[0] : (t.loanData.teacher ? t.loanData.teacher.split(' ')[0] : 'Ocupado');
-                    div.title = `Prestado a: ${t.loanData.teacher} (${t.loanData.course})`;
+                    let raw = t.loanData.student || t.loanData.teacher || "Ocupado";
+                    if(raw.includes(' - ')) { raw = raw.split(' - ')[1]; }
+                    
+                    // Limpieza segura en visualización por si quedó basura
+                    raw = cleanName(raw);
+
+                    subText = raw.split(' ')[0].substring(0, 10);
+                    subClass = "bg-red-700 text-white font-bold tracking-wide";
+                    div.title = `Prestado a: ${t.loanData.teacher} (${t.loanData.course}) - ${raw}`;
                 } else if(t.status === 'maintenance') {
                     subText = "Mantención";
                 }
 
-                div.innerHTML = `<span class="text-xs opacity-75">${currentRes.prefix}</span><span class="text-xl">${t.id}</span>
-                                 <span class="text-[9px] truncate w-full text-center px-1 bg-black/10 mt-1">${subText}</span>`;
+                div.innerHTML = `<span class="text-xs opacity-75 mb-1">${currentRes.prefix}</span>
+                                 <span class="text-xl leading-none">${t.id}</span>
+                                 <div class="absolute bottom-0 w-full text-center text-[10px] py-1 truncate px-1 ${subClass}">
+                                    ${subText}
+                                 </div>`;
                 grid.appendChild(div);
             });
 
@@ -318,15 +633,7 @@
         function toggleSelection(id) {
             if (selectedIds.has(id)) selectedIds.delete(id);
             else selectedIds.add(id);
-            
-            const grid = document.getElementById('grid-container');
-            // Re-render simple visual update
-            Array.from(grid.children).forEach(div => {
-                const spanVal = div.querySelector('span:nth-child(2)').innerText;
-                if (selectedIds.has(spanVal)) div.classList.add('status-selected');
-                else div.classList.remove('status-selected');
-            });
-            updateButtonsState();
+            window.updateGridUI();
         }
 
         function updateButtonsState() {
@@ -334,68 +641,108 @@
             document.getElementById('sel-count').textContent = count;
             document.getElementById('btn-loan').disabled = count === 0;
             document.getElementById('btn-maintenance').disabled = count === 0;
-            document.getElementById('btn-return-mass').disabled = count === 0; // Habilitar botón devolución
+            document.getElementById('btn-return-mass').disabled = count === 0; 
         }
 
         function openLoanModal() {
-            // Verificar si hay items no disponibles seleccionados
             for(let id of selectedIds) {
                 if(tabletsData[id].status !== 'available') return showToast("⚠️ Selección inválida: Incluye equipos ocupados.");
             }
             document.getElementById('modal-qty').textContent = selectedIds.size;
             document.getElementById('modal-resource-name').textContent = currentRes.name;
+            
             document.getElementById('modal-student').value = '';
+            document.getElementById('modal-course').value = '';
+            document.getElementById('student-list').innerHTML = '';
+            document.getElementById('assign-method-container').classList.add('hidden'); 
+            document.getElementById('chk-by-list').checked = false;
+            toggleStudentInput();
+            
             document.getElementById('loan-modal').classList.remove('hidden');
         }
 
         async function executeLoan() {
             const course = document.getElementById('modal-course').value;
             const teacher = document.getElementById('modal-teacher').value.trim();
-            const student = document.getElementById('modal-student').value.trim();
+            const specificStudent = document.getElementById('modal-student').value.trim();
+            const useListMethod = document.getElementById('chk-by-list').checked;
 
             if(!teacher) return alert("Ingrese el nombre del profesor.");
+
             const btn = document.getElementById('confirm-loan-btn');
             btn.disabled = true; btn.textContent = "Guardando...";
 
             const ids = Array.from(selectedIds);
             const now = new Date().toISOString();
+            
+            const courseStudents = (useListMethod && course && schoolData[course]) ? schoolData[course] : [];
+
+            // FILTRAR: Solo prestamos los IDs que tengan un alumno asignado si es automático
+            let finalIdsToLoan = [];
+
+            if (useListMethod) {
+                // Filtramos los PCs cuyo número sea mayor a la cantidad de alumnos
+                finalIdsToLoan = ids.filter(id => {
+                    const listIndex = parseInt(id) - 1;
+                    return listIndex < courseStudents.length;
+                });
+
+                if (finalIdsToLoan.length === 0) {
+                    btn.disabled = false; btn.textContent = "Confirmar";
+                    return alert("El curso seleccionado no tiene alumnos cargados o los PCs seleccionados exceden la lista.");
+                }
+            } else {
+                // Manual: prestamos todo lo seleccionado
+                finalIdsToLoan = ids;
+            }
 
             try {
-                const promises = ids.map(id => updateDoc(doc(db, currentRes.collection, id), {
-                    status: 'loaned',
-                    loanData: { course, teacher, student, timestamp: now }
-                }));
+                const promises = finalIdsToLoan.map((id) => {
+                    let assignedStudent = specificStudent; 
+                    
+                    if (useListMethod) {
+                        const listIndex = parseInt(id) - 1; 
+                        if (courseStudents[listIndex]) {
+                             assignedStudent = `N°${listIndex + 1} - ${courseStudents[listIndex]}`;
+                        } else {
+                             assignedStudent = "---"; 
+                        }
+                    }
+
+                    return updateDoc(doc(db, currentRes.collection, id), {
+                        status: 'loaned',
+                        loanData: { course, teacher, student: assignedStudent, timestamp: now }
+                    });
+                });
+
                 await Promise.all(promises);
 
                 await addDoc(collection(db, COLL_LOGS), {
-                    action: 'Asignación', resourceType: currentRes.name, tablets: ids,
-                    course, teacher, student, timestamp: now
+                    action: useListMethod ? 'Asignación Masiva (Lista)' : 'Asignación', 
+                    resourceType: currentRes.name, tablets: finalIdsToLoan,
+                    course, teacher, student: useListMethod ? "Varios (N° Lista)" : specificStudent, 
+                    timestamp: now
                 });
 
                 closeModal();
                 window.clearSelection();
-                showToast(`✅ ${ids.length} equipos asignados.`);
+                showToast(useListMethod ? `✅ Se asignaron ${finalIdsToLoan.length} equipos (ajustado a lista).` : `✅ ${finalIdsToLoan.length} equipos asignados.`);
             } catch (e) { console.error(e); } finally { btn.disabled = false; btn.textContent = "Confirmar"; }
         }
 
-        // DEVOLUCIÓN MASIVA (LIMPIAR PANTALLA)
         async function returnSelected() {
             if(!confirm(`¿Liberar / Devolver ${selectedIds.size} equipos seleccionados?`)) return;
-            
             const ids = Array.from(selectedIds);
             const now = new Date().toISOString();
-            
             try {
                 const promises = ids.map(id => updateDoc(doc(db, currentRes.collection, id), {
                     status: 'available', loanData: null
                 }));
                 await Promise.all(promises);
-
                 await addDoc(collection(db, COLL_LOGS), {
                     action: 'Devolución Masiva', resourceType: currentRes.name, tablets: ids,
                     course: "N/A", teacher: "Sistema", timestamp: now
                 });
-
                 window.clearSelection();
                 showToast("✅ Equipos liberados exitosamente.");
             } catch(e) { console.error(e); showToast("Error al liberar."); }
@@ -411,7 +758,6 @@
             } catch(e) { console.error(e); }
         }
 
-        // GENERADOR DE REPORTES
         async function generateReport() {
             const start = document.getElementById('report-start').value;
             const end = document.getElementById('report-end').value;
@@ -422,7 +768,6 @@
             area.classList.remove('hidden');
             document.getElementById('report-dates').textContent = `Desde ${start} hasta ${end}`;
 
-            // Descargar logs y filtrar en cliente
             const q = collection(db, COLL_LOGS);
             const snap = await getDocs(q);
             const logs = [];
@@ -433,7 +778,7 @@
                 if(logDate >= start && logDate <= end) logs.push(data);
             });
 
-            logs.sort((a,b) => b.timestamp.localeCompare(a.timestamp)); // Descendente
+            logs.sort((a,b) => b.timestamp.localeCompare(a.timestamp)); 
 
             tbody.innerHTML = '';
             if(logs.length === 0) {
@@ -463,6 +808,16 @@
             box.classList.remove('hidden');
             setTimeout(() => box.classList.add('hidden'), 3000);
         }
+
+        window.updateGridUI = () => {
+             const grid = document.getElementById('grid-container');
+            Array.from(grid.children).forEach(div => {
+                const spanVal = div.querySelector('span:nth-child(2)').innerText;
+                if (selectedIds.has(spanVal)) div.classList.add('status-selected');
+                else div.classList.remove('status-selected');
+            });
+            updateButtonsState();
+        };
     </script>
 </body>
 </html>

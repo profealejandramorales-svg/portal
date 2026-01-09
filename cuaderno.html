@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuaderno Digital - ProfeAle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Indie+Flower&family=Inter:wght@300;400;600&family=Patrick+Hand&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --paper-color: #fff0f5; --line-color: #e3dce6; --spiral-color: #94a3b8; }
+        body {
+            background-color: #f3f4f6; background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px; font-family: 'Inter', sans-serif; height: 100vh;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .notebook-container {
+            width: 95%; max-width: 1200px; height: 90vh; background-color: var(--paper-color);
+            border-radius: 10px 20px 20px 10px; box-shadow: 10px 10px 30px rgba(0,0,0,0.15), inset 0 0 40px rgba(0,0,0,0.05);
+            position: relative; display: flex; padding-left: 60px;
+        }
+        .lined-paper {
+            background-image: linear-gradient(var(--line-color) 1px, transparent 1px);
+            background-size: 100% 2rem; background-attachment: local; line-height: 2rem;
+        }
+        /* Espiral */
+        .spiral-binding {
+            position: absolute; left: 0; top: 20px; bottom: 20px; width: 50px;
+            display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; z-index: 20;
+        }
+        .ring-hole { width: 100%; height: 40px; position: relative; }
+        .ring-hole::before {
+            content: ''; position: absolute; right: 5px; top: 12px; width: 12px; height: 12px;
+            background: #333; border-radius: 50%; box-shadow: inset 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .ring-hole::after {
+            content: ''; position: absolute; left: -15px; top: 8px; width: 50px; height: 20px;
+            border-radius: 50%; border-top: 4px solid var(--spiral-color); border-bottom: 2px solid transparent;
+            transform: rotate(-10deg); box-shadow: 2px -2px 2px rgba(0,0,0,0.2);
+        }
+        /* Tabs */
+        .tabs-container { position: absolute; right: -40px; top: 50px; display: flex; flex-direction: column; gap: 10px; }
+        .tab {
+            width: 60px; height: 50px; background: white; border-radius: 0 10px 10px 0;
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+            cursor: pointer; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); transition: all 0.2s; position: relative; left: 0;
+        }
+        .tab:hover { left: 5px; }
+        .tab.active { width: 70px; background: var(--paper-color); font-weight: bold; box-shadow: 5px 2px 10px rgba(0,0,0,0.1); z-index: 10; }
+        .tab-1 { border-right: 5px solid #ec4899; color: #ec4899; }
+        .tab-2 { border-right: 5px solid #8b5cf6; color: #8b5cf6; }
+        .tab-3 { border-right: 5px solid #10b981; color: #10b981; }
+        .tab-4 { border-right: 5px solid #f59e0b; color: #f59e0b; }
+        .tab-5 { border-right: 5px solid #ef4444; color: #ef4444; } 
+
+        /* Contenido */
+        .page-content { flex: 1; height: 100%; padding: 2rem 2rem 3rem 1rem; overflow-y: auto; display: none; animation: fadeIn 0.4s ease; position: relative; }
+        .page-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Firma */
+        .page-content::after {
+            content: 'ProfeAle 💖'; position: absolute; bottom: 1rem; right: 2rem;
+            font-family: 'Dancing Script', cursive; font-size: 1.8rem; font-weight: 600;
+            background: linear-gradient(to right, #ec4899, #8b5cf6); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; background-clip: text; color: transparent;
+            filter: drop-shadow(1px 1px 0px rgba(255,255,255, 0.8)); opacity: 0.9;
+            transform: rotate(-3deg); pointer-events: none; z-index: 0;
+        }
+        .handwritten-title {
+            font-family: 'Patrick Hand', cursive; font-size: 2.5rem; color: #831843;
+            border-bottom: 2px dashed #db2777; padding-bottom: 0.5rem; margin-bottom: 1.5rem; outline: none;
+        }
+        .handwritten-input { background: transparent; border: none; font-family: 'Indie Flower', cursive; font-size: 1.2rem; width: 100%; outline: none; color: #374151; }
+        .post-it { padding: 1rem; box-shadow: 2px 4px 6px rgba(0,0,0,0.1); font-family: 'Indie Flower', cursive; font-size: 1.2rem; transition: transform 0.2s; cursor: text; min-height: 100px; outline: none; z-index: 5; }
+        .post-it:focus { transform: scale(1.05); z-index: 10; box-shadow: 5px 10px 15px rgba(0,0,0,0.15); }
+        .reminder-item { display: flex; align-items: center; gap: 10px; margin-bottom: 0.5rem; font-family: 'Indie Flower', cursive; font-size: 1.3rem; color: #4b5563; }
+        .reminder-checkbox { appearance: none; width: 20px; height: 20px; border: 2px solid #db2777; border-radius: 4px; cursor: pointer; position: relative; flex-shrink: 0; }
+        .reminder-checkbox:checked { background-color: #db2777; }
+        .reminder-checkbox:checked::after { content: '✔'; position: absolute; color: white; font-size: 14px; left: 2px; top: -2px; }
+        .reminder-text { border-bottom: 1px solid transparent; width: 100%; outline: none; }
+        .reminder-text:focus { border-bottom: 1px dashed #db2777; }
+        .reminder-checkbox:checked + .reminder-text { text-decoration: line-through; opacity: 0.6; }
+        [contenteditable]:empty:before { content: attr(placeholder); color: #9ca3af; font-style: italic; }
+        #save-status { position: absolute; top: 10px; right: 20px; font-size: 0.8rem; font-weight: bold; color: #10b981; opacity: 0; transition: opacity 0.5s; font-family: 'Inter', sans-serif; }
+        
+        /* Estilos Tabla de Notas */
+        .grade-table th { font-family: 'Patrick Hand', cursive; font-size: 1.1rem; color: #831843; border-bottom: 2px solid #ec4899; }
+        .grade-table input { background: transparent; text-align: center; width: 100%; font-family: 'Inter', sans-serif; outline: none; border-bottom: 1px solid transparent; }
+        .grade-table input:focus { border-bottom: 1px solid #ec4899; background: rgba(255,255,255,0.5); }
+        .grade-table tr:hover { background-color: rgba(236, 72, 153, 0.05); }
+        
+        /* Estilos para Conducta */
+        .select-hand { background: rgba(255,255,255,0.7); border: 1px solid #9ca3af; font-family: 'Inter', sans-serif; padding: 5px; border-radius: 5px; outline: none; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #fbcfe8; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+    </style>
+</head>
+<body>
+
+    <div class="notebook-container lined-paper">
+        <div id="save-status">☁️ Guardado en la nube</div>
+        
+        <div class="spiral-binding">
+            <div class="ring-hole"></div><div class="ring-hole"></div><div class="ring-hole"></div><div class="ring-hole"></div><div class="ring-hole"></div><div class="ring-hole"></div>
+            <div class="ring-hole"></div><div class="ring-hole"></div><div class="ring-hole"></div><div class="ring-hole"></div><div class="ring-hole"></div><div class="ring-hole"></div>
+        </div>
+
+        <div class="tabs-container">
+            <div class="tab tab-1 active" onclick="switchPage('dashboard', this)">🏠</div>
+            <div class="tab tab-2" onclick="switchPage('grades', this)" title="Notas">📚</div>
+            <div class="tab tab-3" onclick="switchPage('planning', this)" title="Planificación">✏️</div>
+            <div class="tab tab-4" onclick="switchPage('notes', this)" title="Apuntes">💡</div>
+            <div class="tab tab-5" onclick="switchPage('conduct', this)" title="Anotaciones / Conducta">⚠️</div>
+        </div>
+
+        <div id="dashboard" class="page-content active">
+            <h1 class="handwritten-title" contenteditable="true" id="prof-name">Cuaderno de ProfeAle 👋</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-6 relative z-10">
+                    <div class="bg-white/50 p-4 rounded-xl shadow-sm border border-pink-100">
+                        <h3 class="font-bold text-pink-800 mb-2 font-mono uppercase text-sm tracking-widest">Horario (Editable)</h3>
+                        <div id="schedule-container">
+                            <ul class="space-y-2">
+                                <li class="flex gap-3 border-b border-pink-200 pb-1"><span class="font-bold text-gray-600 w-16" contenteditable="true">08:30</span><span class="font-hand text-lg text-pink-700 w-full" contenteditable="true">Clase 1...</span></li>
+                                <li class="flex gap-3 border-b border-pink-200 pb-1"><span class="font-bold text-gray-600 w-16" contenteditable="true">10:15</span><span class="font-hand text-lg text-pink-700 w-full" contenteditable="true">Clase 2...</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <h3 class="font-hand text-2xl text-indigo-700 mb-2 rotate-[-1deg]">📌 Recordatorios</h3>
+                        <div class="bg-indigo-50/50 p-4 rounded-lg border-2 border-dashed border-indigo-200 transform rotate-[1deg]" id="reminder-container"></div>
+                        <button onclick="addReminder()" class="text-xs text-indigo-500 hover:text-indigo-700 font-bold mt-2 ml-4">+ Tarea</button>
+                    </div>
+                </div>
+                <div class="relative min-h-[400px] border-l-2 border-dashed border-pink-200 pl-6 z-10">
+                    <p class="text-xs text-gray-400 font-mono text-center mb-4">NOTAS RÁPIDAS (CLOUD)</p>
+                    <div class="post-it absolute top-10 left-0 w-48 bg-yellow-100 rotate-[-3deg]" contenteditable="true" id="note1">...</div>
+                    <div class="post-it absolute top-24 right-4 w-48 bg-blue-100 rotate-[2deg]" contenteditable="true" id="note2">...</div>
+                    <div class="post-it absolute bottom-20 left-10 w-48 bg-pink-100 rotate-[-1deg]" contenteditable="true" id="note3">...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="grades" class="page-content">
+            <h1 class="handwritten-title">Libro de Clases</h1>
+            <div class="flex items-center gap-4 mb-4 relative z-10">
+                <label class="font-bold text-pink-800 text-sm uppercase">Seleccionar Curso:</label>
+                <select id="course-select" class="select-hand w-64">
+                    <option value="">-- Cargar Curso --</option>
+                </select>
+            </div>
+            <div class="bg-white/60 rounded-lg shadow-sm border border-pink-200 overflow-hidden relative z-10">
+                <table class="w-full text-left grade-table">
+                    <thead class="bg-pink-100/50">
+                        <tr>
+                            <th class="p-3 w-10">#</th><th class="p-3">Alumno</th><th class="p-3 text-center w-16">N1</th><th class="p-3 text-center w-16">N2</th><th class="p-3 text-center w-16">N3</th><th class="p-3 text-center w-16">N4</th><th class="p-3 text-center w-16 font-bold">Prom</th>
+                        </tr>
+                    </thead>
+                    <tbody id="grades-body" class="text-sm"><tr><td colspan="7" class="p-4 text-center text-gray-400 italic">Selecciona un curso...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="conduct" class="page-content">
+            <h1 class="handwritten-title text-gray-800" style="color: #4b5563; border-color: #9ca3af;">Registro de Evidencia</h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10 h-full">
+                <div class="md:col-span-1 bg-white/80 p-4 rounded-xl border border-gray-300 h-fit shadow-sm">
+                    <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase">Nueva Anotación</h3>
+                    
+                    <div class="mb-3">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">CURSO</label>
+                        <select id="conduct-course-select" class="select-hand w-full text-sm">
+                            <option value="">-- Seleccionar --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">ALUMNO</label>
+                        <select id="conduct-student-select" class="select-hand w-full text-sm">
+                            <option value="">-- Primero elige curso --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">TIPO DE ANOTACIÓN</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="obs-type" value="negative" checked class="mr-2 text-red-600 focus:ring-red-500">
+                                <span class="text-sm text-red-700 font-bold">Negativa</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="obs-type" value="positive" class="mr-2 text-green-600 focus:ring-green-500">
+                                <span class="text-sm text-green-700 font-bold">Positiva</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">DETALLE</label>
+                        <textarea id="conduct-detail" class="w-full bg-white border border-gray-300 rounded p-2 text-sm h-24 resize-none outline-none focus:ring-1 focus:ring-gray-400" placeholder="Describe el hecho..."></textarea>
+                    </div>
+
+                    <button onclick="saveObservation()" class="w-full bg-gray-700 text-white font-bold py-2 rounded shadow hover:bg-gray-800 transition">Guardar Registro</button>
+                </div>
+
+                <div class="md:col-span-2 flex flex-col h-full overflow-hidden">
+                    <h3 class="font-bold text-gray-600 mb-2 text-sm uppercase">Historial de Registros</h3>
+                    <div class="bg-white/60 rounded-xl border border-gray-200 flex-1 overflow-y-auto p-4" id="observations-list">
+                        <p class="text-center text-gray-400 italic mt-10">No hay registros seleccionados.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="planning" class="page-content">
+            <h1 class="handwritten-title">Planificación</h1>
+            <div class="space-y-6 relative z-10">
+                <div><label class="block text-xs font-bold text-pink-400 uppercase">Objetivo</label><textarea id="plan-oa" class="w-full bg-transparent border border-pink-200 rounded p-2 font-hand text-gray-700 h-20 resize-none focus:bg-white/50" placeholder="OA..."></textarea></div>
+                <div><label class="block text-xs font-bold text-pink-400 uppercase">Actividades</label><textarea id="plan-act" class="w-full bg-transparent border border-pink-200 rounded p-2 font-hand text-gray-700 h-40 resize-none focus:bg-white/50" placeholder="Inicio, Desarrollo, Cierre..."></textarea></div>
+            </div>
+        </div>
+
+        <div id="notes" class="page-content">
+            <h1 class="handwritten-title">Mis Apuntes</h1>
+            <div class="w-full h-full relative z-10">
+                <textarea id="big-notes" class="w-full h-[60vh] bg-transparent border-none outline-none font-hand text-xl text-gray-700 resize-none leading-[2rem]" placeholder="Escribe aquí..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot, getDocs, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyBnSMVCH0yyYUWk5z54kTIPTrWkyoeWs-I", authDomain: "suspenciones-40d0c.firebaseapp.com", projectId: "suspenciones-40d0c", storageBucket: "suspenciones-40d0c.firebasestorage.app", messagingSenderId: "853418739042", appId: "1:853418739042:web:d051befb99cd2acdd4583b" };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const NOTEBOOK_REF = doc(db, "cuaderno_digital", "profe_ale");
+        const COLL_ROSTERS = "config_cursos"; 
+
+        let isTyping = false;
+        let saveTimeout;
+        let localData = {};
+        let schoolData = {}; 
+
+        document.addEventListener('DOMContentLoaded', () => {
+            signInAnonymously(auth).then(() => {
+                console.log("Conectado a Firebase");
+                loadRosters(); 
+                
+                onSnapshot(NOTEBOOK_REF, (doc) => {
+                    if (doc.exists() && !isTyping) {
+                        localData = doc.data();
+                        loadDataToUI(localData);
+                        const obsCourse = document.getElementById('conduct-course-select').value;
+                        if(obsCourse) renderObservations(obsCourse);
+                    } else if (!doc.exists()) {
+                        saveDataToCloud();
+                    }
+                });
+            });
+
+            document.body.addEventListener('input', (e) => {
+                if(e.target.closest('#conduct') || e.target.classList.contains('grade-input')) return;
+                isTyping = true;
+                showSaving();
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    saveDataToCloud();
+                    isTyping = false;
+                }, 2000);
+            });
+
+            document.getElementById('course-select').addEventListener('change', (e) => {
+                renderGradesTable(e.target.value);
+            });
+
+            document.getElementById('conduct-course-select').addEventListener('change', (e) => {
+                const course = e.target.value;
+                const studentSelect = document.getElementById('conduct-student-select');
+                studentSelect.innerHTML = '<option value="">-- Seleccionar Alumno --</option>';
+                
+                if(course && schoolData[course]) {
+                    schoolData[course].sort().forEach(st => {
+                        const opt = document.createElement('option');
+                        opt.value = st;
+                        opt.textContent = st;
+                        studentSelect.appendChild(opt);
+                    });
+                    renderObservations(course);
+                } else {
+                    document.getElementById('observations-list').innerHTML = '<p class="text-center text-gray-400 italic mt-10">Selecciona un curso.</p>';
+                }
+            });
+
+            window.saveObservation = saveObservation;
+        });
+
+        async function loadRosters() {
+            try {
+                const snap = await getDocs(collection(db, COLL_ROSTERS));
+                const selectGrades = document.getElementById('course-select');
+                const selectConduct = document.getElementById('conduct-course-select');
+                
+                snap.forEach(d => {
+                    schoolData[d.id] = d.data().students || [];
+                    const opt1 = document.createElement('option'); opt1.value = d.id; opt1.textContent = d.id;
+                    selectGrades.appendChild(opt1);
+                    const opt2 = document.createElement('option'); opt2.value = d.id; opt2.textContent = d.id;
+                    selectConduct.appendChild(opt2);
+                });
+            } catch(e) { console.error("Error cargando cursos", e); }
+        }
+
+        async function saveObservation() {
+            const course = document.getElementById('conduct-course-select').value;
+            const student = document.getElementById('conduct-student-select').value;
+            const detail = document.getElementById('conduct-detail').value.trim();
+            // OBTENER TIPO SELECCIONADO
+            const type = document.querySelector('input[name="obs-type"]:checked').value;
+
+            if(!course || !student || !detail) return alert("Completa todos los campos.");
+
+            const newObs = {
+                id: Date.now().toString(),
+                course, student, detail, type, // Guardamos el tipo
+                date: new Date().toLocaleString()
+            };
+
+            if(!localData.observations) localData.observations = {};
+            if(!localData.observations[course]) localData.observations[course] = [];
+
+            localData.observations[course].unshift(newObs);
+
+            document.getElementById('conduct-detail').value = ""; 
+            showSaving();
+            
+            try {
+                await setDoc(NOTEBOOK_REF, localData, { merge: true });
+                showSaved();
+                renderObservations(course);
+            } catch(e) { console.error(e); alert("Error al guardar anotación"); }
+        }
+
+        function renderObservations(course) {
+            const container = document.getElementById('observations-list');
+            container.innerHTML = '';
+
+            const list = localData.observations ? localData.observations[course] || [] : [];
+
+            if(list.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 italic mt-10">No hay registros para este curso aún.</p>';
+                return;
+            }
+
+            list.forEach((obs, index) => {
+                // DEFINIR COLORES SEGÚN TIPO
+                const isNeg = obs.type === 'negative'; // Por defecto true si es antiguo
+                const borderClass = isNeg ? 'border-red-500' : 'border-green-500';
+                const bgClass = isNeg ? 'bg-red-50' : 'bg-green-50';
+                const titleColor = isNeg ? 'text-red-700' : 'text-green-700';
+
+                const div = document.createElement('div');
+                div.className = `${bgClass} p-3 rounded border-l-4 ${borderClass} shadow-sm mb-2 text-sm`;
+                div.innerHTML = `
+                    <div class="flex justify-between text-xs text-gray-500 mb-1">
+                        <strong>${obs.date}</strong>
+                        <span class="font-bold ${titleColor} uppercase">${obs.student}</span>
+                    </div>
+                    <p class="text-gray-800 font-hand text-lg leading-tight">${obs.detail}</p>
+                    <button onclick="deleteObservation('${course}', ${index})" class="text-[10px] text-gray-400 hover:text-red-600 mt-2 underline">Eliminar registro</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.deleteObservation = async (course, index) => {
+            if(!confirm("¿Borrar esta anotación?")) return;
+            localData.observations[course].splice(index, 1);
+            showSaving();
+            try {
+                await setDoc(NOTEBOOK_REF, localData, { merge: true });
+                showSaved();
+                renderObservations(course);
+            } catch(e) { console.error(e); }
+        };
+
+        function renderGradesTable(courseName) {
+            const tbody = document.getElementById('grades-body');
+            tbody.innerHTML = '';
+            if (!courseName || !schoolData[courseName]) {
+                tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-400">Selecciona un curso...</td></tr>';
+                return;
+            }
+            const students = schoolData[courseName].sort();
+            const savedGrades = localData.grades ? localData.grades[courseName] || {} : {};
+
+            students.forEach((student, index) => {
+                const sGrades = savedGrades[student] || ["", "", "", ""];
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-pink-100 group hover:bg-pink-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-gray-400 text-xs">${index + 1}</td>
+                    <td class="p-3 font-medium text-gray-700 truncate max-w-[200px]" title="${student}">${student}</td>
+                    <td class="p-3"><input type="text" class="grade-input" data-student="${student}" data-idx="0" value="${sGrades[0]}"></td>
+                    <td class="p-3"><input type="text" class="grade-input" data-student="${student}" data-idx="1" value="${sGrades[1]}"></td>
+                    <td class="p-3"><input type="text" class="grade-input" data-student="${student}" data-idx="2" value="${sGrades[2]}"></td>
+                    <td class="p-3"><input type="text" class="grade-input" data-student="${student}" data-idx="3" value="${sGrades[3]}"></td>
+                    <td class="p-3 text-center font-bold text-pink-700" id="avg-${index}">-</td>
+                `;
+                tbody.appendChild(tr);
+                calculateAvg(tr, index);
+            });
+
+            tbody.querySelectorAll('.grade-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const row = e.target.closest('tr');
+                    const index = row.querySelector('td:first-child').innerText - 1;
+                    calculateAvg(row, index);
+                    saveGrades();
+                });
+            });
+        }
+
+        function calculateAvg(row, index) {
+            let sum = 0; let count = 0;
+            row.querySelectorAll('input').forEach(inp => {
+                const val = parseFloat(inp.value.replace(',', '.'));
+                if (!isNaN(val) && val > 0) { sum += val; count++; }
+            });
+            const avgCell = document.getElementById(`avg-${index}`);
+            avgCell.textContent = count > 0 ? (sum / count).toFixed(1) : '-';
+        }
+
+        async function saveGrades() {
+            const courseName = document.getElementById('course-select').value;
+            if(!courseName) return;
+            if(!localData.grades) localData.grades = {};
+            if(!localData.grades[courseName]) localData.grades[courseName] = {};
+
+            document.querySelectorAll('.grade-input').forEach(input => {
+                const student = input.dataset.student;
+                const idx = input.dataset.idx;
+                if(!localData.grades[courseName][student]) localData.grades[courseName][student] = ["", "", "", ""];
+                localData.grades[courseName][student][idx] = input.value;
+            });
+            showSaving();
+            try { await setDoc(NOTEBOOK_REF, localData, { merge: true }); showSaved(); } catch(e) { console.error(e); }
+        }
+
+        async function saveDataToCloud() {
+            const data = {
+                profName: document.getElementById('prof-name').innerText,
+                note1: document.getElementById('note1').innerText,
+                note2: document.getElementById('note2').innerText,
+                note3: document.getElementById('note3').innerText,
+                bigNotes: document.getElementById('big-notes').value,
+                planOA: document.getElementById('plan-oa').value,
+                planAct: document.getElementById('plan-act').value,
+                scheduleHTML: document.getElementById('schedule-container').innerHTML,
+                reminders: getRemindersData(),
+                grades: localData.grades || {}, 
+                observations: localData.observations || {} 
+            };
+            localData = data;
+            try { await setDoc(NOTEBOOK_REF, data, { merge: true }); showSaved(); } catch(e) { console.error("Error guardando", e); }
+        }
+
+        function loadDataToUI(data) {
+            if(data.profName) document.getElementById('prof-name').innerText = data.profName;
+            if(data.note1) document.getElementById('note1').innerText = data.note1;
+            if(data.note2) document.getElementById('note2').innerText = data.note2;
+            if(data.note3) document.getElementById('note3').innerText = data.note3;
+            if(data.bigNotes) document.getElementById('big-notes').value = data.bigNotes;
+            if(data.planOA) document.getElementById('plan-oa').value = data.planOA;
+            if(data.planAct) document.getElementById('plan-act').value = data.planAct;
+            if(data.scheduleHTML) document.getElementById('schedule-container').innerHTML = data.scheduleHTML;
+            
+            const remContainer = document.getElementById('reminder-container');
+            remContainer.innerHTML = '';
+            if(data.reminders && data.reminders.length > 0) {
+                data.reminders.forEach(r => createReminderElement(r.text, r.done));
+            } else { createReminderElement("Bienvenida Profe Ale!", false); }
+            
+            const currentCourse = document.getElementById('course-select').value;
+            if(currentCourse) renderGradesTable(currentCourse);
+        }
+
+        function getRemindersData() {
+            const items = [];
+            document.querySelectorAll('.reminder-item').forEach(item => {
+                items.push({ text: item.querySelector('.reminder-text').innerText, done: item.querySelector('.reminder-checkbox').checked });
+            });
+            return items;
+        }
+
+        window.addReminder = () => createReminderElement("", false);
+
+        function createReminderElement(text, done) {
+            const container = document.getElementById('reminder-container');
+            const div = document.createElement('div');
+            div.className = 'reminder-item';
+            div.innerHTML = `<input type="checkbox" class="reminder-checkbox" ${done ? 'checked' : ''}><div class="reminder-text" contenteditable="true" placeholder="Nueva tarea...">${text}</div>`;
+            container.appendChild(div);
+        }
+
+        function showSaving() { const el = document.getElementById('save-status'); el.innerText = "⏳ Guardando..."; el.style.opacity = '1'; }
+        function showSaved() { const el = document.getElementById('save-status'); el.innerText = "☁️ Guardado en la nube"; setTimeout(() => { el.style.opacity = '0'; }, 2000); }
+
+        window.switchPage = (pageId, tabElement) => {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            tabElement.classList.add('active');
+        }
+    </script>
+</body>
+</html>
