@@ -47,6 +47,34 @@
         .title-font { font-family: 'Dancing Script', cursive; }
         .flower-icon { color: #ec4899; opacity: 0.8; position: absolute; z-index: 0; }
 
+        /* ESTILO DE LA FIRMA PROFEALE */
+        .firma-profe {
+            font-family: 'Dancing Script', cursive; 
+            font-size: 1.4rem; /* Tamaño ideal para footer */
+            font-weight: 700;
+            
+            /* Degradado */
+            background: linear-gradient(to right, #ec4899, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+
+            filter: drop-shadow(1px 1px 0px rgba(255,255,255, 0.5));
+            transform: rotate(-2deg);
+            display: inline-block;
+            margin: 0 4px;
+        }
+
+        .marca-registrada {
+            font-family: sans-serif;
+            font-size: 0.5em;
+            color: #db2777;
+            -webkit-text-fill-color: #db2777; /* Anula el transparente del degradado */
+            vertical-align: super;
+            font-weight: bold;
+        }
+
         /* RELOJ */
         .analog-clock-container {
             position: relative; width: 220px; height: 220px; margin: 0 auto;
@@ -277,7 +305,7 @@
 
     <footer class="bg-white/80 backdrop-blur-md py-8 mt-auto text-center border-t border-pink-100">
         <p class="text-sm font-semibold text-slate-600">Sistema de Gestión Integrado • Escuela Agrícola Sagrados Corazones</p>
-        <p class="text-xs text-pink-500 mt-1">Diseñado con cariño por ProfeAle &copy; 2026</p>
+        <p class="text-xs text-pink-500 mt-1">Diseñado con cariño por <span class="firma-profe">ProfeAle 💖 <sup class="marca-registrada">®</sup></span> &copy; 2026</p>
     </footer>
 
     <script>
