@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Firma ProfeAle - Marca Registrada</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f3f4f6;
+        }
+
+        .tarjeta-firma {
+            background: white;
+            padding: 50px 90px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .contenedor-firma {
+            /* Usamos este contenedor para agrupar texto y símbolo */
+            display: inline-block;
+            position: relative;
+        }
+
+        .firma-texto {
+            font-family: 'Dancing Script', cursive; 
+            font-size: 80px; 
+            font-weight: 700;
+            
+            /* Degradado de la firma */
+            background: linear-gradient(to right, #ec4899, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+
+            filter: drop-shadow(2px 2px 0px rgba(0,0,0, 0.1));
+            transform: rotate(-3deg);
+            display: inline-block;
+        }
+
+        /* Estilo para la R de Registrado */
+        .marca-registrada {
+            font-family: sans-serif; /* Fuente normal para que se lea bien la R */
+            font-size: 20px; /* Mucho más pequeño */
+            color: #db2777; /* Color rosado oscuro sólido */
+            vertical-align: top; /* Para que quede arriba */
+            position: relative;
+            top: 5px; /* Ajuste fino de altura */
+            left: -5px; /* Un poquito pegado a la firma */
+            font-weight: bold;
+            -webkit-text-fill-color: #db2777; /* Sobrescribe el transparente del degradado */
+        }
+
+        p {
+            font-family: sans-serif;
+            color: #9ca3af;
+            margin-top: 40px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tarjeta-firma">
+        <div class="contenedor-firma">
+            <div class="firma-texto">ProfeAle 💖</div>
+            <sup class="marca-registrada">®</sup>
+        </div>
+        
+        <p>📸 Usa "Recortes" (Win + Shift + S) para capturarla.</p>
+    </div>
+
+</body>
+</html>
