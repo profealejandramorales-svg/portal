@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Torre de Control UTP - Master Dashboard</title>
+    <title>Torre de Control UTP - Visión Central</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
@@ -12,7 +12,7 @@
     <style>
         body { font-family: 'Quicksand', sans-serif; background-color: #f8fafc; }
         
-        /* TARJETAS */
+        /* TARJETAS DE CRISTAL */
         .glass-card {
             background: white; border-radius: 16px; padding: 1.25rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
@@ -45,12 +45,12 @@
                 <div class="bg-indigo-600 text-white p-2 rounded-lg shadow-lg"><i class="fa-solid fa-layer-group text-xl"></i></div>
                 <div>
                     <h1 class="text-xl font-bold text-gray-800 leading-none">Torre de Control</h1>
-                    <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mt-0.5">Gestión Integral • 5 Sistemas Conectados</p>
+                    <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mt-0.5">Visión Integral • 5 Sistemas Conectados</p>
                 </div>
             </div>
             
             <div class="flex flex-wrap gap-2 justify-center">
-                <span class="status-pill st-wait" id="st-a">Casa A (Insp/PIE)</span>
+                <span class="status-pill st-wait" id="st-a">Casa A (Central)</span>
                 <span class="status-pill st-wait" id="st-b">Casa B (RRHH)</span>
                 <span class="status-pill st-wait" id="st-c">Casa C (Data)</span>
                 <span class="status-pill st-wait" id="st-d">Casa D (Acad)</span>
@@ -74,7 +74,7 @@
                 
                 <div class="flex gap-8 text-center">
                     <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase">Total</p>
+                        <p class="text-xs font-bold text-gray-400 uppercase">Recibidas</p>
                         <p class="text-2xl font-bold text-gray-800" id="kpi-plan-total">0</p>
                     </div>
                     <div>
@@ -294,6 +294,13 @@
                 }
             });
 
+            // NUEVO: Radar de Entrevistas
+            onSnapshot(collection(dbs.A, "entrevistas"), (snap) => {
+                // Filtramos las de hoy para el feed
+                const todayDocs = snap.docs.filter(d => d.data().date === today || d.data().createdAt?.startsWith(today));
+                if(todayDocs.length > 0) processFeed('entrevistas', todayDocs, 'Orientación', 'Nueva Entrevista', 'A');
+            });
+
             // TICS (Simplificado)
             onSnapshot(collection(dbs.A, "inventario_tablets"), (s) => {
                 let loaned = s.docs.filter(d => d.data().status === 'loaned').length;
@@ -320,9 +327,14 @@
             });
         }
 
-        // CASA D: ACADÉMICO
+        // CASA D: ACADÉMICO (Repitencia y PIE)
         function connectHouseD() {
-            setStatus('d', true); // Conexión OK
+            // Radar de Repitencia
+            onSnapshot(collection(dbs.D, "repitencia_process"), (snap) => {
+               // Si hay nuevos procesos, avisar en el feed (simplificado para no saturar)
+               processFeed('repitencia', snap.docs, 'Académico', 'Proceso Decreto 67', 'D');
+               setStatus('d', true);
+            });
         }
 
         // CASA C: BODEGA
@@ -348,14 +360,14 @@
         }
 
         function processFeed(source, docs, labelSystem, labelEvent, house) {
-            const lastDocs = docs.slice(-1);
+            const lastDocs = docs.slice(-1); // Solo el ultimo para no saturar al carga inicial
             lastDocs.forEach(d => {
                 const data = d.data();
                 const id = d.id;
                 if(feedItems.includes(id)) return;
 
                 const time = new Date().toLocaleTimeString('es-CL', {hour:'2-digit', minute:'2-digit'});
-                const detail = data.student || data.titulo || data.descripcion || "Nuevo registro";
+                const detail = data.student || data.studentName || data.titulo || data.descripcion || "Nuevo registro";
                 const row = `
                     <tr class="animate-pulse">
                         <td class="px-4 py-3 font-mono text-xs text-gray-500">${time}</td>

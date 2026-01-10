@@ -37,7 +37,7 @@
             background: #ffffff;
         }
 
-        /* Colores */
+        /* Colores Temáticos */
         .border-admin { border-left-color: #db2777; } .icon-admin { color: #db2777; background-color: #fce7f3; }
         .border-utp { border-left-color: #9333ea; } .icon-utp { color: #9333ea; background-color: #f3e8ff; }
         .border-insp { border-left-color: #be185d; } .icon-insp { color: #be185d; background-color: #fbe7f3; }
@@ -47,19 +47,16 @@
         .title-font { font-family: 'Dancing Script', cursive; }
         .flower-icon { color: #ec4899; opacity: 0.8; position: absolute; z-index: 0; }
 
-        /* ESTILO DE LA FIRMA PROFEALE */
+        /* FIRMA PROFEALE */
         .firma-profe {
             font-family: 'Dancing Script', cursive; 
-            font-size: 1.4rem; /* Tamaño ideal para footer */
+            font-size: 1.4rem;
             font-weight: 700;
-            
-            /* Degradado */
             background: linear-gradient(to right, #ec4899, #8b5cf6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             color: transparent;
-
             filter: drop-shadow(1px 1px 0px rgba(255,255,255, 0.5));
             transform: rotate(-2deg);
             display: inline-block;
@@ -67,15 +64,11 @@
         }
 
         .marca-registrada {
-            font-family: sans-serif;
-            font-size: 0.5em;
-            color: #db2777;
-            -webkit-text-fill-color: #db2777; /* Anula el transparente del degradado */
-            vertical-align: super;
-            font-weight: bold;
+            font-family: sans-serif; font-size: 0.5em; color: #db2777;
+            -webkit-text-fill-color: #db2777; vertical-align: super; font-weight: bold;
         }
 
-        /* RELOJ */
+        /* RELOJ ANALÓGICO */
         .analog-clock-container {
             position: relative; width: 220px; height: 220px; margin: 0 auto;
             border-radius: 50%; background: rgba(255, 255, 255, 0.5);
@@ -136,18 +129,17 @@
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-admin transition-transform group-hover:scale-110"><i class="fa-solid fa-clock-rotate-left"></i></div>
                     <div><h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition">Control Reloj</h3><p class="text-xs text-gray-600 font-medium">Asistencia Docente.</p></div>
                 </a>
-                
                 <a href="permisos.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-admin">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-admin transition-transform group-hover:scale-110"><i class="fa-solid fa-user-lock"></i></div>
-                    <div><h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition">Permisos</h3><p class="text-xs text-gray-600 font-medium">Control permisos.</p></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition">Permisos</h3><p class="text-xs text-gray-600 font-medium">Solicitudes.</p></div>
                 </a>
                 <a href="carga.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-admin">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-admin transition-transform group-hover:scale-110"><i class="fa-solid fa-users-gear"></i></div>
                     <div><h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition">Dotación</h3><p class="text-xs text-gray-600 font-medium">Carga horaria.</p></div>
                 </a>
-                <a href="horario_profe.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-admin">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-admin transition-transform group-hover:scale-110"><i class="fa-solid fa-calendar-days"></i></div>
-                    <div><h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition">Horarios</h3><p class="text-xs text-gray-600 font-medium">Gestor de bloques.</p></div>
+                <a href="calculo_profe.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-admin">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-admin transition-transform group-hover:scale-110"><i class="fa-solid fa-calculator"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition">Calc. Carga</h3><p class="text-xs text-gray-600 font-medium">65/35 Legal.</p></div>
                 </a>
                 <a href="certificados.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-admin">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-admin transition-transform group-hover:scale-110"><i class="fa-solid fa-stamp"></i></div>
@@ -166,6 +158,11 @@
                 Gestión UTP
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <a href="vision.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp bg-purple-50">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-layer-group"></i></div>
+                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Visión Central</h3><p class="text-xs text-gray-600 font-medium">Torre de Control.</p></div>
+                </a>
+
                 <a href="digital.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-laptop-code"></i></div>
                     <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Planif. Digital</h3><p class="text-xs text-gray-600 font-medium">Plataforma Web.</p></div>
@@ -178,12 +175,6 @@
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-camera"></i></div>
                     <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Scanner</h3><p class="text-xs text-gray-600 font-medium">Corregir pruebas.</p></div>
                 </a>
-                
-                <a href="vision.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp bg-purple-50">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-layer-group"></i></div>
-                    <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Visión Central</h3><p class="text-xs text-gray-600 font-medium">Torre de Control.</p></div>
-                </a>
-
                 <a href="plani.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-list-check"></i></div>
                     <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Planif. Manual</h3><p class="text-xs text-gray-600 font-medium">Enlaces Drive.</p></div>
@@ -212,12 +203,10 @@
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-laptop"></i></div>
                     <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Recursos TICS</h3><p class="text-xs text-gray-600 font-medium">Reserva equipos.</p></div>
                 </a>
-                
                 <a href="ruleta.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-dice"></i></div>
                     <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Ruleta</h3><p class="text-xs text-gray-600 font-medium">Sorteo Alumnos.</p></div>
                 </a>
-
                 <a href="cuaderno.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-utp">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-utp transition-transform group-hover:scale-110"><i class="fa-solid fa-pen-to-square"></i></div>
                     <div><h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition">Cuaderno</h3><p class="text-xs text-gray-600 font-medium">Personal Docente.</p></div>
@@ -295,6 +284,7 @@
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-pie transition-transform group-hover:scale-110"><i class="fa-solid fa-file-contract"></i></div>
                     <div><h3 class="font-bold text-gray-800 group-hover:text-violet-600 transition">Decreto 67</h3><p class="text-xs text-gray-600 font-medium">Repitencia.</p></div>
                 </a>
+                
                 <a href="entrevistas.html" class="app-card glass-panel p-5 rounded-2xl flex items-center gap-4 group border-pie">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner icon-pie transition-transform group-hover:scale-110"><i class="fa-solid fa-clipboard-question"></i></div>
                     <div><h3 class="font-bold text-gray-800 group-hover:text-violet-600 transition">Entrevistas</h3><p class="text-xs text-gray-600 font-medium">Registro casos.</p></div>
