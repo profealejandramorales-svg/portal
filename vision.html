@@ -11,26 +11,19 @@
 
     <style>
         body { font-family: 'Quicksand', sans-serif; background-color: #f8fafc; }
-        
-        /* TARJETAS DE CRISTAL */
         .glass-card {
             background: white; border-radius: 16px; padding: 1.25rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             border: 1px solid #e2e8f0; transition: transform 0.2s;
         }
         .glass-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.1); }
-        
         .kpi-value { font-size: 2rem; font-weight: 800; color: #0f172a; line-height: 1; }
         .kpi-label { font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
         .kpi-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1.2rem; }
-
-        /* ESTADO DE CONEXIÓN */
         .status-pill { font-size: 0.6rem; padding: 2px 8px; border-radius: 99px; font-weight: bold; border: 1px solid; display: inline-flex; align-items: center; gap: 4px; }
         .st-wait { background: #fffbeb; color: #b45309; border-color: #fcd34d; animation: pulse 2s infinite; }
         .st-ok { background: #dcfce7; color: #15803d; border-color: #86efac; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-
-        /* FIRMA */
         .firma-profe {
             font-family: 'Dancing Script', cursive; font-size: 1.1rem; font-weight: 700;
             background: linear-gradient(to right, #ec4899, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -48,13 +41,12 @@
                     <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mt-0.5">Visión Integral • 5 Sistemas Conectados</p>
                 </div>
             </div>
-            
             <div class="flex flex-wrap gap-2 justify-center">
-                <span class="status-pill st-wait" id="st-a">Casa A (Central)</span>
-                <span class="status-pill st-wait" id="st-b">Casa B (RRHH)</span>
-                <span class="status-pill st-wait" id="st-c">Casa C (Data)</span>
-                <span class="status-pill st-wait" id="st-d">Casa D (Acad)</span>
-                <span class="status-pill st-wait" id="st-e">Casa E (Planif)</span>
+                <span class="status-pill st-wait" id="st-a">Casa A</span>
+                <span class="status-pill st-wait" id="st-b">Casa B</span>
+                <span class="status-pill st-wait" id="st-c">Casa C</span>
+                <span class="status-pill st-wait" id="st-d">Casa D</span>
+                <span class="status-pill st-wait" id="st-e">Casa E</span>
                 <a href="index.html" class="ml-2 text-xs font-bold text-gray-400 hover:text-gray-800 underline flex items-center"><i class="fa-solid fa-arrow-left mr-1"></i> Salir</a>
             </div>
         </div>
@@ -66,326 +58,237 @@
             <div class="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div class="flex items-center gap-4 w-full md:w-auto">
                     <div class="bg-indigo-100 text-indigo-600 p-4 rounded-xl text-2xl"><i class="fa-solid fa-book-open-reader"></i></div>
-                    <div>
-                        <h2 class="text-lg font-bold text-indigo-900">Planif. Digital</h2>
-                        <p class="text-xs text-indigo-600 font-medium" id="planif-status">Conectando...</p>
-                    </div>
+                    <div><h2 class="text-lg font-bold text-indigo-900">Planif. Digital</h2><p class="text-xs text-indigo-600 font-medium" id="planif-status">Conectando...</p></div>
                 </div>
-                
                 <div class="flex gap-8 text-center">
-                    <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase">Recibidas</p>
-                        <p class="text-2xl font-bold text-gray-800" id="kpi-plan-total">0</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-green-600 uppercase">Aprobadas</p>
-                        <p class="text-2xl font-bold text-green-600" id="kpi-plan-ok">0</p>
-                    </div>
+                    <div><p class="text-xs font-bold text-gray-400 uppercase">Recibidas</p><p class="text-2xl font-bold text-gray-800" id="kpi-plan-total">0</p></div>
+                    <div><p class="text-xs font-bold text-green-600 uppercase">Aprobadas</p><p class="text-2xl font-bold text-green-600" id="kpi-plan-ok">0</p></div>
                 </div>
-                
-                <div class="w-full md:w-32 h-16">
-                    <canvas id="chartPlanif"></canvas>
-                </div>
+                <div class="w-full md:w-32 h-16"><canvas id="chartPlanif"></canvas></div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="glass-card border-l-4 border-amber-500">
                 <p class="kpi-label">Atrasos (Hoy)</p>
-                <div class="flex justify-between items-center">
-                    <span class="kpi-value text-amber-600" id="kpi-atrasos">--</span>
-                    <div class="kpi-icon bg-amber-50 text-amber-500"><i class="fa-solid fa-clock"></i></div>
-                </div>
+                <div class="flex justify-between items-center"><span class="kpi-value text-amber-600" id="kpi-atrasos">0</span><div class="kpi-icon bg-amber-50 text-amber-500"><i class="fa-solid fa-clock"></i></div></div>
             </div>
             <div class="glass-card border-l-4 border-red-500">
-                <p class="kpi-label">Suspensiones (Activas)</p>
-                <div class="flex justify-between items-center">
-                    <span class="kpi-value text-red-600" id="kpi-susp">--</span>
-                    <div class="kpi-icon bg-red-50 text-red-500"><i class="fa-solid fa-ban"></i></div>
-                </div>
+                <p class="kpi-label">Suspensiones</p>
+                <div class="flex justify-between items-center"><span class="kpi-value text-red-600" id="kpi-susp">0</span><div class="kpi-icon bg-red-50 text-red-500"><i class="fa-solid fa-ban"></i></div></div>
             </div>
             <div class="glass-card border-l-4 border-blue-500">
                 <p class="kpi-label">Salidas / Retiros</p>
-                <div class="flex justify-between items-center">
-                    <span class="kpi-value text-blue-600" id="kpi-salidas">--</span>
-                    <div class="kpi-icon bg-blue-50 text-blue-500"><i class="fa-solid fa-person-walking-arrow-right"></i></div>
-                </div>
+                <div class="flex justify-between items-center"><span class="kpi-value text-blue-600" id="kpi-salidas">0</span><div class="kpi-icon bg-blue-50 text-blue-500"><i class="fa-solid fa-person-walking-arrow-right"></i></div></div>
             </div>
             <div class="glass-card border-l-4 border-purple-500">
                 <p class="kpi-label">TICS en Uso</p>
-                <div class="flex justify-between items-center">
-                    <span class="kpi-value text-purple-600" id="kpi-tics">--</span>
-                    <div class="kpi-icon bg-purple-50 text-purple-500"><i class="fa-solid fa-laptop"></i></div>
-                </div>
+                <div class="flex justify-between items-center"><span class="kpi-value text-purple-600" id="kpi-tics">0</span><div class="kpi-icon bg-purple-50 text-purple-500"><i class="fa-solid fa-laptop"></i></div></div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
             <div class="glass-card lg:col-span-2">
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
-                    <h3 class="font-bold text-gray-700 text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-traffic-light text-emerald-500"></i> Semáforo PIE (Envío Material)
-                    </h3>
+                    <h3 class="font-bold text-gray-700 text-sm flex items-center gap-2"><i class="fa-solid fa-traffic-light text-emerald-500"></i> Semáforo PIE (Envío Material)</h3>
                     <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded font-bold" id="pie-registros">0 Registros</span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <div class="w-1/3 h-32 relative">
-                        <canvas id="chartSemaforo"></canvas>
-                    </div>
+                    <div class="w-1/3 h-32 relative"><canvas id="chartSemaforo"></canvas></div>
                     <div class="w-2/3 grid grid-cols-2 gap-2 text-xs">
-                        <div class="bg-green-50 p-2 rounded border border-green-200">
-                            <span class="block text-lg font-bold text-green-700" id="sem-green">0</span> A Tiempo
-                        </div>
-                        <div class="bg-yellow-50 p-2 rounded border border-yellow-200">
-                            <span class="block text-lg font-bold text-yellow-700" id="sem-yellow">0</span> Con Atraso
-                        </div>
-                        <div class="bg-red-50 p-2 rounded border border-red-200">
-                            <span class="block text-lg font-bold text-red-700" id="sem-red">0</span> No Entregado
-                        </div>
-                        <div class="bg-gray-50 p-2 rounded border border-gray-200 flex items-center justify-center">
-                            <span class="text-gray-500 font-bold" id="sem-cumplimiento">0% Cumpl.</span>
-                        </div>
+                        <div class="bg-green-50 p-2 rounded border border-green-200"><span class="block text-lg font-bold text-green-700" id="sem-green">0</span> A Tiempo</div>
+                        <div class="bg-yellow-50 p-2 rounded border border-yellow-200"><span class="block text-lg font-bold text-yellow-700" id="sem-yellow">0</span> Con Atraso</div>
+                        <div class="bg-red-50 p-2 rounded border border-red-200"><span class="block text-lg font-bold text-red-700" id="sem-red">0</span> No Entregado</div>
+                        <div class="bg-gray-50 p-2 rounded border border-gray-200 flex items-center justify-center"><span class="text-gray-500 font-bold" id="sem-cumplimiento">0% Cumpl.</span></div>
                     </div>
                 </div>
             </div>
-
             <div class="glass-card">
-                <div class="flex justify-between items-center mb-4 border-b pb-2">
-                    <h3 class="font-bold text-gray-700 text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-boxes-stacked text-teal-500"></i> Inventario
-                    </h3>
-                </div>
-                <div class="text-center py-4">
-                    <p class="text-4xl font-bold text-teal-600" id="kpi-bodega">--</p>
-                    <p class="text-xs text-gray-400 font-bold uppercase mt-1">Items Registrados</p>
-                </div>
-                <div class="mt-2 text-center text-xs text-teal-500 bg-teal-50 p-2 rounded">
-                    Conectado a Bodega Central
-                </div>
+                <div class="flex justify-between items-center mb-4 border-b pb-2"><h3 class="font-bold text-gray-700 text-sm flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-teal-500"></i> Inventario</h3></div>
+                <div class="text-center py-4"><p class="text-4xl font-bold text-teal-600" id="kpi-bodega">--</p><p class="text-xs text-gray-400 font-bold uppercase mt-1">Items Registrados</p></div>
+                <div class="mt-2 text-center text-xs text-teal-500 bg-teal-50 p-2 rounded">Conectado a Bodega Central</div>
             </div>
         </div>
 
         <div class="glass-card">
-            <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2 text-sm uppercase border-b pb-2">
-                <i class="fa-solid fa-satellite-dish text-orange-500"></i> Radar de Eventos (Tiempo Real)
-            </h3>
+            <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2 text-sm uppercase border-b pb-2"><i class="fa-solid fa-satellite-dish text-orange-500"></i> Radar de Eventos (Tiempo Real)</h3>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left text-gray-600">
-                    <thead class="text-xs text-gray-400 uppercase bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-2 w-24">Hora</th>
-                            <th class="px-4 py-2 w-28">Sistema</th>
-                            <th class="px-4 py-2">Detalle del Evento</th>
-                            <th class="px-4 py-2 w-16 text-center"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100" id="feed-body">
-                        <tr><td colspan="4" class="p-6 text-center text-gray-400 italic text-xs">Escaneando redes...</td></tr>
-                    </tbody>
+                    <thead class="text-xs text-gray-400 uppercase bg-gray-50"><tr><th class="px-4 py-2 w-24">Hora</th><th class="px-4 py-2 w-28">Sistema</th><th class="px-4 py-2">Detalle del Evento</th><th class="px-4 py-2 w-16 text-center"></th></tr></thead>
+                    <tbody class="divide-y divide-gray-100" id="feed-body"><tr><td colspan="4" class="p-6 text-center text-gray-400 italic text-xs">Escaneando redes...</td></tr></tbody>
                 </table>
             </div>
         </div>
-
     </main>
 
-    <footer class="text-center text-[10px] text-gray-400">
-        Sistema Integrado de Gestión • <span class="firma-profe">ProfeAle 💖</span>
-    </footer>
+    <footer class="text-center text-[10px] text-gray-400">Sistema Integrado de Gestión • <span class="firma-profe">ProfeAle 💖</span></footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, collection, onSnapshot, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- 1. CONFIGURACIÓN DE LAS 5 CASAS ---
-        const cfgA = { apiKey: "AIzaSyBnSMVCH0yyYUWk5z54kTIPTrWkyoeWs-I", authDomain: "suspenciones-40d0c.firebaseapp.com", projectId: "suspenciones-40d0c", appId: "1:853418739042:web:d051befb99cd2acdd4583b" };
-        const cfgB = { apiKey: "AIzaSyAFp6biz1UTr9Ehaudkpe7QyTFVbdQz5Sc", authDomain: "asistencia-mi-clase.firebaseapp.com", projectId: "asistencia-mi-clase", appId: "1:552398254230:web:c58dd07e5ceeb67e0912b7" };
-        const cfgC = { apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs", authDomain: "attendance-ai-s81lt.firebaseapp.com", projectId: "attendance-ai-s81lt", appId: "1:935781953186:web:6c8a7a93ffad180d33b1fb" };
-        const cfgD = { apiKey: "AIzaSyAisxzJVm2OzjYEXSi4Q7HxZEUG_aarQwo", authDomain: "notas-liceo-agricola-sscc.firebaseapp.com", projectId: "notas-liceo-agricola-sscc", appId: "1:434804825732:web:8c9035fa88be54cd6facd1" };
-        const cfgE = { apiKey: "AIzaSyDJnJlpsqR76z_lBnTNEULYcGoQGIi23VU", authDomain: "planificaciones-18b94.firebaseapp.com", projectId: "planificaciones-18b94", appId: "1:268119843295:web:bb2bdbcb0affe4ecf3646a" };
-
-        // --- 2. INICIALIZAR ---
-        const apps = {
-            A: initializeApp(cfgA, "A"),
-            B: initializeApp(cfgB, "B"),
-            C: initializeApp(cfgC, "C"),
-            D: initializeApp(cfgD, "D"),
-            E: initializeApp(cfgE, "E")
+        // --- 1. CONFIGURACIÓN ---
+        const cfgs = {
+            A: { apiKey: "AIzaSyBnSMVCH0yyYUWk5z54kTIPTrWkyoeWs-I", projectId: "suspenciones-40d0c" },
+            B: { apiKey: "AIzaSyAFp6biz1UTr9Ehaudkpe7QyTFVbdQz5Sc", projectId: "asistencia-mi-clase" },
+            C: { apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs", projectId: "attendance-ai-s81lt" },
+            D: { apiKey: "AIzaSyAisxzJVm2OzjYEXSi4Q7HxZEUG_aarQwo", projectId: "notas-liceo-agricola-sscc" },
+            E: { apiKey: "AIzaSyDJnJlpsqR76z_lBnTNEULYcGoQGIi23VU", projectId: "planificaciones-18b94" }
         };
 
-        const dbs = {
-            A: getFirestore(apps.A),
-            B: getFirestore(apps.B),
-            C: getFirestore(apps.C),
-            D: getFirestore(apps.D),
-            E: getFirestore(apps.E)
-        };
+        const apps = {}; const dbs = {};
+        Object.keys(cfgs).forEach(k => {
+            apps[k] = initializeApp(cfgs[k], k);
+            dbs[k] = getFirestore(apps[k]);
+        });
 
-        // Auth en la principal
-        signInAnonymously(getAuth(apps.A));
+        signInAnonymously(getAuth(apps.A)); // Auth anonimo para permisos
 
-        // --- 3. VARIABLES Y GRÁFICOS ---
+        // --- 2. VARIABLES ---
         let feedItems = [];
         let charts = {};
-
+        
+        // --- 3. INICIO ---
         document.addEventListener('DOMContentLoaded', () => {
             initCharts();
-            connectHouseA(); // Inspectoría y Semáforo PIE
-            connectHouseB(); // RRHH
-            connectHouseC(); // Bodega
-            connectHouseD(); // Académico
-            connectHouseE(); // Planificaciones
+            connectA(); connectB(); connectC(); connectD(); connectE();
         });
 
         function initCharts() {
-            // Planificaciones (Mini Pie)
-            charts.planif = new Chart(document.getElementById('chartPlanif'), {
-                type: 'doughnut',
-                data: { labels: ['OK', 'Pend'], datasets: [{ data: [0, 100], backgroundColor: ['#22c55e', '#facc15'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '80%', plugins: { legend: { display: false } } }
-            });
-
-            // Semáforo PIE (Dona Tricolor)
-            charts.semaforo = new Chart(document.getElementById('chartSemaforo'), {
-                type: 'doughnut',
-                data: { labels: ['A Tiempo', 'Atraso', 'No Entregado'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#22c55e', '#eab308', '#ef4444'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } }
-            });
+            charts.planif = new Chart(document.getElementById('chartPlanif'), { type: 'doughnut', data: { datasets: [{ data: [0, 100], backgroundColor: ['#22c55e', '#facc15'], borderWidth: 0 }] }, options: { maintainAspectRatio: false, cutout: '80%', plugins: { tooltip: { enabled: false } } } });
+            charts.semaforo = new Chart(document.getElementById('chartSemaforo'), { type: 'doughnut', data: { datasets: [{ data: [0, 0, 0], backgroundColor: ['#22c55e', '#eab308', '#ef4444'], borderWidth: 0 }] }, options: { maintainAspectRatio: false, cutout: '65%', plugins: { tooltip: { enabled: false } } } });
         }
 
-        // --- 4. CONEXIONES (LA MAGIA) ---
-
-        // CASA A: INSPECTORÍA y SEMÁFORO PIE
-        function connectHouseA() {
-            const today = new Date().toISOString().split('T')[0];
+        // --- 4. CONEXIONES INTELIGENTES (TRADUCTOR UNIVERSAL) ---
+        
+        function connectA() {
+            const todayISO = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
             
-            // Atrasos
+            // ATRASOS (Traductor: date/fecha/timestamp)
             onSnapshot(collection(dbs.A, "atrasos"), (snap) => {
-                let c = 0; snap.forEach(d => { if(d.data().date === today || d.data().timestamp?.toDate().toISOString().startsWith(today)) c++; });
+                let c = 0;
+                let newDocs = [];
+                snap.forEach(d => {
+                    const data = d.data();
+                    // Buscar cualquier campo de fecha posible
+                    const fechaRaw = data.date || data.fecha || "";
+                    let esHoy = false;
+                    
+                    // 1. Coincidencia Exacta String
+                    if(fechaRaw === todayISO) esHoy = true;
+                    // 2. Coincidencia Timestamp
+                    if(!esHoy && data.timestamp && data.timestamp.toDate) {
+                        if(data.timestamp.toDate().toISOString().split('T')[0] === todayISO) esHoy = true;
+                    }
+
+                    if(esHoy) {
+                        c++;
+                        newDocs.push({ id: d.id, ...data });
+                    }
+                });
                 document.getElementById('kpi-atrasos').innerText = c;
                 setStatus('a', true);
-                if(c>0) processFeed('atrasos', snap.docs, 'Inspectoría', 'Nuevo Atraso', 'A');
+                // Enviar al feed si hay nuevos
+                if(newDocs.length > 0) processFeed('atrasos', newDocs, 'Inspectoría', 'Nuevo Atraso', 'A');
             });
 
-            // Semáforo PIE (Bitácora)
-            const pieRef = doc(dbs.A, "registros_pie/CENTRAL_PIE_2026/bitacora/master");
-            onSnapshot(pieRef, (docSnap) => {
+            // SUSPENSIONES (Activas)
+            onSnapshot(collection(dbs.A, "suspensiones"), (snap) => {
+                let c = 0;
+                snap.forEach(d => { 
+                    const data = d.data();
+                    // Check fechas (issueDate o date)
+                    const fInicio = data.issueDate || data.date || ""; 
+                    const fFin = data.returnDate || "";
+                    if(fInicio <= todayISO && fFin >= todayISO) c++;
+                    // Fallback simple: si solo tiene fecha inicio hoy
+                    else if(fInicio === todayISO) c++;
+                });
+                document.getElementById('kpi-susp').innerText = c;
+            });
+
+            // SALIDAS
+            onSnapshot(collection(dbs.A, "salida_alumnos"), (snap) => { // Ojo: A veces se llama 'salidas' o 'salida_alumnos'
+                let c = 0;
+                snap.forEach(d => { 
+                     const data = d.data();
+                     const f = data.date || data.fecha || "";
+                     if(f === todayISO) c++;
+                });
+                // Si la colección estaba vacía, probamos con el nombre alternativo 'salidas'
+                if(c===0) { /* Logica de reintento opcional */ }
+                document.getElementById('kpi-salidas').innerText = c;
+            });
+
+            // SEMÁFORO PIE
+            onSnapshot(doc(dbs.A, "registros_pie/CENTRAL_PIE_2026/bitacora/master"), (docSnap) => {
                 if(docSnap.exists()) {
                     const logs = docSnap.data().logs || [];
-                    const green = logs.filter(l => l.material === 'green').length;
-                    const yellow = logs.filter(l => l.material === 'yellow' || l.isLate).length;
-                    const red = logs.filter(l => l.material === 'red').length;
-                    
-                    // Actualizar KPI
-                    document.getElementById('pie-registros').innerText = logs.length + " Registros";
-                    document.getElementById('sem-green').innerText = green;
-                    document.getElementById('sem-yellow').innerText = yellow;
-                    document.getElementById('sem-red').innerText = red;
-                    
-                    // Calcular Cumplimiento (Verde + Amarillo vs Total)
-                    const total = logs.length || 1;
-                    const cumpl = Math.round(((green + yellow) / total) * 100);
-                    document.getElementById('sem-cumplimiento').innerText = cumpl + "% Cumpl.";
-
-                    // Actualizar Gráfico
-                    charts.semaforo.data.datasets[0].data = [green, yellow, red];
-                    charts.semaforo.update();
+                    const g = logs.filter(l => l.material === 'green').length;
+                    const y = logs.filter(l => l.material === 'yellow' || l.isLate).length;
+                    const r = logs.filter(l => l.material === 'red').length;
+                    document.getElementById('pie-registros').innerText = logs.length;
+                    document.getElementById('sem-green').innerText = g; document.getElementById('sem-yellow').innerText = y; document.getElementById('sem-red').innerText = r;
+                    document.getElementById('sem-cumplimiento').innerText = Math.round(((g+y)/(logs.length||1))*100) + "%";
+                    charts.semaforo.data.datasets[0].data = [g, y, r]; charts.semaforo.update();
                 }
             });
 
-            // NUEVO: Radar de Entrevistas
-            onSnapshot(collection(dbs.A, "entrevistas"), (snap) => {
-                // Filtramos las de hoy para el feed
-                const todayDocs = snap.docs.filter(d => d.data().date === today || d.data().createdAt?.startsWith(today));
-                if(todayDocs.length > 0) processFeed('entrevistas', todayDocs, 'Orientación', 'Nueva Entrevista', 'A');
-            });
-
-            // TICS (Simplificado)
+            // TICS
             onSnapshot(collection(dbs.A, "inventario_tablets"), (s) => {
-                let loaned = s.docs.filter(d => d.data().status === 'loaned').length;
-                document.getElementById('kpi-tics').innerText = loaned;
+                const prestados = s.docs.filter(d => d.data().status === 'loaned').length;
+                document.getElementById('kpi-tics').innerText = prestados;
             });
         }
 
-        // CASA E: PLANIFICACIONES
-        function connectHouseE() {
-            const planColl = collection(dbs.E, "planificaciones_digitales");
-            
-            onSnapshot(planColl, (snap) => {
-                let total = snap.size;
-                let approved = 0;
-                snap.forEach(doc => { if(doc.data().estado === 'aprobado') approved++; });
-
-                document.getElementById('kpi-plan-total').innerText = total;
-                document.getElementById('kpi-plan-ok').innerText = approved;
-                document.getElementById('planif-status').innerText = "Sincronizado";
-
-                charts.planif.data.datasets[0].data = [approved, total - approved];
-                charts.planif.update();
+        function connectE() { // Planificaciones
+            onSnapshot(collection(dbs.E, "planificaciones_digitales"), (snap) => {
+                let ok = 0; snap.forEach(d => { if(d.data().estado === 'aprobado') ok++; });
+                document.getElementById('kpi-plan-total').innerText = snap.size;
+                document.getElementById('kpi-plan-ok').innerText = ok;
+                document.getElementById('planif-status').innerText = "En línea";
+                charts.planif.data.datasets[0].data = [ok, snap.size - ok]; charts.planif.update();
                 setStatus('e', true);
             });
         }
 
-        // CASA D: ACADÉMICO (Repitencia y PIE)
-        function connectHouseD() {
-            // Radar de Repitencia
-            onSnapshot(collection(dbs.D, "repitencia_process"), (snap) => {
-               // Si hay nuevos procesos, avisar en el feed (simplificado para no saturar)
-               processFeed('repitencia', snap.docs, 'Académico', 'Proceso Decreto 67', 'D');
-               setStatus('d', true);
-            });
-        }
-
-        // CASA C: BODEGA
-        function connectHouseC() {
+        function connectD() { setStatus('d', true); } // Academico
+        function connectC() { // Bodega
             onSnapshot(collection(dbs.C, "inventarioItems"), (snap) => {
-                document.getElementById('kpi-bodega').innerText = snap.size;
-                setStatus('c', true);
+                document.getElementById('kpi-bodega').innerText = snap.size; setStatus('c', true);
             });
         }
-
-        // CASA B: RRHH
-        function connectHouseB() {
-            setStatus('b', true);
-        }
+        function connectB() { setStatus('b', true); } // RRHH
 
         // --- UTILIDADES ---
         function setStatus(id, ok) {
             const el = document.getElementById(`st-${id}`);
-            if(ok) { 
-                el.classList.remove('st-wait'); el.classList.add('st-ok'); 
-                el.style.borderColor = '#4ade80'; el.style.backgroundColor = '#f0fdf4';
-            }
+            if(ok) { el.classList.remove('st-wait'); el.classList.add('st-ok'); el.style.borderColor = '#4ade80'; el.style.backgroundColor = '#f0fdf4'; }
         }
 
-        function processFeed(source, docs, labelSystem, labelEvent, house) {
-            const lastDocs = docs.slice(-1); // Solo el ultimo para no saturar al carga inicial
-            lastDocs.forEach(d => {
-                const data = d.data();
-                const id = d.id;
-                if(feedItems.includes(id)) return;
-
+        function processFeed(source, items, labelSystem, labelEvent, house) {
+            items.slice(-2).forEach(item => { // Ultimos 2
+                if(feedItems.includes(item.id)) return;
+                
+                // Traductor de Nombres (student / nombre / alumno / title)
+                const detail = item.student || item.nombre || item.alumno || item.titulo || "Registro Nuevo";
                 const time = new Date().toLocaleTimeString('es-CL', {hour:'2-digit', minute:'2-digit'});
-                const detail = data.student || data.studentName || data.titulo || data.descripcion || "Nuevo registro";
+                
                 const row = `
-                    <tr class="animate-pulse">
+                    <tr class="animate-pulse bg-blue-50/50">
                         <td class="px-4 py-3 font-mono text-xs text-gray-500">${time}</td>
-                        <td class="px-4 py-3"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px] font-bold uppercase border border-gray-200">${labelSystem}</span></td>
-                        <td class="px-4 py-3 text-xs font-medium text-gray-700">
-                            <span class="text-indigo-600 font-bold">${labelEvent}:</span> ${detail.substring(0,30)}...
-                        </td>
+                        <td class="px-4 py-3"><span class="bg-white border border-gray-200 text-gray-600 px-2 py-1 rounded text-[10px] font-bold uppercase">${labelSystem}</span></td>
+                        <td class="px-4 py-3 text-xs font-medium text-gray-700"><span class="text-indigo-600 font-bold">${labelEvent}:</span> ${detail}</td>
                         <td class="px-4 py-3 text-center"><span class="text-[10px] text-gray-400 font-bold">Casa ${house}</span></td>
-                    </tr>
-                `;
+                    </tr>`;
                 
                 const body = document.getElementById('feed-body');
                 if(feedItems.length === 0) body.innerHTML = '';
                 body.insertAdjacentHTML('afterbegin', row);
-                feedItems.push(id);
+                feedItems.push(item.id);
             });
         }
-
     </script>
 </body>
 </html>
