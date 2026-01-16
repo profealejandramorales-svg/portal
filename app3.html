@@ -37,13 +37,6 @@
             display: flex; flex-direction: column;
         }
 
-        body::before {
-            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('logo.jpg'); background-repeat: no-repeat;
-            background-position: center center; background-size: 400px;
-            opacity: 0.05; z-index: -1; pointer-events: none;
-        }
-        
         .app-header {
             position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
             background: var(--primary); color: white; display: flex; align-items: center; justify-content: space-between;
@@ -142,43 +135,88 @@
         .header-sub-blue { background-color: #bbdefb !important; font-weight: bold; }
         .cell-yellow { background-color: #fff9c4 !important; font-weight: bold; }
         
-        .footer-credits { margin-top: auto; padding: 15px; background: white; border-top: 1px solid #eee; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; color: #666; font-weight: bold; }
-        .footer-credits img { height: 40px; }
+        .footer-credits { margin-top: auto; padding: 15px; background: white; border-top: 1px solid #eee; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #666; font-weight: bold; }
+        .footer-credits img { height: 60px; margin-bottom: 5px; }
         
         .alu-thumb { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc; display: block; margin: 0 auto; }
 
         /* --- IMPRESIÓN --- */
         @media print {
-            @page { size: landscape; margin: 0.5cm; }
-            html, body { background: white !important; margin: 0 !important; padding: 0 !important; width: 100% !important; height: auto !important; overflow: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            @page { size: landscape; margin: 0; }
+            
+            html, body { 
+                background: white !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                width: 100% !important; 
+                height: 100% !important; 
+                overflow: visible !important; 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+            }
+            
+            /* ELEMENTOS OCULTOS AL IMPRIMIR */
             body::before { display: none !important; content: none !important; }
-            .app-header, .tabs-container, .btn, #vMenu, #vCurso, #modalEval, #modalAsisStats, .no-print, #loader, .footer-credits, #modalAlumno { display: none !important; }
+            .app-header, .tabs-container, .btn, #vMenu, #vCurso, #modalEval, #modalAsisStats, .no-print, #loader, .footer-credits, #modalAlumno, #modalAsigManager { display: none !important; }
+            
             body > *:not(#printArea) { display: none !important; }
-            #printArea { display: block !important; position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; background: white !important; z-index: 9999 !important; }
+            
+            #printArea { 
+                display: block !important; 
+                position: absolute !important; 
+                top: 0 !important; 
+                left: 0 !important; 
+                width: 100% !important; 
+                background: white !important; 
+                z-index: 9999 !important; 
+            }
             #printArea * { visibility: visible !important; }
 
-            .informe-page { width: 100%; min-height: 98vh; position: relative; page-break-after: always; display: flex; flex-direction: column; background: white !important; }
+            /* INFORME ALUMNO (Individual) - Estricto para duplex */
+            .informe-page { 
+                width: 100%; 
+                height: 100vh; 
+                position: relative; 
+                page-break-after: always; 
+                break-after: page; 
+                display: flex; 
+                flex-direction: column; 
+                background: white !important;
+                padding: 20px 40px; 
+                box-sizing: border-box;
+                overflow: hidden; /* Evita que contenido se pase a la siguiente */
+            }
+
+            /* PLANILLA CURSO (Masivo) - Permite flujo continuo */
+            .print-flow-container {
+                width: 100%;
+                height: auto;
+                overflow: visible !important;
+                background: white;
+                padding: 20px;
+                display: block;
+            }
             
-            .sabana-print-container .table-wrapper {
+            .print-flow-container .table-wrapper {
                 overflow: visible !important;
                 max-height: none !important;
                 border: none !important;
                 box-shadow: none !important;
             }
             
-            .sabana-print-container table {
+            .print-flow-container table {
                 width: 100% !important;
-                font-size: 9px !important; 
+                font-size: 10px !important; 
                 border-collapse: collapse !important;
             }
             
-            .sabana-print-container th, .sabana-print-container td {
+            .print-flow-container th, .print-flow-container td {
                 padding: 2px !important;
                 border: 1px solid #999 !important;
             }
-
-            .watermark { display: block !important; position: absolute !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; width: 150px !important; opacity: 0.1 !important; z-index: 0 !important; pointer-events: none; }
-            .watermark img { width: 100% !important; height: auto !important; }
+            
+            .print-flow-container thead { display: table-header-group; }
+            .print-flow-container tr { page-break-inside: avoid; }
 
             .inf-header-grid { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #004a99; padding-bottom: 8px; margin-bottom: 8px; position: relative; z-index: 2; background: white; }
             .inf-logo { width: 60px !important; height: auto !important; }
@@ -192,18 +230,18 @@
             .inf-table, .pers-table, .print-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; position: relative; z-index: 2; background: transparent !important; }
             .inf-table th, .inf-table td, .pers-table th, .pers-table td, .print-table th, .print-table td { border: 1px solid #000 !important; }
 
-            .inf-table th { background-color: #e0e0e0 !important; color: #333; font-weight: bold; text-align: center; font-size: 9px; padding: 3px; }
-            .inf-table td { font-size: 10px; padding: 2px; text-align: center; height: 14px; }
-            .print-col-nombre { text-align: left !important; padding-left: 5px !important; width: 25%; font-weight: bold; font-size: 9px !important;}
+            .inf-table th { background-color: #e0e0e0 !important; color: #333; font-weight: bold; text-align: center; font-size: 10px; padding: 3px; }
+            .inf-table td { font-size: 10px; padding: 2px; text-align: center; height: 16px; }
+            .print-col-nombre { text-align: left !important; padding-left: 5px !important; width: 25%; font-weight: bold; font-size: 10px !important;}
             .print-col-prom { background-color: #f5f5f5 !important; font-weight: bold; }
             .final-closed { background-color: #e3f2fd !important; font-weight: bold; color: #004a99; }
 
-            .pers-table th { background-color: #fff2cc !important; color: #000 !important; font-size: 9px; padding: 4px; text-align: center; }
-            .pers-table td { font-size: 9px; padding: 2px 4px; }
+            .pers-table th { background-color: #fff2cc !important; color: #000 !important; font-size: 10px; padding: 4px; text-align: center; }
+            .pers-table td { font-size: 10px; padding: 2px 4px; }
             .pers-cat-row { background-color: #f0f0f0 !important; font-weight: bold !important; text-align: left !important; padding-left: 10px !important; }
             .pers-val-col { text-align: center !important; width: 60px; font-weight: bold; }
 
-            .print-table th, .print-table td { font-size: 9px !important; padding: 2px; text-align: center; color: black !important; }
+            .print-table th, .print-table td { font-size: 10px !important; padding: 2px; text-align: center; color: black !important; }
 
             .box-title { background: #eee; border: 1px solid #000; font-weight: bold; font-size: 10px; padding: 3px; text-align: center; }
             .box-content { border: 1px solid #000; height: 50px !important; font-size: 10px; padding: 5px; margin-bottom: 5px; }
@@ -218,7 +256,6 @@
         .spinner { border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* UPDATED MODAL STYLES FOR CLEANER LOOK */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; justify-content: center; align-items: center; }
         .modal-box { background: white; padding: 25px; border-radius: 8px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .modal-wide { width: 95%; max-width: 900px; max-height: 90vh; overflow-y: auto; }
@@ -327,6 +364,34 @@
         </div>
     </div>
 
+    <div id="modalAsigManager" class="modal-overlay">
+        <div class="modal-box" style="width: 500px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                <h3 style="color:var(--primary); margin:0;">Gestionar Asignaturas</h3>
+                <button class="btn btn-icon" onclick="document.getElementById('modalAsigManager').style.display='none'">✕</button>
+            </div>
+            <div style="background:#fff3e0; padding:10px; font-size:11px; margin-bottom:10px; border-left:4px solid orange; color:#333;">
+                ⚠️ <b>Cuidado:</b> Si eliminas una asignatura, el sistema dejará de mostrar sus notas, aunque no se borren permanentemente de los alumnos. Asegúrate de borrar la duplicada.
+            </div>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table class="sge-table" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyAsigManager">
+                        </tbody>
+                </table>
+            </div>
+            <div style="text-align:right; margin-top:15px;">
+                 <button class="btn btn-default" onclick="document.getElementById('modalAsigManager').style.display='none'">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <div class="main-container">
         <div id="vMenu" class="vista activa">
             <div class="card">
@@ -354,6 +419,7 @@
                             <button class="tab-btn" onclick="verUTP('ranking')">Ranking</button>
                             <button class="tab-btn" onclick="verUTP('correlacion')">Correlación</button>
                             <button class="tab-btn" onclick="verUTP('general')">Consolidado</button>
+                            <button class="tab-btn" onclick="verUTP('mantenedor')">⚙️ Mantenedor</button>
                         </div>
                         <div id="utpSabana" class="utp-tab"><div style="margin-bottom:15px; display:flex; justify-content: space-between;"><div style="display:flex; gap:10px; align-items:center;"><label>Curso:</label><select id="selUtpCursoSabana" class="form-control" onchange="renderUTPPlanillaSabana()"></select></div><button class="btn btn-default" onclick="printSabana()">🖨️ Imprimir</button></div><div class="table-wrapper" id="wrapUtpSabana" style="max-height: 75vh;"></div></div>
                         <div id="utpVista_utp" class="utp-tab" style="display:none;"><div style="margin-bottom:15px; display:flex; gap:15px; background:#e3f2fd; padding:10px; border-radius:4px; align-items:center;"><div><label style="font-weight:bold;">1. Seleccionar Curso:</label><br><select id="selUtpCursoDetalle" class="form-control" onchange="loadStudentsForDetail()"></select></div><div><label style="font-weight:bold;">2. Seleccionar Alumno:</label><br><select id="selUtpAlumnoDetalle" class="form-control" onchange="renderUTPDetalle()"><option value="">-- Primero elija curso --</option></select></div><div style="flex:1; text-align:right;"><span style="font-size:10px; color:#666;">Análisis Comparativo</span></div></div><div id="wrapUtpDetalle" style="overflow-x:auto;"></div></div>
@@ -367,6 +433,62 @@
                                 <div><canvas id="chartUTPPie"></canvas></div>
                             </div>
                         </div>
+                        
+                        <div id="utpMantenedor" class="utp-tab" style="display:none;">
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                                <div class="card">
+                                    <h3>1. Gestión de Año y Cursos</h3>
+                                    <div class="form-section">Nuevo Año Académico</div>
+                                    <p style="font-size:11px; color:#666;">Agregue un año al selector (ej: 2027) para empezar a crear cursos en él.</p>
+                                    <div style="display:flex; gap:10px; margin-bottom:15px;">
+                                        <input type="number" id="inNewYear" class="form-control" placeholder="Ej: 2027">
+                                        <button class="btn btn-blue" onclick="addYearOption()">Agregar al Selector</button>
+                                    </div>
+                                    
+                                    <div class="form-section">Crear Nuevo Curso</div>
+                                    <div style="margin-bottom:10px;">
+                                        <label>Nombre del Curso (Incluir año):</label>
+                                        <input type="text" id="inNewCursoNombre" class="form-control" placeholder="Ej: Primero Medio A 2027">
+                                    </div>
+                                    <div style="margin-bottom:10px;">
+                                        <label>Profesor Jefe (Opcional):</label>
+                                        <input type="text" id="inNewCursoProfe" class="form-control" placeholder="Nombre Profesor">
+                                    </div>
+                                    <button class="btn btn-success" onclick="createNewCurso()">+ Crear Curso</button>
+                                </div>
+                                
+                                <div class="card">
+                                    <h3>2. Agregar Asignaturas Faltantes</h3>
+                                    <p style="font-size:11px; color:#666;">Seleccione el curso y agregue la asignatura que faltó en la carga inicial.</p>
+                                    <div style="margin-bottom:10px;">
+                                        <label>Seleccionar Curso:</label>
+                                        <select id="selMantCursoAsig" class="form-control"></select>
+                                    </div>
+                                    <div style="margin-bottom:10px;">
+                                        <label>ID Asignatura (Único, ej: 105):</label>
+                                        <input type="text" id="inNewAsigID" class="form-control" placeholder="Ej: MAT2027">
+                                    </div>
+                                    <div style="margin-bottom:10px;">
+                                        <label>Nombre Asignatura:</label>
+                                        <input type="text" id="inNewAsigNombre" class="form-control" placeholder="Ej: MATEMATICA">
+                                    </div>
+                                    <button class="btn btn-blue" onclick="addNewSubject()">+ Agregar Asignatura</button>
+                                </div>
+                                
+                                <div class="card span-2">
+                                    <h3>3. Carga Masiva de Alumnos (Nómina)</h3>
+                                    <p style="font-size:11px; color:#666;">Pegue la lista desde Excel. Formato: <b>RUT;NOMBRE COMPLETO</b> (Una línea por alumno).</p>
+                                    <div style="margin-bottom:10px;">
+                                        <label>Seleccionar Curso:</label>
+                                        <select id="selMantCursoNomina" class="form-control"></select>
+                                    </div>
+                                    <textarea id="txtNominaMasiva" class="form-control" rows="10" placeholder="12345678-9;JUAN PEREZ&#10;98765432-1;MARIA GONZALEZ"></textarea>
+                                    <br>
+                                    <button class="btn btn-warning" onclick="batchStudents()">📤 Cargar Nómina</button>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -389,6 +511,7 @@
                         <div style="display:flex; align-items:center; gap:10px;">
                             <label>Asignatura:</label>
                             <select id="selAsig" onchange="renderNotas()" class="form-control"></select>
+                            <button class="btn btn-default btn-sm" onclick="openAsigManager()" title="Gestionar Asignaturas" style="padding: 5px 10px;">⚙️</button>
                         </div>
                         <div style="display:flex; gap:10px;">
                             <button class="btn btn-success" onclick="exportToExcel()">📥 Descargar Excel</button>
@@ -451,7 +574,7 @@
         function isConcepto(nom) { return CONCEPTOS.some(c => cleanStr(nom).includes(c)); }
         function getPrintHeader(title){ return `<div class="inf-header-grid"><img src="logo.jpg" class="inf-logo"><div class="inf-center"><div class="inf-school">ESCUELA AGRÍCOLA SAGRADOS CORAZONES</div><div class="inf-city">VILLA ALEGRE</div><div class="inf-rbd">RBD: 3478-9 | DECRETO COOPERADOR: 17576</div><div class="inf-doc-title">${title}</div></div><div></div></div>`; }
 
-        async function init() { const loader = document.getElementById("loader"); const grid = document.getElementById("gridCursos"); const year = document.getElementById("selAno").value; loader.style.display = "flex"; document.getElementById("loaderText").innerText = "Cargando Cursos..."; grid.innerHTML = ""; try { const s = await db.collection("cursos").get(); let h = ""; let count = 0; s.forEach(d => { if(d.data().nombre && d.data().nombre.includes(year)) { h += `<div class="curso-item" onclick="load('${d.id}')"><h3 style="font-size:30px;color:#004a99">📚</h3><h3>${d.data().nombre}</h3></div>`; count++; } }); grid.innerHTML = count > 0 ? h : `<div style="grid-column:1/-1;text-align:center;">No hay cursos.</div>`; } catch (error) { console.error(error); alert(error.message); } finally { loader.style.display = "none"; } }
+        async function init() { const loader = document.getElementById("loader"); const grid = document.getElementById("gridCursos"); const year = document.getElementById("selAno").value; loader.style.display = "flex"; document.getElementById("loaderText").innerText = "Cargando Cursos..."; grid.innerHTML = ""; try { const s = await db.collection("cursos").get(); let h = ""; let count = 0; s.forEach(d => { if(d.data().nombre && d.data().nombre.includes(year)) { h += `<div class="curso-item" onclick="load('${d.id}')"><h3 style="font-size:30px;color:#004a99">📚</h3><h3>${d.data().nombre}</h3></div>`; count++; } }); grid.innerHTML = count > 0 ? h : `<div style="grid-column:1/-1;text-align:center;">No hay cursos para el año ${year}.</div>`; } catch (error) { console.error(error); alert(error.message); } finally { loader.style.display = "none"; } }
         async function load(id){ document.getElementById("loader").style.display="flex"; try{ const [c,a,s]=await Promise.all([db.collection("cursos").doc(id).get(),db.collection("cursos").doc(id).collection("alumnos").orderBy("numero_lista").get(),db.collection("cursos").doc(id).collection("asignaturas").orderBy("id").get()]); CURSO={id,data:c.data(),alumnos:a.docs.map(d=>d.data()),asignaturas:s.docs.map(d=>({id:d.id,...d.data()}))}; document.getElementById("lblCurso").innerText=CURSO.data.nombre; document.getElementById("inProfesorJefe").value = CURSO.data.profesor_jefe || ""; document.getElementById("vMenu").classList.remove("activa"); setTimeout(() => document.getElementById("vMenu").style.display="none", 300); document.getElementById("vCurso").style.display="block"; setTimeout(() => document.getElementById("vCurso").classList.add("activa"), 50); document.getElementById("btnHeaderBack").style.display="block"; let sel=document.getElementById("selAsig"); sel.innerHTML=""; CURSO.asignaturas.forEach(x=>sel.innerHTML+=`<option value="${x.id}">${x.nombre}</option>`); window.history.pushState({page: 'curso', id: id}, "Curso", "#curso"); ver('notas'); }catch(e){ alert("Error: " + e.message); }finally{ document.getElementById("loader").style.display="none" } }
         
         function ver(t){
@@ -483,10 +606,15 @@
         function getNota11Value(alu, asigNombre, cursoNombre, periodoSuffix = '', subjectsList = null) { 
             let s = cleanStr(asigNombre); let c = cleanStr(cursoNombre); let sourceKey = null; 
             if(s.includes("LENGUA")) sourceKey = "HABILIDADES"; if(s.includes("MATEMATICA")) sourceKey = "RELIGION"; if(s.includes("HISTORIA")) sourceKey = "INDUCCION"; if(s.includes("BIOLOGIA")) sourceKey = "HABITOS"; 
+            
+            // Detección de niveles
             let esPrimeroSegundo = c.includes("1") || c.includes("2") || c.includes("PRIMERO") || c.includes("SEGUNDO"); 
             let esTerceroCuarto = c.includes("3") || c.includes("4") || c.includes("TERCERO") || c.includes("CUARTO");
+            
+            // Lógica de traspaso específica por nivel
             if(s.includes("TECNOLOGIA") && esPrimeroSegundo) sourceKey = "ORIENTACION"; 
             if(s.includes("INGLES") && esTerceroCuarto) sourceKey = "ORIENTACION"; 
+            
             if(!sourceKey) return null; 
             let list = subjectsList || (typeof CURSO !== 'undefined' && CURSO && CURSO.asignaturas ? CURSO.asignaturas : []); 
             if(!list || list.length === 0) return null;
@@ -576,7 +704,10 @@
             table.querySelectorAll("input").forEach(input => { let span = document.createElement("span"); span.innerText = input.value; input.parentNode.replaceChild(span, input); });
             table.querySelectorAll("th").forEach(th => { th.style.cursor = "default"; th.style.background = "#f0f0f0"; th.style.color = "black"; th.title = ""; th.onclick = null; });
             table.querySelectorAll("button").forEach(btn => btn.remove());
-            let html = `<div class="informe-page sabana-print-container">${getPrintHeader("PLANILLA DE CALIFICACIONES PARCIALES")}<div class="inf-data-grid" style="margin-bottom:10px; grid-template-columns: 1fr 1fr 1fr;"><div><b>CURSO:</b> ${CURSO.data.nombre}</div><div><b>ASIGNATURA:</b> ${asigName}</div><div><b>PROFESOR(A):</b> ${profName}</div></div><div class="table-wrapper" style="border:none; box-shadow:none;">${table.outerHTML}</div><div class="inf-footer" style="margin-top:30px;"><div class="inf-firma">Firma Profesor(a)</div></div></div>`;
+            
+            // CAMBIO: Usamos print-flow-container para permitir múltiples páginas
+            let html = `<div class="print-flow-container">${getPrintHeader("PLANILLA DE CALIFICACIONES PARCIALES")}<div class="inf-data-grid" style="margin-bottom:10px; grid-template-columns: 1fr 1fr 1fr;"><div><b>CURSO:</b> ${CURSO.data.nombre}</div><div><b>ASIGNATURA:</b> ${asigName}</div><div><b>PROFESOR(A):</b> ${profName}</div></div><div class="table-wrapper" style="border:none; box-shadow:none;">${table.outerHTML}</div><div class="inf-footer" style="margin-top:30px;"><div class="inf-firma">Firma Profesor(a)</div></div></div>`;
+            
             document.getElementById("printArea").innerHTML = html; window.print();
         }
 
@@ -594,7 +725,16 @@
         alus = alus.filter(a => !a.fecha_retiro);
         let ranking=[]; alus.forEach(alu=>{ let total=0, faltas=0; if(alu.asistencia_diaria){ Object.values(alu.asistencia_diaria).forEach(m=>{ Object.values(m).forEach(v=>{ if(v!==null){total++; if(v===false)faltas++} }) }) }; let p=total>0?Math.round(((total-faltas)/total)*100):0; ranking.push({nombre:alu.nombre_completo, faltas:faltas, pct:p}) }); let riskList = [...ranking].sort((a,b)=>b.faltas-a.faltas).filter(x=>x.faltas>0); let hRisk=""; if(riskList.length===0) hRisk="<tr><td colspan='3'>Asistencia Perfecta.</td></tr>"; else riskList.forEach(r=>{ hRisk+=`<tr><td style="text-align:left;">${r.nombre}</td><td style="color:red;font-weight:bold;">${r.faltas}</td><td>${r.pct}%</td></tr>`; }); document.getElementById("bodyRankingRisk").innerHTML=hRisk; let rewardList = [...ranking].sort((a,b)=>b.pct-a.pct).slice(0, 10); let labels = rewardList.map(r=>r.nombre.split(" ")[0] + " " + (r.nombre.split(" ")[2]||"")); let data = rewardList.map(r=>r.pct); const ctx = document.getElementById('chartBestAsis'); if(chartBestAsisInstance) chartBestAsisInstance.destroy(); chartBestAsisInstance = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: '% Asistencia', data: data, backgroundColor: '#388e3c', borderColor: '#1b5e20', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: { beginAtZero: true, max: 100 } } } }); document.getElementById("modalAsisStats").style.display='flex'; } catch(e) { alert("Error cargando detalle: " + e.message); } finally { document.getElementById("loader").style.display="none"; } }
 
-        async function loadUTPData() { const loader = document.getElementById("loader"); loader.style.display = "flex"; document.getElementById("loaderText").innerText = "Procesando Datos UTP..."; const year = document.getElementById("selAno").value; UTP_DATA = []; try { const cursosSnap = await db.collection("cursos").get(); const promises = []; cursosSnap.forEach(doc => { const c = doc.data(); if(c.nombre && c.nombre.includes(year)) { promises.push(Promise.all([db.collection("cursos").doc(doc.id).collection("alumnos").orderBy("numero_lista").get(),db.collection("cursos").doc(doc.id).collection("asignaturas").orderBy("id").get()]).then(([alusSnap, asigsSnap]) => { return { id: doc.id, nombre: c.nombre, alumnos: alusSnap.docs.map(a => a.data()), asignaturas: asigsSnap.docs.map(s => ({id:s.id, ...s.data()})) }; })); } }); const rawData = await Promise.all(promises); processUTPData(rawData); renderUTPGeneral(); let sel = document.getElementById("selUtpCursoSabana"); let selDet = document.getElementById("selUtpCursoDetalle"); sel.innerHTML = "<option value=''>Seleccione Curso</option>"; selDet.innerHTML = "<option value=''>Seleccione Curso</option>"; UTP_DATA.forEach((c, idx) => { let op = `<option value="${idx}">${c.nombre}</option>`; sel.innerHTML += op; selDet.innerHTML += op; }); } catch (e) { console.error(e); alert("Error cargando UTP"); } finally { loader.style.display = "none"; } }
+        async function loadUTPData() { const loader = document.getElementById("loader"); loader.style.display = "flex"; document.getElementById("loaderText").innerText = "Procesando Datos UTP..."; const year = document.getElementById("selAno").value; UTP_DATA = []; try { const cursosSnap = await db.collection("cursos").get(); const promises = []; cursosSnap.forEach(doc => { const c = doc.data(); if(c.nombre && c.nombre.includes(year)) { promises.push(Promise.all([db.collection("cursos").doc(doc.id).collection("alumnos").orderBy("numero_lista").get(),db.collection("cursos").doc(doc.id).collection("asignaturas").orderBy("id").get()]).then(([alusSnap, asigsSnap]) => { return { id: doc.id, nombre: c.nombre, alumnos: alusSnap.docs.map(a => a.data()), asignaturas: asigsSnap.docs.map(s => ({id:s.id, ...s.data()})) }; })); } }); const rawData = await Promise.all(promises); processUTPData(rawData); renderUTPGeneral(); 
+            // UPDATED SELECTORS including Mantenedor
+            let sel = document.getElementById("selUtpCursoSabana"); let selDet = document.getElementById("selUtpCursoDetalle"); 
+            let selMantAsig = document.getElementById("selMantCursoAsig"); let selMantNomina = document.getElementById("selMantCursoNomina");
+            
+            let htmlOp = "<option value=''>Seleccione Curso</option>";
+            sel.innerHTML = htmlOp; selDet.innerHTML = htmlOp; selMantAsig.innerHTML = htmlOp; selMantNomina.innerHTML = htmlOp;
+            
+            UTP_DATA.forEach((c, idx) => { let op = `<option value="${idx}">${c.nombre}</option>`; sel.innerHTML += op; selDet.innerHTML += op; selMantAsig.innerHTML += op; selMantNomina.innerHTML += op; }); } catch (e) { console.error(e); alert("Error cargando UTP"); } finally { loader.style.display = "none"; } }
+        
         function processUTPData(courses) { 
             UTP_DATA = courses.map(c => { 
                 let sumProm = 0, countProm = 0, reprobados = 0, rojosList = [], matriculaActiva = 0; 
@@ -786,8 +926,18 @@
         function generateNotasHTML(alu) {
             let p=alu.personalidad||{}, totalDias=0, faltas=0; if(alu.asistencia_diaria) Object.values(alu.asistencia_diaria).forEach(m=>{Object.values(m).forEach(d=>{if(d!==undefined&&d!==null){totalDias++;if(d===false)faltas++}})}); let porcAsis=totalDias>0?Math.round(((totalDias-faltas)/totalDias)*100):100;
             const CONCEPTOS=["RELIGION","ORIENTACION","FORMACION"], CIENCIAS=["BIOLOGIA","FISICA","QUIMICA"], TALLERES_NOTA_11=["INDUCCION","HABILIDADES","HABITOS"], NO_PROM_GENERAL=["RELIGION","ORIENTACION","CONSEJO","HABILIDADES","HABITOS","INDUCCION"];
+            
+            // --- DETECCION DE NIVEL ---
+            const cursoNombre = CURSO.data.nombre.toUpperCase();
+            // Nivel 3ro o 4to Medio: Buscamos "3" o "4" o "TERCERO" o "CUARTO"
+            const esTerceroCuarto = cursoNombre.includes("3") || cursoNombre.includes("4") || cursoNombre.includes("TERCERO") || cursoNombre.includes("CUARTO");
+            
             let asignaturas=CURSO.asignaturas.filter(a=>!cleanStr(a.nombre).includes("CONSEJO")), sumPromAnual=0, countPromAnual=0, sumGenP1=0, countGenP1=0, sumGenP2=0, countGenP2=0;
             let scienceFinals=[], dataRows=asignaturas.map(asig=>{let n=alu.notas?(alu.notas[asig.id]||alu.notas[Number(asig.id)]||{}):{}, nomUpper=cleanStr(asig.nombre), esConcepto=CONCEPTOS.some(c=>nomUpper.includes(c)), esCiencia=CIENCIAS.some(c=>nomUpper.includes(c)), esTaller=TALLERES_NOTA_11.some(t=>nomUpper.includes(t)), sePromedia=!NO_PROM_GENERAL.some(c=>nomUpper.includes(c));
+            
+            // Si es 3ro o 4to medio, desactivamos la lógica de fusión para que renderice fila normal
+            if (esTerceroCuarto && esCiencia) { esCiencia = false; }
+
             let n11_s1=getNota11Value(alu,asig.nombre,CURSO.data.nombre,''); let s1=0,c1=0; for(let i=1;i<=10;i++){if(n['n'+i]){s1+=parseFloat(n['n'+i]);c1++}} if(n11_s1){s1+=parseFloat(n11_s1);c1++} else if(n.n11){s1+=parseFloat(n.n11);c1++} let p1=c1>0?(s1/c1).toFixed(1):"";
             let n11_s2=getNota11Value(alu,asig.nombre,CURSO.data.nombre,'s2_'); let s2=0,c2=0; for(let i=1;i<=10;i++){let k='s2_n'+i;if(n[k]){s2+=parseFloat(n[k]);c2++}} if(n11_s2){s2+=parseFloat(n11_s2);c2++} else if(n.s2_n11){s2+=parseFloat(n.s2_n11);c2++} let p2=c2>0?(s2/c2).toFixed(1):"";
             let pFinalNum=null; if(p1&&p2)pFinalNum=(parseFloat(p1)+parseFloat(p2))/2; else if(p1)pFinalNum=parseFloat(p1); else if(p2)pFinalNum=parseFloat(p2); let pFinal=pFinalNum?pFinalNum.toFixed(1):"";
@@ -796,9 +946,10 @@
             let genP1=countGenP1>0?(sumGenP1/countGenP1).toFixed(1):"", genP2=countGenP2>0?(sumGenP2/countGenP2).toFixed(1):"", promedioGeneral=countPromAnual>0?(sumPromAnual/countPromAnual).toFixed(1):"", puntajeNEM=promedioGeneral?Math.round(parseFloat(promedioGeneral)*100):"", htmlRows="", cienciaRendered=false;
             dataRows.forEach(row=>{let p1Str=row.esTaller?`<span style="color:#aaa;">${row.p1}</span>`:(row.esConcepto?numToConcept(row.p1):row.p1), p2Str=row.esTaller?`<span style="color:#aaa;">${row.p2}</span>`:(row.esConcepto?numToConcept(row.p2):row.p2), n11_s1_str=row.esConcepto?numToConcept(row.n11_s1||row.n.n11):(row.n11_s1||row.n.n11||''), n11_s2_str=row.esConcepto?numToConcept(row.n11_s2||row.n.s2_n11):(row.n11_s2||row.n.s2_n11||''), finalStr=row.esTaller?"":(row.esConcepto?numToConcept(row.pFinal):row.pFinal), trStyle=row.esTaller?"color:#555;font-style:italic;":"";
             if(row.esCiencia){if(!cienciaRendered){htmlRows+=`<tr style="${trStyle}"><td class="print-col-nombre">${row.asig.nombre}</td>`;for(let i=1;i<=10;i++)htmlRows+=`<td class="print-col-nota">${row.esConcepto?numToConcept(row.n['n'+i]):(row.n['n'+i]||'')}</td>`;htmlRows+=`<td class="print-col-nota" style="background:#e8f0fe"><b>${n11_s1_str}</b></td><td class="print-col-prom">${p1Str}</td>`;for(let i=1;i<=10;i++)htmlRows+=`<td class="print-col-nota">${row.esConcepto?numToConcept(row.n['s2_n'+i]):(row.n['s2_n'+i]||'')}</td>`;htmlRows+=`<td class="print-col-nota" style="background:#e8f0fe"><b>${n11_s2_str}</b></td><td class="print-col-prom">${p2Str}</td><td class="print-col-final" rowspan="3" style="vertical-align:middle;background:#ddd;">${promCienciasFusionado?promCienciasFusionado.toFixed(1):"-"}</td></tr>`;cienciaRendered=true}else{htmlRows+=`<tr style="${trStyle}"><td class="print-col-nombre">${row.asig.nombre}</td>`;for(let i=1;i<=10;i++)htmlRows+=`<td class="print-col-nota">${row.esConcepto?numToConcept(row.n['n'+i]):(row.n['n'+i]||'')}</td>`;htmlRows+=`<td class="print-col-nota" style="background:#e8f0fe"><b>${n11_s1_str}</b></td><td class="print-col-prom">${p1Str}</td>`;for(let i=1;i<=10;i++)htmlRows+=`<td class="print-col-nota">${row.esConcepto?numToConcept(row.n['s2_n'+i]):(row.n['s2_n'+i]||'')}</td>`;htmlRows+=`<td class="print-col-nota" style="background:#e8f0fe"><b>${n11_s2_str}</b></td><td class="print-col-prom">${p2Str}</td></tr>`;}} else {htmlRows+=`<tr style="${trStyle}"><td class="print-col-nombre">${row.asig.nombre}</td>`;for(let i=1;i<=10;i++)htmlRows+=`<td class="print-col-nota">${row.esConcepto?numToConcept(row.n['n'+i]):(row.n['n'+i]||'')}</td>`;htmlRows+=`<td class="print-col-nota" style="background:#e8f0fe"><b>${n11_s1_str}</b></td><td class="print-col-prom">${p1Str}</td>`;for(let i=1;i<=10;i++)htmlRows+=`<td class="print-col-nota">${row.esConcepto?numToConcept(row.n['s2_n'+i]):(row.n['s2_n'+i]||'')}</td>`;htmlRows+=`<td class="print-col-nota" style="background:#e8f0fe"><b>${n11_s2_str}</b></td><td class="print-col-prom">${p2Str}</td><td class="print-col-final">${finalStr}</td></tr>`;}});
-            return { html: `<div class="informe-page"><div class="watermark"><img src="logo.jpg"></div>${getPrintHeader("INFORME DE NOTAS Y DESARROLLO PERSONAL")}<div class="inf-data-grid"><div><b>ALUMNO:</b> ${alu.nombre_completo}</div><div><b>RUT:</b> ${alu.rut}</div><div><b>CURSO:</b> ${CURSO.data.nombre}</div><div style="background:#e8f0fe; border:1px solid #004a99; font-weight:bold; text-align:center;">NEM ESTIMADO: ${puntajeNEM||"-"}</div></div><div class="inf-layout"><div class="inf-col-left"><table class="inf-table"><thead><tr><th class="print-col-nombre" rowspan="2">ASIGNATURA</th><th colspan="11">PRIMER SEMESTRE</th><th class="print-col-prom" rowspan="2">P1</th><th colspan="11">SEGUNDO SEMESTRE</th><th class="print-col-prom" rowspan="2">P2</th><th class="print-col-final" rowspan="2">FINAL</th></tr><tr class="subheader-nums"><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>N11</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>N11</th></tr></thead><tbody>${htmlRows}</tbody><tfoot><tr><td colspan="12" style="text-align:right;padding-right:5px;font-weight:bold;">PROMEDIO GENERAL:</td><td style="font-weight:bold;background:#ccc;">${genP1}</td><td colspan="11"></td><td style="font-weight:bold;background:#ccc;">${genP2}</td><td class="final-closed">${promedioGeneral}</td></tr></tfoot></table></div><div class="inf-col-right"><div class="box-title">ASISTENCIA</div><div class="box-content"><div>% Asistencia: <b>${porcAsis}%</b></div><div>Inasistencias: <b>${faltas}</b></div></div><div class="box-title">RENDIMIENTO</div><div class="chart-box"><canvas id="chartPrint_${alu.rut}"></canvas></div><div class="box-title">PERSONALIDAD</div><div class="box-content" style="height:350px;font-style:italic;overflow:hidden;font-size:9px;"><b>S1:</b> ${p.obs_s1||"-"}<br><b>S2:</b> ${p.obs_s2||"-"}</div></div></div><div class="inf-footer-dual"><div class="inf-firma-box"><div class="inf-firma-line">Firma Profesor(a) Jefe</div></div><div class="inf-firma-box"><div class="inf-firma-line">Alejandra Morales G.<br><span class="inf-firma-sub">Unidad Técnico Pedagógica</span></div></div></div></div>`, chartData: { id: `chartPrint_${alu.rut}`, data: [parseFloat(promedioGeneral)||0, 6.0] } };
+            return { html: `<div class="informe-page">${getPrintHeader("INFORME DE NOTAS Y DESARROLLO PERSONAL")}<div class="inf-data-grid"><div><b>ALUMNO:</b> ${alu.nombre_completo}</div><div><b>RUT:</b> ${alu.rut}</div><div><b>CURSO:</b> ${CURSO.data.nombre}</div><div style="background:#e8f0fe; border:1px solid #004a99; font-weight:bold; text-align:center;">NEM ESTIMADO: ${puntajeNEM||"-"}</div></div><div class="inf-layout"><div class="inf-col-left"><table class="inf-table"><thead><tr><th class="print-col-nombre" rowspan="2">ASIGNATURA</th><th colspan="11">PRIMER SEMESTRE</th><th class="print-col-prom" rowspan="2">P1</th><th colspan="11">SEGUNDO SEMESTRE</th><th class="print-col-prom" rowspan="2">P2</th><th class="print-col-final" rowspan="2">FINAL</th></tr><tr class="subheader-nums"><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>N11</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>N11</th></tr></thead><tbody>${htmlRows}</tbody><tfoot><tr><td colspan="12" style="text-align:right;padding-right:5px;font-weight:bold;">PROMEDIO GENERAL:</td><td style="font-weight:bold;background:#ccc;">${genP1}</td><td colspan="11"></td><td style="font-weight:bold;background:#ccc;">${genP2}</td><td class="final-closed">${promedioGeneral}</td></tr></tfoot></table></div><div class="inf-col-right"><div class="box-title">ASISTENCIA</div><div class="box-content"><div>% Asistencia: <b>${porcAsis}%</b></div><div>Inasistencias: <b>${faltas}</b></div></div><div class="box-title">RENDIMIENTO</div><div class="chart-box"><canvas id="chartPrint_${alu.rut}"></canvas></div><div class="box-title">PERSONALIDAD</div><div class="box-content" style="height:350px;font-style:italic;overflow:hidden;font-size:9px;"><b>S1:</b> ${p.obs_s1||"-"}<br><b>S2:</b> ${p.obs_s2||"-"}</div></div></div><div class="inf-footer-dual"><div class="inf-firma-box"><div class="inf-firma-line">Firma Profesor(a) Jefe</div></div><div class="inf-firma-box"><div class="inf-firma-line">Alejandra Morales G.<br><span class="inf-firma-sub">Unidad Técnico Pedagógica</span></div></div></div></div>`, chartData: { id: `chartPrint_${alu.rut}`, data: [parseFloat(promedioGeneral)||0, 6.0] } };
         }
-        function generatePersonalidadHTML(alu) { let p=alu.personalidad||{}, groups={}, trs=""; INDICADORES_PERS.forEach(i=>{if(!groups[i.cat])groups[i.cat]=[];groups[i.cat].push(i)}); for(const[cat,inds]of Object.entries(groups)){trs+=`<tr><td colspan="3" class="pers-cat-row">${cat}</td></tr>`;inds.forEach(ind=>{let v1=p[`${ind.id}_S1`]||"-",v2=p[`${ind.id}_S2`]||"-";trs+=`<tr><td style="text-align:left;padding-left:15px;">${ind.text}</td><td class="pers-val-col">${v1}</td><td class="pers-val-col">${v2}</td></tr>`})} return `<div class="informe-page"><div class="watermark"><img src="logo.jpg"></div>${getPrintHeader("INFORME DE DESARROLLO PERSONAL Y SOCIAL")}<div class="inf-data-grid" style="grid-template-columns:2fr 1fr 1fr;"><div><b>ALUMNO:</b> ${alu.nombre_completo}</div><div><b>RUT:</b> ${alu.rut}</div><div><b>CURSO:</b> ${CURSO.data.nombre}</div></div><table class="pers-table"><thead><tr><th>INDICADORES DE EVALUACIÓN</th><th>1º SEM</th><th>2º SEM</th></tr></thead><tbody>${trs}</tbody></table><div style="font-size:10px;margin-top:5px;font-style:italic;">Conceptos: DE: Desarrollo Excelente | DA: Desarrollo Adecuado | PS: Puede Superarse | NR: No Registra</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px;"><div><div class="box-title">OBSERVACIONES 1º SEMESTRE</div><div class="box-content" style="height:60px;font-style:italic;">${p['obs_s1']||"Sin observaciones."}</div></div><div><div class="box-title">OBSERVACIONES 2º SEMESTRE</div><div class="box-content" style="height:60px;font-style:italic;">${p['obs_s2']||"Sin observaciones."}</div></div></div><div class="inf-footer-dual"><div class="inf-firma-box"><div class="inf-firma-line">Firma Profesor(a) Jefe</div></div><div class="inf-firma-box"><div class="inf-firma-line">Alejandra Morales G.<br><span class="inf-firma-sub">Unidad Técnico Pedagógica</span></div></div></div></div>`; }
+        function generatePersonalidadHTML(alu) { let p=alu.personalidad||{}, groups={}, trs=""; INDICADORES_PERS.forEach(i=>{if(!groups[i.cat])groups[i.cat]=[];groups[i.cat].push(i)}); for(const[cat,inds]of Object.entries(groups)){trs+=`<tr><td colspan="3" class="pers-cat-row">${cat}</td></tr>`;inds.forEach(ind=>{let v1=p[`${ind.id}_S1`]||"-",v2=p[`${ind.id}_S2`]||"-";trs+=`<tr><td style="text-align:left;padding-left:15px;">${ind.text}</td><td class="pers-val-col">${v1}</td><td class="pers-val-col">${v2}</td></tr>`})} 
+        return `<div class="informe-page">${getPrintHeader("INFORME DE DESARROLLO PERSONAL Y SOCIAL")}<div class="inf-data-grid" style="grid-template-columns:2fr 1fr 1fr;"><div><b>ALUMNO:</b> ${alu.nombre_completo}</div><div><b>RUT:</b> ${alu.rut}</div><div><b>CURSO:</b> ${CURSO.data.nombre}</div></div><table class="pers-table"><thead><tr><th>INDICADORES DE EVALUACIÓN</th><th>1º SEM</th><th>2º SEM</th></tr></thead><tbody>${trs}</tbody></table><div style="font-size:10px;margin-top:5px;font-style:italic;">Conceptos: DE: Desarrollo Excelente | DA: Desarrollo Adecuado | PS: Puede Superarse | NR: No Registra</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px;"><div><div class="box-title">OBSERVACIONES 1º SEMESTRE</div><div class="box-content" style="height:60px;font-style:italic;">${p['obs_s1']||"Sin observaciones."}</div></div><div><div class="box-title">OBSERVACIONES 2º SEMESTRE</div><div class="box-content" style="height:60px;font-style:italic;">${p['obs_s2']||"Sin observaciones."}</div></div></div><div class="inf-footer-dual"><div class="inf-firma-box"><div class="inf-firma-line">Firma Profesor(a) Jefe</div></div><div class="inf-firma-box"><div class="inf-firma-line">Alejandra Morales G.<br><span class="inf-firma-sub">Unidad Técnico Pedagógica</span></div></div></div></div>`; }
         function printInformes(mode, rut=null) { let targets=mode==='all'?CURSO.alumnos:[CURSO.alumnos.find(a=>a.rut===rut)], fullHTML="", charts=[]; targets.forEach(alu=>{if(!alu)return; let d=generateNotasHTML(alu); fullHTML+=d.html; charts.push(d.chartData); fullHTML+=generatePersonalidadHTML(alu); }); document.getElementById("printArea").innerHTML=fullHTML; charts.forEach(c=>{let ctx=document.getElementById(c.id); if(ctx){new Chart(ctx,{type:'bar',data:{labels:['Alumno','Curso'],datasets:[{label:'Promedio',data:c.data,backgroundColor:['#004a99','#ccc']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:2,max:7}},animation:false}})}}); setTimeout(()=>window.print(),800); }
         
         function printFullReport(rut){printInformes('one',rut)}
@@ -847,8 +998,6 @@
         function openStudentModal(rut = null) {
             const modal = document.getElementById("modalAlumno");
             const title = document.getElementById("modalAluTitle");
-            
-            // Limpiar campos
             document.getElementById("inAluId").value = "";
             document.getElementById("inAluRut").value = "";
             document.getElementById("inAluRut").disabled = false;
@@ -868,7 +1017,6 @@
             document.getElementById("inAluJudicial").value = "";
 
             if (rut) {
-                // Modo Edición
                 const alu = CURSO.alumnos.find(a => a.rut === rut);
                 if (alu) {
                     title.innerText = "Editar Alumno";
@@ -880,22 +1028,17 @@
                     document.getElementById("inAluNombreLegal").value = alu.nombre_legal || alu.nombre_completo || "";
                     document.getElementById("inAluNombreSocial").value = alu.nombre_social || "";
                     document.getElementById("inAluFoto").value = alu.foto_url || "";
-                    
                     document.getElementById("inAluFechaMat").value = alu.fecha_matricula || "";
                     document.getElementById("inAluFechaRet").value = alu.fecha_retiro || "";
-                    
                     document.getElementById("inAluDir").value = alu.direccion || "";
                     document.getElementById("inAluApo").value = alu.nombre_apoderado || "";
                     document.getElementById("inAluTelApo").value = alu.telefono_apoderado || "";
                     document.getElementById("inAluTelAlu").value = alu.telefono_alumno || "";
-                    
                     document.getElementById("inAluNEE").value = alu.nee || "";
                     document.getElementById("inAluSalud").value = alu.salud || "";
                     document.getElementById("inAluJudicial").value = alu.judicial || "";
                 }
-            } else {
-                title.innerText = "Nuevo Alumno";
-            }
+            } else { title.innerText = "Nuevo Alumno"; }
             modal.style.display = "flex";
         }
 
@@ -903,61 +1046,147 @@
             const rut = document.getElementById("inAluRut").value.trim();
             const legal = document.getElementById("inAluNombreLegal").value.trim();
             const social = document.getElementById("inAluNombreSocial").value.trim();
-            
-            // Lógica de nombre: Si hay social, ese es el "nombre_completo" para el resto de la app.
             const nombreDisplay = social ? social : legal;
-
             if (!rut || !legal) return alert("RUT y Nombre Legal son obligatorios");
-
             const loader = document.getElementById("loader");
-            loader.style.display = "flex";
-            document.getElementById("loaderText").innerText = "Guardando Ficha...";
-
+            loader.style.display = "flex"; document.getElementById("loaderText").innerText = "Guardando Ficha...";
             try {
-                const data = {
-                    rut: rut,
-                    nombre_completo: nombreDisplay,
-                    nombre_legal: legal,
-                    nombre_social: social,
-                    sexo_registral: document.getElementById("inAluSexo").value,
-                    numero_lista: parseInt(document.getElementById("inAluNum").value),
-                    foto_url: document.getElementById("inAluFoto").value.trim(),
-                    fecha_matricula: document.getElementById("inAluFechaMat").value,
-                    fecha_retiro: document.getElementById("inAluFechaRet").value, // Si tiene valor, se considera retirado
-                    direccion: document.getElementById("inAluDir").value.trim(),
-                    nombre_apoderado: document.getElementById("inAluApo").value.trim(),
-                    telefono_apoderado: document.getElementById("inAluTelApo").value.trim(),
-                    telefono_alumno: document.getElementById("inAluTelAlu").value.trim(),
-                    nee: document.getElementById("inAluNEE").value.trim(),
-                    salud: document.getElementById("inAluSalud").value.trim(),
-                    judicial: document.getElementById("inAluJudicial").value.trim()
-                };
-
+                const data = { rut: rut, nombre_completo: nombreDisplay, nombre_legal: legal, nombre_social: social, sexo_registral: document.getElementById("inAluSexo").value, numero_lista: parseInt(document.getElementById("inAluNum").value), foto_url: document.getElementById("inAluFoto").value.trim(), fecha_matricula: document.getElementById("inAluFechaMat").value, fecha_retiro: document.getElementById("inAluFechaRet").value, direccion: document.getElementById("inAluDir").value.trim(), nombre_apoderado: document.getElementById("inAluApo").value.trim(), telefono_apoderado: document.getElementById("inAluTelApo").value.trim(), telefono_alumno: document.getElementById("inAluTelAlu").value.trim(), nee: document.getElementById("inAluNEE").value.trim(), salud: document.getElementById("inAluSalud").value.trim(), judicial: document.getElementById("inAluJudicial").value.trim() };
                 await db.collection("cursos").doc(CURSO.id).collection("alumnos").doc(rut).set(data, { merge: true });
                 document.getElementById("modalAlumno").style.display = "none";
-                await load(CURSO.id); 
-                ver('matricula'); 
-            } catch (e) {
-                alert("Error al guardar: " + e.message);
-            } finally {
-                loader.style.display = "none";
-            }
+                await load(CURSO.id); ver('matricula'); 
+            } catch (e) { alert("Error al guardar: " + e.message); } finally { loader.style.display = "none"; }
         }
 
         async function deleteStudent(rut) {
             if (!confirm("¿ESTÁ SEGURO? Eliminar al alumno borrará permanentemente sus notas y asistencia. Esta acción no se puede deshacer.")) return;
-            const loader = document.getElementById("loader");
-            loader.style.display = "flex";
-            document.getElementById("loaderText").innerText = "Eliminando...";
-            try {
-                await db.collection("cursos").doc(CURSO.id).collection("alumnos").doc(rut).delete();
-                await load(CURSO.id); ver('matricula');
-            } catch (e) { alert("Error al eliminar: " + e.message); } finally { loader.style.display = "none"; }
+            const loader = document.getElementById("loader"); loader.style.display = "flex"; document.getElementById("loaderText").innerText = "Eliminando...";
+            try { await db.collection("cursos").doc(CURSO.id).collection("alumnos").doc(rut).delete(); await load(CURSO.id); ver('matricula'); } catch (e) { alert("Error al eliminar: " + e.message); } finally { loader.style.display = "none"; }
         }
 
-        async function saveCursoConfig() {
-            const profe = document.getElementById("inProfesorJefe").value.trim();
-            try { await db.collection("cursos").doc(CURSO.id).update({ profesor_jefe: profe }); CURSO.data.profesor_jefe = profe; alert("Configuración del curso guardada."); } catch (e) { alert("Error: " + e.message); }
+        async function saveCursoConfig() { const profe = document.getElementById("inProfesorJefe").value.trim(); try { await db.collection("cursos").doc(CURSO.id).update({ profesor_jefe: profe }); CURSO.data.profesor_jefe = profe; alert("Configuración del curso guardada."); } catch (e) { alert("Error: " + e.message); } }
+        function openAsigManager() { if (!CURSO || !CURSO.asignaturas) return alert("Primero carga un curso."); let html = ""; CURSO.asignaturas.forEach(asig => { html += `<tr><td style="font-size:10px; color:#666;">${asig.id}</td><td style="font-weight:bold;">${asig.nombre}</td><td><button class="btn btn-red btn-sm" onclick="deleteAsignatura('${asig.id}')">🗑️ Eliminar</button></td></tr>`; }); document.getElementById("bodyAsigManager").innerHTML = html; document.getElementById("modalAsigManager").style.display = "flex"; }
+        async function deleteAsignatura(id) { if(!confirm("⚠️ ¿ESTÁS SEGURO?\n\nVas a eliminar la asignatura con ID: " + id + ".\nEsta acción es irreversible.")) return; const loader = document.getElementById("loader"); loader.style.display = "flex"; document.getElementById("loaderText").innerText = "Eliminando Asignatura..."; try { await db.collection("cursos").doc(CURSO.id).collection("asignaturas").doc(id).delete(); alert("Asignatura eliminada correctamente."); document.getElementById("modalAsigManager").style.display = "none"; await load(CURSO.id); } catch (e) { console.error(e); alert("Error al eliminar: " + e.message); } finally { loader.style.display = "none"; } }
+
+        /* --- NUEVAS FUNCIONALIDADES: MANTENEDOR UTP --- */
+        
+        function addYearOption() {
+            const y = document.getElementById("inNewYear").value;
+            if(!y || y.length !== 4) return alert("Ingrese un año válido de 4 dígitos");
+            const sel = document.getElementById("selAno");
+            // Check if exists
+            for(let i=0; i<sel.options.length; i++) { if(sel.options[i].value == y) return alert("El año ya existe en la lista."); }
+            const opt = document.createElement("option");
+            opt.value = y; opt.text = y;
+            sel.add(opt, 0); // Add to top
+            sel.value = y;
+            alert("Año " + y + " agregado temporalmente. Cree un curso con este año para guardarlo.");
+            init(); // Refresh to show empty grid for new year
+        }
+
+        async function createNewCurso() {
+            const nom = document.getElementById("inNewCursoNombre").value.trim();
+            const profe = document.getElementById("inNewCursoProfe").value.trim();
+            if(!nom) return alert("El nombre del curso es obligatorio.");
+            if(!confirm("Crear curso: " + nom + "?")) return;
+            
+            document.getElementById("loader").style.display = "flex";
+            try {
+                // Crear documento de curso
+                await db.collection("cursos").add({
+                    nombre: nom,
+                    profesor_jefe: profe
+                });
+                alert("Curso creado exitosamente. Actualizando UTP...");
+                document.getElementById("inNewCursoNombre").value = "";
+                loadUTPData(); // Recargar selectores y datos
+            } catch(e) {
+                alert("Error creando curso: " + e.message);
+            } finally {
+                document.getElementById("loader").style.display = "none";
+            }
+        }
+
+        async function addNewSubject() {
+            const idx = document.getElementById("selMantCursoAsig").value;
+            const id = document.getElementById("inNewAsigID").value.trim();
+            const nom = document.getElementById("inNewAsigNombre").value.trim();
+            
+            if(idx === "" || !id || !nom) return alert("Complete todos los campos.");
+            const cursoId = UTP_DATA[idx].id;
+
+            document.getElementById("loader").style.display = "flex";
+            try {
+                // Check dupes manually in UTP_DATA first to save a read
+                if(UTP_DATA[idx].asignaturas.some(a => a.id === id)) throw new Error("ID de asignatura ya existe en este curso.");
+                
+                // --- CORRECCIÓN CLAVE: Agregamos el campo 'id' dentro del documento ---
+                await db.collection("cursos").doc(cursoId).collection("asignaturas").doc(id).set({
+                    id: id,
+                    nombre: nom.toUpperCase(),
+                    profesor: ""
+                });
+                // ----------------------------------------------------------------------
+
+                alert("Asignatura agregada correctamente.");
+                document.getElementById("inNewAsigID").value = "";
+                document.getElementById("inNewAsigNombre").value = "";
+                loadUTPData();
+            } catch(e) {
+                alert("Error: " + e.message);
+            } finally {
+                document.getElementById("loader").style.display = "none";
+            }
+        }
+
+        async function batchStudents() {
+            const idx = document.getElementById("selMantCursoNomina").value;
+            const text = document.getElementById("txtNominaMasiva").value.trim();
+            
+            if(idx === "" || !text) return alert("Seleccione curso y pegue la nómina.");
+            const cursoId = UTP_DATA[idx].id;
+            
+            const lines = text.split(/\r?\n/);
+            if(lines.length === 0) return;
+
+            if(!confirm(`Se cargarán ${lines.length} alumnos al curso ${UTP_DATA[idx].nombre}. ¿Continuar?`)) return;
+
+            document.getElementById("loader").style.display = "flex";
+            document.getElementById("loaderText").innerText = "Procesando Nómina...";
+
+            const batch = db.batch();
+            let count = 0;
+            // Get current max num lista approximately
+            let currentMax = UTP_DATA[idx].alumnos.length;
+
+            try {
+                lines.forEach((line) => {
+                    const parts = line.split(";");
+                    if(parts.length >= 2) {
+                        const rut = parts[0].trim();
+                        const nombre = parts[1].trim();
+                        if(rut && nombre) {
+                            currentMax++;
+                            const docRef = db.collection("cursos").doc(cursoId).collection("alumnos").doc(rut);
+                            batch.set(docRef, {
+                                rut: rut,
+                                nombre_completo: nombre,
+                                numero_lista: currentMax
+                            }, { merge: true }); // Merge prevents overwriting existing detailed data if re-uploaded
+                            count++;
+                        }
+                    }
+                });
+
+                await batch.commit();
+                alert(`Proceso finalizado. ${count} alumnos procesados.`);
+                document.getElementById("txtNominaMasiva").value = "";
+                loadUTPData();
+            } catch(e) {
+                alert("Error en carga masiva: " + e.message);
+            } finally {
+                document.getElementById("loader").style.display = "none";
+            }
         }
 
         init();
