@@ -3,461 +3,721 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Privado - ProfeAle Admin v9.7 (2026 Fixed)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <title>Gestor Decreto 67 - Informe Académico</title>
     
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .grade-cell { min-width: 70px; text-align: center; }
-        .empty-grade { color: #d1d5db; font-style: italic; font-size: 0.7rem; }
-        .btn-action { transition: all 0.2s; } .btn-action:hover { transform: translateY(-1px); }
-        .print-only { display: none; }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        
+        /* UI Pantalla */
+        .tab-btn { transition: all 0.2s; border-bottom: 3px solid transparent; opacity: 0.7; }
+        .tab-btn:hover { opacity: 1; background-color: #e2e8f0; }
+        .tab-btn.active { border-color: #166534; color: #166534; font-weight: bold; background-color: #dcfce7; opacity: 1; }
+
+        input.editable, textarea.editable, select.editable {
+            border: 1px solid #94a3b8; background-color: #ffffff;
+            border-radius: 0.375rem; padding: 0.5rem; width: 100%; font-size: 0.95rem;
+        }
+        input.editable:focus { outline: none; border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2); }
+
+        /* Estilo Hoja de Vida (Tutoría) en Pantalla */
+        .sheet-paper {
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            font-family: 'Times New Roman', serif;
+            color: black;
+            min-height: 800px;
+        }
+        .sheet-table th, .sheet-table td { border: 1px solid black; padding: 4px 8px; font-size: 10pt; vertical-align: top; }
+        .sheet-table th { background-color: #f3f4f6; font-weight: bold; text-transform: uppercase; font-size: 9pt; }
+
+        /* --- MEJORAS DE IMPRESIÓN --- */
         @media print {
+            body { background: white; }
+            body * { visibility: hidden; } 
+            
+            #print-zone, #print-zone * {
+                visibility: visible !important;
+                display: block !important;
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+            }
+            #print-zone {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                background: white;
+            }
+            
+            img { display: block !important; visibility: visible !important; }
+
             .no-print { display: none !important; }
-            .printable-container { margin: 0; padding: 0; box-shadow: none; width: 100% !important; max-width: 100% !important; }
-            body { background-color: white; }
-            .print-only { display: block; }
-            #printHeader { position: fixed; top: 0; left: 0; width: 100%; background-color: white; border-bottom: 2px solid #3730a3; padding: 10px 40px; margin-bottom: 20px; z-index: 1000; }
-            body > .printable-container { padding-top: 100px; }
-            table { font-size: 10px; width: 100%; }
-            th, td { padding: 4px !important; border: 1px solid #9ca3af !important; }
+            @page { size: letter; margin: 1.5cm; } 
+            
+            .doc-container { 
+                font-family: 'Times New Roman', serif; 
+                color: black; 
+                line-height: 1.3;
+                font-size: 11pt;
+            }
+            .doc-header { display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 20px; }
+            .doc-title { text-align: center; font-weight: bold; font-size: 14pt; text-decoration: underline; margin-bottom: 20px; text-transform: uppercase; }
+            .doc-section { font-weight: bold; border-bottom: 1px solid #000; margin-top: 20px; margin-bottom: 10px; font-size: 11pt; text-transform: uppercase; }
+            .doc-box { border: 1px solid #000; padding: 10px; min-height: 50px; white-space: pre-wrap; text-align: justify; margin-bottom: 10px; }
+            .doc-signatures { display: flex; justify-content: space-between; margin-top: 80px; page-break-inside: avoid; }
+            .doc-sign-line { width: 40%; border-top: 1px solid black; text-align: center; font-weight: bold; padding-top: 5px; font-size: 10pt; }
+            
+            table.print-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10pt; }
+            table.print-table th, table.print-table td { border: 1px solid black; padding: 5px; text-align: left; vertical-align: top; }
+            table.print-table th { background-color: #eee !important; -webkit-print-color-adjust: exact; font-weight: bold; text-align: center; }
         }
     </style>
 </head>
-<body class="bg-slate-100 flex flex-col items-center min-h-screen py-6">
+<body class="pb-12">
 
-    <div id="loginOverlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center border-t-4 border-indigo-600">
-            <h1 class="text-3xl font-bold text-slate-800 tracking-tight">ProfeAle Admin</h1>
-            <p class="text-slate-500 text-sm mt-1 mb-6">Acceso Privado + Generador PDF</p>
-            <form id="loginForm" class="space-y-4 text-left">
-                <input type="email" id="emailInput" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="admin@profeale.cl" required>
-                <input type="password" id="passwordInput" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="••••••••" required>
-                <div id="authErrorMsg" class="text-rose-500 text-xs text-center font-bold hidden"></div>
-                <button type="submit" id="btnLogin" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition shadow-md">Ingresar</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="printHeader" class="print-only">
-        <div class="flex items-center justify-between w-full">
-            <div class="w-1/3"><h3 class="font-bold">ProfeAle</h3></div>
-            <div class="w-1/3 text-center"><h3 class="text-xl font-bold uppercase">Informe Académico</h3></div>
-            <div class="w-1/3 text-right text-xs"><p class="print-date-placeholder">--/--/----</p></div>
-        </div>
-    </div>
-
-    <div class="printable-container bg-white p-6 rounded-2xl shadow-xl max-w-[95%] w-full">
-        
-        <div class="no-print flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+    <header class="bg-green-800 text-white shadow-lg no-print sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <img src="logo.jpg" id="schoolLogo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/167/167707.png'" alt="Logo" class="h-16 object-contain hover:scale-105 transition-transform">
+                <img src="logo.jpg" alt="Logo" class="h-12 bg-white rounded p-1" onerror="this.style.display='none'">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-800">Panel de Control</h1>
-                    <div class="flex items-center gap-2 text-xs">
-                        <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">Admin v9.7</span>
-                        <span id="userIdDisplay" class="text-slate-400">...</span>
-                    </div>
+                    <h1 class="text-lg font-bold">Gestión Decreto 67</h1>
+                    <p class="text-green-200 text-xs">Informe Avance Tutoría-Repitencia • Desarrollado por ProfeAle</p>
                 </div>
             </div>
-            <div class="flex flex-col items-end gap-2">
-                <input type="file" id="csvInput" accept=".csv" class="hidden">
-                <button id="importBtn" class="bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs font-bold py-1 px-3 rounded border border-blue-200 transition flex items-center gap-1">📂 Importar Nómina CSV</button>
-                <button id="backupBtn" class="bg-rose-100 text-rose-700 hover:bg-rose-200 text-xs font-bold py-1 px-3 rounded border border-rose-200 transition">💾 Descargar Respaldo JSON</button>
-                <button id="btnLogout" class="text-xs font-bold text-slate-400 hover:text-slate-600 underline">Cerrar Sesión</button>
+            <div class="text-right flex gap-2">
+                <div id="connection-status" class="text-xs bg-yellow-500 text-black px-2 py-1 rounded">Conectando...</div>
+                <button onclick="saveData()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-bold shadow text-sm flex items-center gap-2">
+                    <i class="fas fa-save"></i> GUARDAR
+                </button>
             </div>
         </div>
+    </header>
 
-        <p id="currentDate" class="text-slate-500 text-center mb-4 no-print text-sm font-medium capitalize"></p>
-
-        <div id="controlsContainer" class="no-print bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 shadow-sm">
-             <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                 <div class="md:col-span-1"><label class="block text-xs font-bold text-indigo-600 uppercase mb-1">Año</label><select id="yearSelector" class="w-full p-2 border-2 border-indigo-100 rounded text-sm font-bold text-indigo-700"><option value="2025">2025</option><option value="2026" selected>2026</option></select></div>
-                 <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Clase</label><div class="flex"><select id="classSelector" class="w-full p-2 border border-slate-300 rounded-l text-sm"></select><button id="addClassBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold px-2 rounded-r" title="Nueva Clase">+</button></div></div>
-                 <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha</label><input type="date" id="dateSelector" class="w-full p-2 border border-slate-300 rounded text-sm"></div>
-                 <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Evaluación</label><input type="text" id="evalNameInput" placeholder="Ej: PRUEBA 1" class="w-full p-2 border border-slate-300 rounded text-sm uppercase font-semibold text-slate-700"></div>
-                 <div class="md:col-span-1"><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Estudiante</label><div class="flex"><input type="text" id="studentNameInput" placeholder="Nombre" class="w-full p-2 border border-slate-300 rounded-l text-sm" /><button id="addStudentBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 rounded-r transition">+</button></div></div>
-                 <div class="md:col-span-1"><button id="saveDataBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded shadow-md btn-action text-sm">💾 Guardar Todo</button></div>
-             </div>
-        </div>
-
-        <div id="backToTableContainer" class="no-print hidden mb-4"><button id="backToTableBtn" class="text-indigo-600 font-bold hover:underline flex items-center gap-1">← Volver al Panel Principal</button></div>
-
-        <div id="studentsTableContainer" class="printable-container overflow-x-auto min-h-[300px]">
-            <div id="loadingIndicator" class="text-center py-12">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
-                <p class="text-slate-400 font-medium">Cargando base de datos...</p>
-                <p id="loadingError" class="text-red-500 text-xs mt-2 hidden">Error de conexión.</p>
-            </div>
-            <table id="mainTable" class="w-full hidden border-collapse text-sm">
-                <thead id="tableHeader" class="bg-slate-100 text-slate-500 uppercase text-xs font-bold border-b-2 border-slate-200"></thead>
-                <tbody id="tableBody" class="bg-white"></tbody>
-            </table>
-        </div>
-
-        <div id="classReportContainer" class="hidden mt-6 printable-container"></div>
-        <div id="classDetailsContainer" class="hidden mt-6 printable-container"></div>
+    <div class="max-w-7xl mx-auto px-4 py-6">
         
-        <div id="reportButtons" class="no-print mt-8 pt-6 border-t border-slate-100 flex flex-wrap justify-center gap-4">
-            <button id="showReportBtn" class="px-5 py-2 bg-white border border-slate-300 rounded-full text-slate-700 font-bold shadow-sm hover:bg-slate-50 transition text-sm">📊 Resumen</button>
-            <button id="showDetailedReportBtn" class="px-5 py-2 bg-white border border-slate-300 rounded-full text-slate-700 font-bold shadow-sm hover:bg-slate-50 transition text-sm">📋 Detallado</button>
-            <button id="printReportBtn" class="px-5 py-2 bg-slate-800 text-white rounded-full font-bold shadow-md hover:bg-slate-900 transition text-sm flex items-center gap-2">🖨️ Imprimir</button>
-        </div>
-
-        <div id="observationModal" class="no-print fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
-            <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[95vh]">
-                <div class="bg-indigo-600 p-3 flex justify-between items-center">
-                    <h3 class="text-md font-bold text-white flex items-center gap-2"><span>💬</span> <span id="modalTitle">Observaciones</span></h3>
-                    <button id="closeObservationModalBtn" class="text-white hover:text-gray-200 font-bold text-lg leading-none">&times;</button>
+        <div class="bg-white p-4 rounded-lg shadow border border-gray-200 mb-6 no-print">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">1. Curso</label>
+                    <select id="course-select" class="w-full p-2 border rounded bg-gray-50 font-bold text-gray-700" onchange="filterStudents()">
+                        <option value="">Cargando nómina...</option>
+                    </select>
                 </div>
-                <div class="p-4 overflow-y-auto bg-slate-50 flex-1">
-                    <div id="observationHistory" class="space-y-3 mb-4"></div>
-                    <div class="bg-white p-3 rounded border border-slate-200 shadow-sm relative">
-                        <label class="text-xs font-bold text-slate-400 uppercase mb-1 block">Fecha</label>
-                        <input type="date" id="obsDateInput" class="w-full mb-2 p-1.5 border border-slate-300 rounded text-sm font-bold text-slate-700">
-                        <label class="text-xs font-bold text-slate-400 uppercase mb-1 block">Observación</label>
-                        <textarea id="newObservationText" class="w-full text-sm text-slate-700 border border-slate-200 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-20 placeholder:text-slate-300 mb-2" placeholder="Escribe el detalle..."></textarea>
-                    </div>
-                </div>
-                <div class="p-3 bg-white border-t border-slate-100 flex justify-end">
-                    <button id="saveObservationBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-6 rounded shadow transition text-sm">Guardar</button>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">2. Estudiante</label>
+                    <select id="student-select" class="w-full p-2 border rounded disabled:bg-gray-100" disabled onchange="loadStudentFromList()">
+                        <option value="">← Seleccione curso</option>
+                    </select>
                 </div>
             </div>
         </div>
 
+        <div class="flex flex-wrap border-b border-gray-200 bg-white rounded-t-lg no-print">
+            <button onclick="switchTab('ficha')" id="btn-ficha" class="tab-btn active flex-1 py-3 px-2 text-sm"><i class="fas fa-id-card"></i> Ficha</button>
+            <button onclick="switchTab('analisis')" id="btn-analisis" class="tab-btn flex-1 py-3 px-2 text-sm"><i class="fas fa-chart-pie"></i> Análisis</button>
+            <button onclick="switchTab('decision')" id="btn-decision" class="tab-btn flex-1 py-3 px-2 text-sm"><i class="fas fa-gavel"></i> Resolución</button>
+            <button onclick="switchTab('tutoria')" id="btn-tutoria" class="tab-btn flex-1 py-3 px-2 text-sm"><i class="fas fa-hands-helping"></i> Tutoría (Bitácora)</button>
+            <button onclick="switchTab('historial')" id="btn-historial" class="tab-btn flex-1 py-3 px-2 text-sm bg-yellow-50 text-yellow-800 font-bold border-yellow-200"><i class="fas fa-folder-open"></i> 5. Gestión e Historial</button>
+        </div>
+
+        <div class="bg-white p-6 rounded-b-lg shadow-sm border border-t-0 border-gray-200 min-h-[600px] no-print relative">
+            
+            <div id="tab-ficha" class="view-section">
+                <h3 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2">Identificación del Estudiante</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div><label class="text-xs font-bold text-gray-500">Nombre Completo</label><input type="text" id="inp-nombre" class="editable font-bold" oninput="updateTutoriaHeader()"></div>
+                    <div><label class="text-xs font-bold text-gray-500">RUT</label><input type="text" id="inp-rut" class="editable font-bold"></div>
+                    <div><label class="text-xs font-bold text-gray-500">Curso</label><input type="text" id="inp-curso" class="editable" oninput="updateTutoriaHeader()"></div>
+                    <div><label class="text-xs font-bold text-gray-500">Profesor Jefe / Tutor</label><input type="text" id="inp-profesor" class="editable"></div>
+                </div>
+            </div>
+
+            <div id="tab-analisis" class="view-section hidden">
+                <h3 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2">Análisis de Brecha (Decreto 67)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                    <div class="bg-gray-50 p-4 rounded border">
+                        <h4 class="font-bold text-sm mb-2 text-blue-800">Calificaciones</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-xs">Semestre 1</label><input type="number" id="inp-sem1" class="editable text-center font-bold" onchange="updateChart()"></div>
+                            <div><label class="text-xs">Semestre 2</label><input type="number" id="inp-sem2" class="editable text-center font-bold" onchange="updateChart()"></div>
+                        </div>
+                        <div class="mt-4"><label class="text-xs">Promedio Curso</label><input type="number" id="inp-prom-curso" value="5.5" class="editable text-center w-24" onchange="updateChart()"></div>
+                    </div>
+                    <div class="h-48 w-full"><canvas id="gapChart"></canvas></div>
+                </div>
+                <div class="space-y-4">
+                    <div><label class="text-xs font-bold text-gray-500">Análisis Pedagógico (Progreso y Brecha)</label><textarea id="inp-analisis-ped" class="editable h-24"></textarea></div>
+                    <div><label class="text-xs font-bold text-gray-500">Factores Socioemocionales</label><textarea id="inp-analisis-soc" class="editable h-24"></textarea></div>
+                </div>
+            </div>
+
+            <div id="tab-decision" class="view-section hidden">
+                <h3 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2">Resolución del Caso</h3>
+                <div class="flex justify-between items-center mb-4 bg-gray-100 p-3 rounded">
+                    <span class="font-bold">Decisión Final:</span>
+                    <select id="inp-decision" class="p-2 border-2 border-blue-500 rounded font-bold text-blue-800">
+                        <option value="Repitencia">REPITENCIA</option>
+                        <option value="Aprobación">APROBACIÓN (Promovido)</option>
+                    </select>
+                </div>
+                <div class="space-y-4">
+                    <div><label class="text-xs font-bold text-gray-500">Fundamentación de la Decisión</label><textarea id="inp-fundamentacion" class="editable h-32"></textarea></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-xs font-bold text-gray-500">Asignaturas Críticas</label><textarea id="inp-asignaturas" class="editable h-20"></textarea></div>
+                        <div><label class="text-xs font-bold text-gray-500">% Asistencia Final</label><input type="text" id="inp-asistencia" class="editable"></div>
+                    </div>
+                </div>
+                <div class="mt-6 text-center">
+                    <button onclick="printReport('repitencia')" class="bg-gray-800 text-white px-8 py-3 rounded-full hover:bg-black font-bold shadow-lg">
+                        <i class="fas fa-print"></i> IMPRIMIR INFORME REPITENCIA
+                    </button>
+                </div>
+            </div>
+
+            <div id="tab-tutoria" class="view-section hidden">
+                <div class="flex flex-col lg:flex-row gap-6">
+                    
+                    <div class="w-full lg:w-1/3 space-y-4">
+                        
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                            <h3 class="text-sm font-bold text-blue-900 uppercase mb-3 border-b border-blue-200 pb-1">Nuevo Registro</h3>
+                            
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500">Semestre</label>
+                                    <select id="tut-semestre" class="w-full p-2 border rounded bg-white">
+                                        <option value="1">1° Semestre</option>
+                                        <option value="2">2° Semestre</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500">Fecha Entrevista</label>
+                                    <input type="date" id="tut-fecha" class="w-full p-2 border rounded">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500">Observación / Tema Tratado</label>
+                                    <textarea id="tut-obs" rows="3" class="w-full p-2 border rounded" placeholder="Ej: Revisión de notas parciales..."></textarea>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500">Acuerdos / Compromisos</label>
+                                    <textarea id="tut-acuerdos" rows="3" class="w-full p-2 border rounded" placeholder="Ej: Estudiar para prueba de..."></textarea>
+                                </div>
+                                
+                                <button onclick="addTutoriaRow()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded shadow transition">
+                                    <i class="fas fa-plus-circle"></i> Agregar a la Hoja
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+                            <details>
+                                <summary class="font-bold text-yellow-800 text-sm cursor-pointer hover:text-yellow-900 flex items-center gap-2">
+                                    <i class="fas fa-lightbulb"></i> Tips para Redacción Formal
+                                </summary>
+                                <div class="mt-3 text-xs text-gray-700 space-y-2">
+                                    <p><strong>Verbos para Observaciones:</strong></p>
+                                    <ul class="list-disc pl-4 italic">
+                                        <li>Se evidencia dificultad en...</li>
+                                        <li>Manifiesta interés por...</li>
+                                        <li>Se observa un descenso en...</li>
+                                        <li>Presenta inasistencias injustificadas...</li>
+                                    </ul>
+                                    <p><strong>Verbos para Acuerdos:</strong></p>
+                                    <ul class="list-disc pl-4 italic">
+                                        <li>Se compromete a asistir a...</li>
+                                        <li>Regularizará entrega de...</li>
+                                        <li>Mantendrá comunicación vía...</li>
+                                        <li>Apoderado supervisará estudio...</li>
+                                    </ul>
+                                </div>
+                            </details>
+                        </div>
+
+                        <hr class="border-blue-200">
+                        
+                        <div>
+                            <label class="text-xs font-bold text-gray-500">Profesor Tutor (Firma)</label>
+                            <input type="text" id="inp-tutor" class="w-full p-2 border rounded mb-2" placeholder="Nombre Profesor" oninput="updateTutoriaHeader()">
+                        </div>
+
+                        <button onclick="printReport('tutoria')" class="w-full bg-gray-800 text-white font-bold py-3 rounded shadow hover:bg-black transition">
+                            <i class="fas fa-print"></i> IMPRIMIR PLANILLA
+                        </button>
+                    </div>
+
+                    <div class="w-full lg:w-2/3 overflow-y-auto bg-gray-200 p-4 rounded border-inner shadow-inner flex justify-center">
+                        <div id="hoja-tutoria-visual" class="sheet-paper w-full max-w-[21cm]">
+                            
+                            <div class="flex justify-between border-b-2 border-black pb-2 mb-4">
+                                <div class="flex items-center gap-4">
+                                    <img src="logo.jpg" alt="Logo Colegio" style="height: 60px; width: auto; object-fit: contain;" onerror="this.style.display='none'">
+                                    <div class="text-left">
+                                        <h2 class="font-bold text-lg uppercase leading-tight">Escuela Agrícola<br>Sagrados Corazones</h2>
+                                        <p class="text-xs italic">Unidad Técnico Pedagógica</p>
+                                    </div>
+                                </div>
+                                <div class="text-right text-xs pt-2">
+                                    <p><strong>REGISTRO DE ACOMPAÑAMIENTO</strong></p>
+                                    <p>Decreto Evaluación 67</p>
+                                </div>
+                            </div>
+
+                            <table class="w-full text-sm mb-6">
+                                <tr>
+                                    <td class="font-bold w-24">ESTUDIANTE:</td>
+                                    <td class="border-b border-black px-2" id="view-nombre"></td>
+                                    <td class="font-bold w-16 text-right px-2">CURSO:</td>
+                                    <td class="border-b border-black w-20 text-center" id="view-curso"></td>
+                                </tr>
+                                <tr>
+                                    <td class="font-bold pt-2">TUTOR:</td>
+                                    <td class="border-b border-black px-2 pt-2" colspan="3" id="view-tutor"></td>
+                                </tr>
+                            </table>
+
+                            <div class="mb-6">
+                                <div class="bg-gray-200 border border-black text-center font-bold text-xs py-1 uppercase">Primer Semestre</div>
+                                <table class="w-full sheet-table border-collapse" id="table-sem1">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 80px;">FECHA</th>
+                                            <th>OBSERVACIONES / TEMAS TRATADOS</th>
+                                            <th>ACUERDOS Y COMPROMISOS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        </tbody>
+                                </table>
+                            </div>
+
+                            <div class="mb-8">
+                                <div class="bg-gray-200 border border-black text-center font-bold text-xs py-1 uppercase">Segundo Semestre</div>
+                                <table class="w-full sheet-table border-collapse" id="table-sem2">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 80px;">FECHA</th>
+                                            <th>OBSERVACIONES / TEMAS TRATADOS</th>
+                                            <th>ACUERDOS Y COMPROMISOS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        </tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-12 flex justify-between px-8 text-center text-xs">
+                                <div class="w-5/12 border-t border-black pt-1">
+                                    <span class="font-bold block" id="view-sign-tutor"></span>
+                                    Firma Profesor Tutor
+                                </div>
+                                <div class="w-5/12 border-t border-black pt-1">
+                                    <span class="font-bold block">Estudiante / Apoderado</span>
+                                    Toma de Conocimiento
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-historial" class="view-section hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">🗂️ Informes Guardados</h3>
+                    <button onclick="loadHistory()" class="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded hover:bg-blue-100 border border-blue-200">
+                        🔄 Cargar Historial
+                    </button>
+                </div>
+                <div class="overflow-x-auto border rounded-lg">
+                    <table class="w-full text-sm text-left text-gray-600">
+                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs font-bold">
+                            <tr>
+                                <th class="px-4 py-3">Fecha</th>
+                                <th class="px-4 py-3">Tipo</th>
+                                <th class="px-4 py-3">Estudiante</th>
+                                <th class="px-4 py-3">Curso</th>
+                                <th class="px-4 py-3 text-right">Ver</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body">
+                            <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Presiona "Cargar Historial" para ver los datos.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
     </div>
-    
-    <div id="printFooter" class="print-only text-center text-xs text-slate-400 mt-2">Sistema Privado ProfeAle</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <div id="print-zone" class="hidden"></div>
 
-        // --- NÓMINA 2025 (HISTÓRICA) ---
-        const LISTA_2025 = {
-            "Primero Medio A": ['ALBURQUENQUE DEL GRECCO EMILYA ANTONIA', 'ANABALÓN BELTRÁN BENJAMÍN NICOLÁS', 'CONTRERAS SALGADO HADEEY ALEJANDRA', 'FERRADA ALBORNOZ AGUSTÍN ALEXIS', 'HERNÁNDEZ FERNÁNDEZ DHARIEN ALEXSANDER', 'IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA', 'LAGOS LASTRA ALEXANDRA DANAE', 'LÓPEZ LÓPEZ LUCIANO ANTONIO', 'MALDONADO FLORES ANTONELLA BELÉN', 'MARIN MARÍN IGNACIO ANTONIO', 'MONTECINO DÍAZ VALESKA BELÉN', 'MUÑOZ CONTRERAS LUIS GABRIEL', 'MUÑOZ LUNA ROGER JOEL', 'NAVARRO VILLANUEVA KARLA PAZ', 'ORELLANA ARRIAGADA SEBASTIÁN ANDRÉS', 'QUEZADA NARANJO FELIPE ALONSO', 'QUINTEROS VERGARA FERNANDA FLORENCIA', 'RAMÍREZ VILLALOBOS DUVAN EMILIO', 'SANTANDER LÓPEZ MARÍA JOSÉ', 'TAPIA CASTILLA JEANFRANCO PATRICK', 'URBINA CÁCERES FRANCHESCA POULETTE', 'VÁSQUEZ ZALDUENDO AMANDA ISABEL', 'ZABALAGA COFRÉ DAMIÁN ANDRÉS', 'BAEZ DONOSO LUKAS ALFONSO', 'MESA DÍAZ GONZALO IGNACIO', 'BAREA SALGADO SERGIO ALEXANDER'],
-            "Primero Medio B": ['ARAVENA ZÚÑIGA NOEMÍ JESÚS DE LAS ESTRELLAS', 'ASTUDILLO CAMPOS CRISTÓBAL ANTONIO', 'ASTUDILLO VÁSQUEZ BRUNO FERNANDO LEÓN', 'CASTILLO MUÑOZ RENÉ ANTONIO', 'CID CERDA MARÍA EVANGELINA', 'CUMINAO VIDAL CATALINA ANDREA', 'DÍAZ MALUENDA MIGUEL ALBERTO', 'KILTAN GONZÁLEZ DIDIER EZEQUIEL', 'LÓPEZ ACUÑA MARCO EMILIO', 'LÓPEZ NOVOA EYDAN DAMIÁN', 'MÉNDEZ SUAZO FABIÁN FELIPE', 'MOYA REYES MATEO ANTONIO BENJAMÍN', 'OSES CAMPOS VALENTINA ABIGAIL', 'PALMA ORELLANA ANTONELLA FRANCISCA', 'PEREIRA ORELLANA MONSERRAT ALAMIRA', 'PÉREZ ORMAZÁBAL ZADKA ALEJANDRA', 'ROJAS GONZÁLEZ FLORENCIA TRINIDAD', 'ROJAS LEIVA EDUARDO JAVIER', 'VÁSQUEZ AGUILERA SCARLET NICOLE', 'YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN', 'VARGAS MORAGA MARTINA SAYEN', 'SALAZAR SALAS PEDRO JOSÉ', 'VERA BRAVO FLORENCIA ANTONIA', 'PÉREZ QUEVEDO CONSTANZA TRINIDAD', 'SALGADO TOLEDO FRANCISCO JAVIER', 'RIQUELME SANTOS BENJAMÍN ALONSO'],
-            "Segundo Medio A": ['AHUMADA ROJAS TRINIDAD BELÉN', 'ESPINOSA TORRES FERNANDA ELENA', 'ESPINOZA PEÑALILLO BRAYAN JESÚS', 'GONZÁLEZ SALAZAR EMILIA CATALINA', 'MEDEL OJEDA LEÓN IGNACIO', 'MORALES REIMÁN ALFONSO TOMÁS', 'PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO', 'PINTO TOBAR JORDÁN AMARO', 'RECABAL YÁÑEZ KEVIN ANDRÉS', 'RIQUELME CASTILLO MATÍAS EDUARDO ANTONIO', 'RIVERA ABARZA CONSTANZA VICTORIA', 'SANTIS CASSEUS TEIVA SCARLETT', 'SOBARZO YÉVENES KATHERINNE ALEXIA BELÉN', 'TOLEDO ALBORNOZ ANTONELLA INES', 'VENEGAS ARRIAGADA ANTONIA EDITH', 'VIELMA ZABALAGA JOAN MANUEL', 'MEZA COLIMÁN ANGEL BLAS', 'PALMA ORELLANA ANTONELLA FRANCISCA'],
-            "Segundo Medio B": ['ARAYA DOMÍNGUEZ ALEX FABIÁN', 'BRAVO MENARES ALEX JOHAN', 'CARRASCO LEIVA BENJAMÍN IGNACIO', 'CARVAJAL URRUTIA CONSTANZA PRISILA (DANIEL)', 'ENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER', 'FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO', 'JARAMILLO VILLAR EMILIO SCOTT', 'LÓPEZ VILLAR MARTÍN ALONSO', 'MIRANDA MUÑOZ ALEXANDRA JAVIERA', 'MUÑOZ TRONCOSO HÉCTOR ANTONIO', 'OLIVARES VALENZUELA ALONSO IGNACIO', 'OLIVARES VALENZUELA ANTONELLA DANAE IGNACIA', 'ORELLANA GARRIDO MATÍAS LEANDRO', 'PUNOY MEDEL MILLARAY ANGÉLICA', 'QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO', 'RIQUELME COLOMA DALIA CONSTANZA', 'SALGADO ROJAS VICENTE MOISÉS', 'SANDOVAL CERPA VICENTE ESTEBAN', 'SOTO NARANJO CHRISTOPHER', 'VEKARIC VERDEJO MARTÍN'],
-            "Tercero Medio A": ['ALCÁNTAR GARCÍA MARTINA ALEJANDRA', 'BAHAMONDE MUÑOZ ARIEL LEON', 'CAMPOS MUÑOZ CRISTOPHER JESÚS', 'CANCINO ORÓSTICA VICENTE GASPAR', 'CARRASCO GONZÁLEZ CAMILA ANDREA', 'COFRÉ CASTILLO ANTONIO ANDRÉS', 'CONTRERAS VENEGAS BELÉN ALEJANDRA', 'GALDAMES VERGARA FELIPE ESTEBAN', 'GARCÍA GONZÁLEZ SANTIAGO HUMBERTO', 'GONZÁLEZ AMIGO FRANCISCA IGNACIA', 'GONZÁLEZ SALAZAR JOAQUÍN ALONSO', 'GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN', 'JARA SEPÚLVEDA KATRINA DARINKA', 'MARTÍNEZ LIZANA AARON ALEJANDRO', 'MEZA CARRASCO BENJAMÍN INTI', 'MIÑO GONZALEZ CATALINA ANDREA', 'MORAGA PACHECO RENATO IGNACIO', 'PÉREZ CORÓN MANUEL IGNACIO', 'SAMANIEGO CORTEZ JAKSON FERGIE', 'SEPÚLVEDA SALAZAR SOFÍA ANTONIA', 'TAPIA ACUÑA GABRIEL ANTONIO', 'VEGA VIVANCO CRISTÓBAL ANTONIO', 'VERA NAVARRETE DANIELA ELIZABETH', 'VILLALOBOS ARAVENA KARINA ANGELINA', 'VILLALOBOS VILLALOBOS SAMIR LUCIAN JESÚS', 'HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO', 'TORREALBA MOYA FLORVELIS DE LOS ANGELES', 'CARO URRUTIA CONSUELO ANTONIA', 'LOBOS CÁCERES ANTONIA PAZ'],
-            "Tercero Medio C": ['ARELLANO ACUÑA MARTÍN ANTONIO', 'AROS ÁVILA DAYANA IGNACIA', 'CABRERA COLOMBINO MARÍA GRACIA', 'FUENTES CARRASCO YARIXA ALEJANDRA', 'GÓMEZ CANCINO DANIELA ALEJANDRA', 'GUTIÉRREZ CARRIÓN MILLARAY CAROLINA', 'HONORATO TAPIA GLORIA JAVIERA', 'LARA RIVERA BENJAMÍN ESTEBAN', 'PALACIOS SOTO JOSÉ TOMÁS', 'PEZO SANTANDER JOSÉ CRISTÓBAL', 'ROCHA ROJAS JOSÉ PABLO WILLIAMS', 'ROJAS YÉVENES FABIANA ISIDORA', 'SÁNCHEZ PAREJA ANDY ANTONIO', 'SANTANDER LÓPEZ SIMÓN ESTEBAN', 'TRONCOSO LIZAMA SIOMARA IGNACIA', 'WARNKEN ROJAS LUCIANA BERNABELA', 'DE LA HOZ VALENZUELA FRANCO SEBASTIÁN', 'COLLAO MEDINA ANAÍS VALENTINA'],
-            "Cuarto Medio A": ['AGURTO CRESPO HOMERO ALEXANDER', 'ANDIA DE LA HOZ CATALINA BELEN', 'FUENTES GONZÁLEZ ESTEBAN ALEXANDER', 'GARCÍA ROJAS SOFÍA ELENA', 'GODOY HERRERA ANTONELLA CONSTANZA PAZ', 'GONZÁLEZ CASTRO KEVIN ALEJANDRO', 'MARCHANT MORÁN PÍA IGNACIA', 'QUINTANA SAN MARTÍN ALAN VICENTE', 'RECABAL YÁÑEZ CRISTOFER BASTIÁN', 'ROJAS GONZÁLEZ GABRIEL ANTONIO', 'TOLEDO MUÑOZ ESPERANZA BELÉN', 'YÁÑEZ GONZÁLEZ FRANCISCA ALEJANDRA'],
-            "Cuarto Medio C": ['Josefa Morales', 'Benjamín Pérez', 'Constanza Varela']
+    <script>
+        // === 1. CONFIGURACIÓN FIREBASE ===
+        const firebaseConfig = {
+            apiKey: "AIzaSyAisxzJVm2OzjYEXSi4Q7HxZEUG_aarQwo",
+            authDomain: "notas-liceo-agricola-sscc.firebaseapp.com",
+            databaseURL: "https://notas-liceo-agricola-sscc-default-rtdb.firebaseio.com",
+            projectId: "notas-liceo-agricola-sscc",
+            storageBucket: "notas-liceo-agricola-sscc.firebasestorage.app",
+            messagingSenderId: "434804825732",
+            appId: "1:434804825732:web:8c9035fa88be54cd6facd1"
         };
 
-        // --- NÓMINA 2026 (OFICIAL NUEVA) ---
-        const LISTA_2026 = {
-            "1A": [
-                'ÁLVAREZ FAÚNDEZ MATEO VICENTE', 'CASTILLO ARAVENA MAITE PASCAL', 'COLLADO PUENTES SANTINO ALEXANDER', 'CONCHA TORREALBA JOAQUÍN IGNACIO', 'DÍAZ MALUENDA ESTEFANÍA ANTONIA', 'DONAIRE ROJAS MAITE EMILIA ESTER', 'ESPINOZA CACHAÑA LISBET ALEXANDRA', 'FERRADA ALBORNOZ AGUSTÍN ALEXIS', 'FUENTEMAVIDA BARROS OSCAR ANTONIO', 'JAQUE PACHECO DAMIÁN IGNACIO', 'JARAMILLO VILLAR MATT HOST', 'LÓPEZ ACUÑA MARCO EMILIO', 'LÓPEZ VILLAR FRANCO IGNACIO', 'MESA DÍAZ GONZALO IGNACIO', 'MEZA CARRASCO CRISTIAN ALFONSO', 'MORALES GARRIDO NICOLÁS ANTONIO', 'ORTEGA DA SILVA EMILIA CATALINA SOPHIA', 'PEREIRA TAPIA KEVIN RUBÉN', 'RAMÍREZ SEPÚLVEDA LUIS JUSTIN JESÚS', 'RAMÍREZ VALDÉS MARTINA POLETTE', 'RECABAL YÁÑEZ TOMÁS IGNACIO', 'RODRÍGUEZ SEPÚLVEDA SIMONEY ISAMAR', 'ROJAS ÓRDENES TRACY MAIDEN', 'SÁNCHEZ MUNIZAGA ALONDRA ANAÍS', 'SOLIZ OLGUIN BRAYAN', 'VALENZUELA MUÑOZ MAGDALENA BELÉN'
-            ],
-            "2A": [
-                'ALBURQUENQUE DEL GRECCO EMILYA ANTONIA', 'ANABALÓN BELTRÁN BENJAMÍN NICOLÁS', 'ARAVENA ZÚÑIGA NOEMÍ JESÚS DE LAS ESTRELLAS', 'ARAYA DOMÍNGUEZ ALEX FABIÁN', 'ASTUDILLO CAMPOS CRISTÓBAL ANTONIO', 'ASTUDILLO VÁSQUEZ BRUNO FERNANDO LEÓN', 'BAEZ DONOSO LUKAS ALFONSO', 'CARO BUSTOS KRISCHNA ESTEFANIA', 'CONTRERAS SALGADO HADEEY ALEJANDRA', 'CUMINAO VIDAL CATALINA ANDREA', 'DÍAZ MALUENDA MIGUEL ALBERTO', 'IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA', 'KILTAN GONZÁLEZ DIDIER EZEQUIEL', 'LAGOS LASTRA ALEXANDRA DANAE', 'LÓPEZ LÓPEZ LUCIANO ANTONIO', 'LÓPEZ NOVOA EYDAN DAMIÁN', 'MALDONADO FLORES ANTONELLA BELÉN', 'MONTECINO DÍAZ VALESKA BELÉN', 'MOYA REYES MATEO ANTONIO BENJAMÍN', 'MUÑOZ CONTRERAS LUIS GABRIEL', 'MUÑOZ LUNA ROGER JOEL', 'NAVARRO VILLANUEVA KARLA PAZ', 'ORELLANA ARRIAGADA SEBASTIÁN ANDRÉS', 'OSES CAMPOS VALENTINA ABIGAIL', 'PALMA ORELLANA ANTONELLA FRANCISCA', 'PEREIRA ORELLANA MONSERRAT ALAMIRA', 'PÉREZ ORMAZÁBAL ZADKA ALEJANDRA', 'PÉREZ QUEVEDO CONSTANZA TRINIDAD', 'QUEZADA NARANJO FELIPE ALONSO', 'RAMÍREZ VILLALOBOS DUVAN EMILIO', 'RIQUELME SANTOS BENJAMÍN ALONSO', 'ROJAS GONZÁLEZ FLORENCIA TRINIDAD', 'ROJAS LEIVA EDUARDO JAVIER', 'SALAZAR SALAS PEDRO JOSÉ', 'SANTANDER LÓPEZ MARÍA JOSÉ', 'TAPIA CASTILLA JEANFRANCO PATRICK', 'URBINA CÁCERES FRANCHESCA POULETTE', 'VARGAS MORAGA MARTINA SAYEN', 'VÁSQUEZ AGUILERA SCARLET NICOLE', 'VÁSQUEZ ZALDUENDO AMANDA ISABEL', 'VERA BRAVO FLORENCIA ANTONIA', 'YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN', 'ZABALAGA COFRÉ DAMIÁN ANDRÉS'
-            ],
-            "3A": [
-                'AHUMADA ROJAS TRINIDAD BELÉN', 'CORNEJO CASTILLO OSCAR GABRIEL', 'ESPINOZA PEÑALILLO BRAYAN JESÚS', 'FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO', 'JARAMILLO VILLAR EMILIO SCOTT', 'LÓPEZ VILLAR MARTÍN ALONSO', 'MEZA COLIMÁN ANGEL BLAS', 'MIRANDA MUÑOZ ALEXANDRA JAVIERA', 'MORAGA PACHECO RENATO IGNACIO', 'MORALES REIMÁN ALFONSO TOMÁS', 'ORELLANA GARRIDO MATÍAS LEANDRO', 'PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO', 'PINTO TOBAR JORDÁN AMARO', 'RECABAL YÁÑEZ KEVIN ANDRÉS', 'SANDOVAL CERPA VICENTE ESTEBAN', 'SOTO NARANJO CHRISTOPHER', 'VEKARIC VERDEJO MARTÍN', 'VIELMA ZABALAGA JOAN MANUEL'
-            ],
-            "3C": [
-                'BRAVO MENARES ALEX JOHAN', 'CARRASCO LEIVA BENJAMÍN IGNACIO', 'ENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER', 'ESPINOSA TORRES FERNANDA ELENA', 'GONZÁLEZ SALAZAR EMILIA CATALINA', 'MEDEL OJEDA LEÓN IGNACIO', 'OLIVARES VALENZUELA ALONSO IGNACIO', 'OLIVARES VALENZUELA ANTONELLA DANAE IGNACIA', 'PUNOY MEDEL MILLARAY ANGÉLICA', 'QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO', 'RIQUELME CASTILLO MATÍAS EDUARDO ANTONIO', 'RIQUELME COLOMA DALIA CONSTANZA', 'RIVERA ABARZA CONSTANZA VICTORIA', 'SAAVEDRA BRAVO FLORENCIA ALEJANDRA', 'SALGADO ROJAS VICENTE MOISÉS', 'SANTIS CASSEUS TEIVA SCARLETT', 'SOBARZO YÉVENES KATHERINNE ALEXIA BELÉN', 'TOLEDO ALBORNOZ ANTONELLA INES', 'VENEGAS ARRIAGADA ANTONIA EDITH'
-            ],
-            "4A": [
-                'ALCÁNTAR GARCÍA MARTINA ALEJANDRA', 'BAHAMONDE MUÑOZ ARIEL LEON', 'CAMPOS MUÑOZ CRISTOPHER JESÚS', 'CANCINO ORÓSTICA VICENTE GASPAR', 'CARO URRUTIA CONSUELO ANTONIA', 'CARRASCO GONZÁLEZ CAMILA ANDREA', 'COFRÉ CASTILLO ANTONIO ANDRÉS', 'GALDAMES VERGARA FELIPE ESTEBAN', 'GARCÍA GONZÁLEZ SANTIAGO HUMBERTO', 'GONZÁLEZ AMIGO FRANCISCA IGNACIA', 'GONZÁLEZ SALAZAR JOAQUÍN ALONSO', 'GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN', 'HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO', 'LOBOS CÁCERES ANTONIA PAZ', 'MARTÍNEZ LIZANA AARON ALEJANDRO', 'MEZA CARRASCO BENJAMÍN INTI', 'MIÑO GONZALEZ CATALINA ANDREA', 'PÉREZ CORÓN MANUEL IGNACIO', 'SAMANIEGO CORTEZ JAKSON FERGIE', 'SEPÚLVEDA SALAZAR SOFÍA ANTONIA', 'TAPIA ACUÑA GABRIEL ANTONIO', 'TORREALBA MOYA FLORVELIS DE LOS ANGELES', 'VEGA VIVANCO CRISTÓBAL ANTONIO', 'VERA NAVARRETE DANIELA ELIZABETH', 'VILLALOBOS ARAVENA KARINA ANGELINA', 'VILLALOBOS VILLALOBOS SAMIR LUCIAN JESÚS'
-            ],
-            "4C": [
-                'ARELLANO ACUÑA MARTÍN ANTONIO', 'AROS ÁVILA DAYANA IGNACIA', 'CABRERA COLOMBINO MARÍA GRACIA', 'COLLAO MEDINA ANAÍS VALENTINA', 'DE LA HOZ VALENZUELA FRANCO SEBASTIÁN', 'FUENTES CARRASCO YARIXA ALEJANDRA', 'GÓMEZ CANCINO DANIELA ALEJANDRA', 'GUTIÉRREZ CARRIÓN MILLARAY CAROLINA', 'HONORATO TAPIA GLORIA JAVIERA', 'LARA RIVERA BENJAMÍN ESTEBAN', 'PALACIOS SOTO JOSÉ TOMÁS', 'PEZO SANTANDER JOSÉ CRISTÓBAL', 'ROCHA ROJAS JOSÉ PABLO WILLIAMS', 'ROJAS YÉVENES FABIANA ISIDORA', 'SÁNCHEZ PAREJA ANDY ANTONIO', 'SANTANDER LÓPEZ SIMÓN ESTEBAN', 'TRONCOSO LIZAMA SIOMARA IGNACIA', 'WARNKEN ROJAS LUCIANA BERNABELA'
-            ]
+        const SCHOOL_NAME = "Escuela Agrícola Sagrados Corazones"; 
+        const LOCATION = "Villa Alegre";
+
+        // NÓMINA OFICIAL 2026 (ACTUALIZADA)
+        const STUDENTS_DATA = [
+            ['Primero Medio A', '23756366-2', '', 'ÁLVAREZ FAÚNDEZ MATEO VICENTE'], ['Primero Medio A', '23632281-5', '', 'CASTILLO ARAVENA MAITE PASCAL'], ['Primero Medio A', '23630802-2', '', 'COLLADO PUENTES SANTINO ALEXANDER'], ['Primero Medio A', '23466096-9', '', 'CONCHA TORREALBA JOAQUÍN IGNACIO'], ['Primero Medio A', '23797819-6', '', 'DÍAZ MALUENDA ESTEFANÍA ANTONIA'], ['Primero Medio A', '23927686-5', '', 'DONAIRE ROJAS MAITE EMILIA ESTER'], ['Primero Medio A', '23552792-8', '', 'ESPINOZA CACHAÑA LISBET ALEXANDRA'], ['Primero Medio A', '23560082-K', '', 'FERRADA ALBORNOZ AGUSTÍN ALEXIS'], ['Primero Medio A', '23329694-5', '', 'FUENTEMAVIDA BARROS OSCAR ANTONIO'], ['Primero Medio A', '23620840-0', '', 'JAQUE PACHECO DAMIÁN IGNACIO'], ['Primero Medio A', '23308540-5', '', 'JARAMILLO VILLAR MATT HOST'], ['Primero Medio A', '23355954-7', '', 'LÓPEZ ACUÑA MARCO EMILIO'], ['Primero Medio A', '23903961-8', '', 'LÓPEZ VILLAR FRANCO IGNACIO'], ['Primero Medio A', '23032545-6', '', 'MESA DÍAZ GONZALO IGNACIO'], ['Primero Medio A', '23520544-0', '', 'MEZA CARRASCO CRISTIAN ALFONSO'], ['Primero Medio A', '23668420-2', '', 'MORALES GARRIDO NICOLÁS ANTONIO'], ['Primero Medio A', '23830831-3', '', 'ORTEGA DA SILVA EMILIA CATALINA SOPHIA'], ['Primero Medio A', '23653817-6', '', 'PEREIRA TAPIA KEVIN RUBÉN'], ['Primero Medio A', '23679011-8', '', 'RAMÍREZ SEPÚLVEDA LUIS JUSTIN JESÚS'], ['Primero Medio A', '23488123-K', '', 'RAMÍREZ VALDÉS MARTINA POLETTE'], ['Primero Medio A', '23493746-4', '', 'RECABAL YÁÑEZ TOMÁS IGNACIO'], ['Primero Medio A', '22988470-0', '', 'RODRÍGUEZ SEPÚLVEDA SIMONEY ISAMAR'], ['Primero Medio A', '23710287-8', '', 'ROJAS ÓRDENES TRACY MAIDEN'], ['Primero Medio A', '23577058-K', '', 'SÁNCHEZ MUNIZAGA ALONDRA ANAÍS'], ['Primero Medio A', '100685011-8', '', 'SOLIZ OLGUIN BRAYAN'], ['Primero Medio A', '23937949-4', '', 'VALENZUELA MUÑOZ MAGDALENA BELÉN'],
+            ['Segundo Medio A', '23376817-0', '', 'ALBURQUENQUE DEL GRECCO EMILYA ANTONIA'], ['Segundo Medio A', '22922460-3', '', 'ANABALÓN BELTRÁN BENJAMÍN NICOLÁS'], ['Segundo Medio A', '23367234-3', '', 'ARAVENA ZÚÑIGA NOEMÍ JESÚS DE LAS ESTRELLAS'], ['Segundo Medio A', '22927087-7', '', 'ARAYA DOMÍNGUEZ ALEX FABIÁN'], ['Segundo Medio A', '22826488-1', '', 'ASTUDILLO CAMPOS CRISTÓBAL ANTONIO'], ['Segundo Medio A', '23251746-8', '', 'ASTUDILLO VÁSQUEZ BRUNO FERNANDO LEÓN'], ['Segundo Medio A', '23461777-K', '', 'BAEZ DONOSO LUKAS ALFONSO'], ['Segundo Medio A', '23282399-2', '', 'CARO BUSTOS KRISCHNA ESTEFANIA'], ['Segundo Medio A', '23355953-9', '', 'CONTRERAS SALGADO HADEEY ALEJANDRA'], ['Segundo Medio A', '23545428-9', '', 'CUMINAO VIDAL CATALINA ANDREA'], ['Segundo Medio A', '23224652-9', '', 'DÍAZ MALUENDA MIGUEL ALBERTO'], ['Segundo Medio A', '23644472-4', '', 'IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA'], ['Segundo Medio A', '23337375-3', '', 'KILTAN GONZÁLEZ DIDIER EZEQUIEL'], ['Segundo Medio A', '23389072-3', '', 'LAGOS LASTRA ALEXANDRA DANAE'], ['Segundo Medio A', '23498596-5', '', 'LÓPEZ LÓPEZ LUCIANO ANTONIO'], ['Segundo Medio A', '23153879-8', '', 'LÓPEZ NOVOA EYDAN DAMIÁN'], ['Segundo Medio A', '23396870-6', '', 'MALDONADO FLORES ANTONELLA BELÉN'], ['Segundo Medio A', '23548214-2', '', 'MONTECINO DÍAZ VALESKA BELÉN'], ['Segundo Medio A', '23391772-9', '', 'MOYA REYES MATEO ANTONIO BENJAMÍN'], ['Segundo Medio A', '23366642-4', '', 'MUÑOZ CONTRERAS LUIS GABRIEL'], ['Segundo Medio A', '23622121-0', '', 'MUÑOZ LUNA ROGER JOEL'], ['Segundo Medio A', '23329866-2', '', 'NAVARRO VILLANUEVA KARLA PAZ'], ['Segundo Medio A', '23388136-8', '', 'ORELLANA ARRIAGADA SEBASTIÁN ANDRÉS'], ['Segundo Medio A', '23432193-5', '', 'OSES CAMPOS VALENTINA ABIGAIL'], ['Segundo Medio A', '23190411-5', '', 'PALMA ORELLANA ANTONELLA FRANCISCA'], ['Segundo Medio A', '23605196-K', '', 'PEREIRA ORELLANA MONSERRAT ALAMIRA'], ['Segundo Medio A', '23415461-3', '', 'PÉREZ ORMAZÁBAL ZADKA ALEJANDRA'], ['Segundo Medio A', '23479449-3', '', 'PÉREZ QUEVEDO CONSTANZA TRINIDAD'], ['Segundo Medio A', '23640108-1', '', 'QUEZADA NARANJO FELIPE ALONSO'], ['Segundo Medio A', '23534317-7', '', 'RAMÍREZ VILLALOBOS DUVAN EMILIO'], ['Segundo Medio A', '23112966-9', '', 'RIQUELME SANTOS BENJAMÍN ALONSO'], ['Segundo Medio A', '23290841-6', '', 'ROJAS GONZÁLEZ FLORENCIA TRINIDAD'], ['Segundo Medio A', '23264828-7', '', 'ROJAS LEIVA EDUARDO JAVIER'], ['Segundo Medio A', '23301500-8', '', 'SALAZAR SALAS PEDRO JOSÉ'], ['Segundo Medio A', '23679554-3', '', 'SANTANDER LÓPEZ MARÍA JOSÉ'], ['Segundo Medio A', '23631475-8', '', 'TAPIA CASTILLA JEANFRANCO PATRICK'], ['Segundo Medio A', '23007625-1', '', 'URBINA CÁCERES FRANCHESCA POULETTE'], ['Segundo Medio A', '23555453-4', '', 'VARGAS MORAGA MARTINA SAYEN'], ['Segundo Medio A', '22763630-0', '', 'VÁSQUEZ AGUILERA SCARLET NICOLE'], ['Segundo Medio A', '23584521-0', '', 'VÁSQUEZ ZALDUENDO AMANDA ISABEL'], ['Segundo Medio A', '23296637-8', '', 'VERA BRAVO FLORENCIA ANTONIA'], ['Segundo Medio A', '23616701-1', '', 'YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN'], ['Segundo Medio A', '23404221-1', '', 'ZABALAGA COFRÉ DAMIÁN ANDRÉS'],
+            ['Tercero Medio A', '23006149-1', '', 'AHUMADA ROJAS TRINIDAD BELÉN'], ['Tercero Medio A', '22774362-K', '', 'CORNEJO CASTILLO OSCAR GABRIEL'], ['Tercero Medio A', '23236242-1', '', 'ESPINOZA PEÑALILLO BRAYAN JESÚS'], ['Tercero Medio A', '23229539-2', '', 'FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO'], ['Tercero Medio A', '22827535-2', '', 'JARAMILLO VILLAR EMILIO SCOTT'], ['Tercero Medio A', '23321258-K', '', 'LÓPEZ VILLAR MARTÍN ALONSO'], ['Tercero Medio A', '23255825-3', '', 'MEZA COLIMÁN ANGEL BLAS'], ['Tercero Medio A', '23285276-3', '', 'MIRANDA MUÑOZ ALEXANDRA JAVIERA'], ['Tercero Medio A', '22932822-0', '', 'MORAGA PACHECO RENATO IGNACIO'], ['Tercero Medio A', '22617512-1', '', 'MORALES REIMÁN ALFONSO TOMÁS'], ['Tercero Medio A', '22876195-8', '', 'ORELLANA GARRIDO MATÍAS LEANDRO'], ['Tercero Medio A', '23054557-K', '', 'PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO'], ['Tercero Medio A', '23029359-7', '', 'PINTO TOBAR JORDÁN AMARO'], ['Tercero Medio A', '23086976-6', '', 'RECABAL YÁÑEZ KEVIN ANDRÉS'], ['Tercero Medio A', '22922664-9', '', 'SANDOVAL CERPA VICENTE ESTEBAN'], ['Tercero Medio A', '23230279-8', '', 'SOTO NARANJO CHRISTOPHER'], ['Tercero Medio A', '22907717-1', '', 'VEKARIC VERDEJO MARTÍN'], ['Tercero Medio A', '23146366-6', '', 'VIELMA ZABALAGA JOAN MANUEL'],
+            ['Tercero Medio C', '23099931-7', '', 'BRAVO MENARES ALEX JOHAN'], ['Tercero Medio C', '23200990-K', '', 'CARRASCO LEIVA BENJAMÍN IGNACIO'], ['Tercero Medio C', '23194660-8', '', 'ENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER'], ['Tercero Medio C', '23090163-5', '', 'ESPINOSA TORRES FERNANDA ELENA'], ['Tercero Medio C', '23121508-5', '', 'GONZÁLEZ SALAZAR EMILIA CATALINA'], ['Tercero Medio C', '23132468-2', '', 'MEDEL OJEDA LEÓN IGNACIO'], ['Tercero Medio C', '23097156-0', '', 'OLIVARES VALENZUELA ALONSO IGNACIO'], ['Tercero Medio C', '22804086-K', '', 'OLIVARES VALENZUELA ANTONELLA DANAE IGNACIA'], ['Tercero Medio C', '23113000-4', '', 'PUNOY MEDEL MILLARAY ANGÉLICA'], ['Tercero Medio C', '23118361-2', '', 'QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO'], ['Tercero Medio C', '23284002-1', '', 'RIQUELME CASTILLO MATÍAS EDUARDO ANTONIO'], ['Tercero Medio C', '23244598-K', '', 'RIQUELME COLOMA DALIA CONSTANZA'], ['Tercero Medio C', '23141589-0', '', 'RIVERA ABARZA CONSTANZA VICTORIA'], ['Tercero Medio C', '23164383-4', '', 'SAAVEDRA BRAVO FLORENCIA ALEJANDRA'], ['Tercero Medio C', '23304433-4', '', 'SALGADO ROJAS VICENTE MOISÉS'], ['Tercero Medio C', '23294557-5', '', 'SANTIS CASSEUS TEIVA SCARLETT'], ['Tercero Medio C', '22912548-6', '', 'SOBARZO YÉVENES KATHERINNE ALEXIA BELÉN'], ['Tercero Medio C', '23209204-1', '', 'TOLEDO ALBORNOZ ANTONELLA INES'], ['Tercero Medio C', '23115030-7', '', 'VENEGAS ARRIAGADA ANTONIA EDITH'],
+            ['Cuarto Medio A', '22717035-2', '', 'ALCÁNTAR GARCÍA MARTINA ALEJANDRA'], ['Cuarto Medio A', '22202028-K', '', 'BAHAMONDE MUÑOZ ARIEL LEON'], ['Cuarto Medio A', '22932851-4', '', 'CAMPOS MUÑOZ CRISTOPHER JESÚS'], ['Cuarto Medio A', '22587064-0', '', 'CANCINO ORÓSTICA VICENTE GASPAR'], ['Cuarto Medio A', '23038091-0', '', 'CARO URRUTIA CONSUELO ANTONIA'], ['Cuarto Medio A', '22935345-4', '', 'CARRASCO GONZÁLEZ CAMILA ANDREA'], ['Cuarto Medio A', '22852052-7', '', 'COFRÉ CASTILLO ANTONIO ANDRÉS'], ['Cuarto Medio A', '22897408-0', '', 'GALDAMES VERGARA FELIPE ESTEBAN'], ['Cuarto Medio A', '22152106-4', '', 'GARCÍA GONZÁLEZ SANTIAGO HUMBERTO'], ['Cuarto Medio A', '22820588-5', '', 'GONZÁLEZ AMIGO FRANCISCA IGNACIA'], ['Cuarto Medio A', '22565627-4', '', 'GONZÁLEZ SALAZAR JOAQUÍN ALONSO'], ['Cuarto Medio A', '22808692-4', '', 'GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN'], ['Cuarto Medio A', '22644932-9', '', 'HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO'], ['Cuarto Medio A', '22448022-9', '', 'LOBOS CÁCERES ANTONIA PAZ'], ['Cuarto Medio A', '22970003-0', '', 'MARTÍNEZ LIZANA AARON ALEJANDRO'], ['Cuarto Medio A', '22482618-4', '', 'MEZA CARRASCO BENJAMÍN INTI'], ['Cuarto Medio A', '22858572-6', '', 'MIÑO GONZALEZ CATALINA ANDREA'], ['Cuarto Medio A', '22932822-0', '', 'MORAGA PACHECO RENATO IGNACIO'], ['Cuarto Medio A', '22839912-4', '', 'PÉREZ CORÓN MANUEL IGNACIO'], ['Cuarto Medio A', '100710921-7', '', 'SAMANIEGO CORTEZ JAKSON FERGIE'], ['Cuarto Medio A', '22889391-9', '', 'SEPÚLVEDA SALAZAR SOFÍA ANTONIA'], ['Cuarto Medio A', '22709426-5', '', 'TAPIA ACUÑA GABRIEL ANTONIO'], ['Cuarto Medio A', '100793606-7', '', 'TORREALBA MOYA FLORVELIS DE LOS ANGELES'], ['Cuarto Medio A', '23022549-4', '', 'VEGA VIVANCO CRISTÓBAL ANTONIO'], ['Cuarto Medio A', '22903476-6', '', 'VERA NAVARRETE DANIELA ELIZABETH'], ['Cuarto Medio A', '22792420-9', '', 'VILLALOBOS ARAVENA KARINA ANGELINA'], ['Cuarto Medio A', '22733377-4', '', 'VILLALOBOS VILLALOBOS SAMIR LUCIAN JESÚS'],
+            ['Cuarto Medio C', '22558171-1', '', 'ARELLANO ACUÑA MARTÍN ANTONIO'], ['Cuarto Medio C', '22897577-K', '', 'AROS ÁVILA DAYANA IGNACIA'], ['Cuarto Medio C', '22339310-1', '', 'CABRERA COLOMBINO MARÍA GRACIA'], ['Cuarto Medio C', '23048274-8', '', 'COLLAO MEDINA ANAÍS VALENTINA'], ['Cuarto Medio C', '22783846-9', '', 'DE LA HOZ VALENZUELA FRANCO SEBASTIÁN'], ['Cuarto Medio C', '22865819-7', '', 'FUENTES CARRASCO YARIXA ALEJANDRA'], ['Cuarto Medio C', '22971225-K', '', 'GÓMEZ CANCINO DANIELA ALEJANDRA'], ['Cuarto Medio C', '22698950-1', '', 'GUTIÉRREZ CARRIÓN MILLARAY CAROLINA'], ['Cuarto Medio C', '22665539-5', '', 'HONORATO TAPIA GLORIA JAVIERA'], ['Cuarto Medio C', '22907525-K', '', 'LARA RIVERA BENJAMÍN ESTEBAN'], ['Cuarto Medio C', '22801082-0', '', 'PALACIOS SOTO JOSÉ TOMÁS'], ['Cuarto Medio C', '22477831-7', '', 'PEZO SANTANDER JOSÉ CRISTÓBAL'], ['Cuarto Medio C', '22796354-9', '', 'ROCHA ROJAS JOSÉ PABLO WILLIAMS'], ['Cuarto Medio C', '22876139-7', '', 'ROJAS YÉVENES FABIANA ISIDORA'], ['Cuarto Medio C', '22916573-9', '', 'SÁNCHEZ PAREJA ANDY ANTONIO'], ['Cuarto Medio C', '22845486-9', '', 'SANTANDER LÓPEZ SIMÓN ESTEBAN'], ['Cuarto Medio C', '23004590-9', '', 'TRONCOSO LIZAMA SIOMARA IGNACIA'], ['Cuarto Medio C', '23009921-9', '', 'WARNKEN ROJAS LUCIANA BERNABELA']
+        ];
+
+        let db, chartInstance = null;
+
+        // INICIALIZACIÓN
+        window.onload = function() {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            const auth = firebase.auth();
+
+            auth.signInAnonymously().then(() => {
+                document.getElementById('connection-status').innerText = "Conectado ✅";
+                document.getElementById('connection-status').classList.remove('bg-yellow-500', 'text-black');
+                document.getElementById('connection-status').classList.add('bg-green-600', 'text-white');
+                populateDropdowns();
+                loadHistory(); 
+                
+                document.getElementById('tut-fecha').valueAsDate = new Date();
+                
+            }).catch((error) => {
+                console.error("Error Auth:", error);
+                document.getElementById('connection-status').innerText = "Error Conexión ❌";
+                document.getElementById('connection-status').classList.add('bg-red-600', 'text-white');
+            });
         };
 
-        const firebaseConfig = { apiKey: "AIzaSyAFp6biz1UTr9Ehaudkpe7QyTFVbdQz5Sc", authDomain: "asistencia-mi-clase.firebaseapp.com", projectId: "asistencia-mi-clase", storageBucket: "asistencia-mi-clase.appspot.com", messagingSenderId: "552398254230", appId: "1:552398254230:web:c58dd07e5ceeb67e0912b7", measurementId: "G-MYR01HM1YE" };
-        const appId = firebaseConfig.appId;
+        function populateDropdowns() {
+            const courseSelect = document.getElementById('course-select');
+            courseSelect.innerHTML = '<option value="">-- Seleccione un Curso --</option>'; // Limpiar antes de llenar
+            
+            // Obtener cursos únicos
+            const uniqueCourses = [...new Set(STUDENTS_DATA.map(s => s[0]))];
+            
+            // ORDEN PERSONALIZADO: Primero, Segundo, Tercero, Cuarto
+            const order = { 'Primero': 1, 'Segundo': 2, 'Tercero': 3, 'Cuarto': 4 };
+            uniqueCourses.sort((a, b) => {
+                const wordA = a.split(' ')[0]; // "Primero", "Segundo", etc.
+                const wordB = b.split(' ')[0];
+                return (order[wordA] || 99) - (order[wordB] || 99) || a.localeCompare(b);
+            });
 
-        let app, db, auth, userId = null;
-        let masterData = {}; 
-        let currentYear = "2026"; 
-        let allClassesData = {};
-        let currentClass = null;
-        let students = [];
-        let currentStudentIndex = -1;
-        let currentDateString = new Date().toISOString().slice(0, 10);
-
-        const getEl = (id) => document.getElementById(id);
-        const els = {
-            loginOverlay: getEl('loginOverlay'), loginForm: getEl('loginForm'), email: getEl('emailInput'), pass: getEl('passwordInput'), authError: getEl('authErrorMsg'),
-            mainTable: getEl('mainTable'), tableHeader: getEl('tableHeader'), tableBody: getEl('tableBody'), tableContainer: getEl('studentsTableContainer'),
-            yearSel: getEl('yearSelector'), classSel: getEl('classSelector'), dateSel: getEl('dateSelector'), evalName: getEl('evalNameInput'),
-            saveBtn: getEl('saveDataBtn'), addStudentBtn: getEl('addStudentBtn'), addClassBtn: getEl('addClassBtn'), backupBtn: getEl('backupBtn'),
-            importBtn: getEl('importBtn'), csvInput: getEl('csvInput'),
-            reportSummary: getEl('classReportContainer'), reportDetail: getEl('classDetailsContainer'), backNav: getEl('backToTableContainer'), controls: getEl('controlsContainer'), reportBtns: getEl('reportButtons'),
-            modal: { el: getEl('observationModal'), title: getEl('modalTitle'), history: getEl('observationHistory'), input: getEl('newObservationText'), date: getEl('obsDateInput'), save: getEl('saveObservationBtn'), close: getEl('closeObservationModalBtn') }
-        };
-
-        function getMyPrivateDocRef() { 
-            return doc(db, `artifacts/${appId}/public/data/calificaciones/master_data`); 
+            // Llenar el select
+            uniqueCourses.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c; opt.innerText = c;
+                courseSelect.appendChild(opt);
+            });
         }
 
-        async function initApp() {
-            try {
-                app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
-                const today = new Date(); const offset = today.getTimezoneOffset() * 60000;
-                currentDateString = new Date(today.getTime() - offset).toISOString().slice(0, 10);
-                els.dateSel.value = currentDateString; updateDateDisplay();
-                onAuthStateChanged(auth, user => {
-                    if (user) { userId = user.uid; getEl('userIdDisplay').textContent = user.email; els.loginOverlay.classList.add('hidden'); loadData(); }
-                    else { els.loginOverlay.classList.remove('hidden'); }
+        window.filterStudents = () => {
+            const course = document.getElementById('course-select').value;
+            const select = document.getElementById('student-select');
+            select.innerHTML = '<option value="">-- Seleccione Alumno --</option>';
+            select.disabled = true;
+            if(course) {
+                STUDENTS_DATA.filter(s => s[0] === course).forEach(s => {
+                    const fullName = `${s[3]} ${s[2]}`;
+                    select.innerHTML += `<option value="${s[1]}">${fullName}</option>`;
                 });
-                setupEvents();
-            } catch (e) { alert("Error crítico: " + e.message); }
-        }
-
-        async function handleLogin(e) { e.preventDefault(); els.authError.classList.add('hidden'); try { await signInWithEmailAndPassword(auth, els.email.value, els.pass.value); } catch (error) { els.authError.textContent = "Error: " + error.message; els.authError.classList.remove('hidden'); } }
-
-        function loadData() {
-            onSnapshot(getMyPrivateDocRef(), (docSnap) => {
-                getEl('loadingIndicator').style.display = 'none';
-                let raw = docSnap.exists() ? docSnap.data() : null;
-                if (!raw) { masterData = { "2025": { classes: {} }, "2026": { classes: {} } }; } 
-                else if (raw.classes && !raw["2025"]) { masterData = { "2025": { classes: raw.classes }, "2026": { classes: {} } }; } 
-                else { masterData = raw; }
-                
-                if(!masterData["2025"]) masterData["2025"] = { classes: {} };
-                if(!masterData["2026"]) masterData["2026"] = { classes: {} };
-
-                let modified = false;
-
-                // --- AUTOCORRECCIÓN 2026: Si está vacía O incorrecta, forzar la nueva lista ---
-                const classKeys2026 = Object.keys(masterData["2026"].classes);
-                const shouldFix2026 = classKeys2026.length === 0 || 
-                    (masterData["2026"].classes["1A"] && masterData["2026"].classes["1A"][0].name !== LISTA_2026["1A"][0]);
-
-                if (shouldFix2026) {
-                    console.log("Corrigiendo nómina 2026...");
-                    for (const [clsName, studentList] of Object.entries(LISTA_2026)) {
-                        // Preservar datos existentes si coinciden los nombres, sino reiniciar
-                        // Para simplificar: Si detectamos error masivo, reiniciamos la lista base preservando notas si es posible, 
-                        // pero aquí forzaremos la estructura correcta.
-                        masterData["2026"].classes[clsName] = studentList.map(name => ({ name: name, grades: [], attendance: {}, observations: [] }));
-                    }
-                    modified = true;
-                }
-
-                // --- AUTOCORRECCIÓN 2025: Si por error tiene datos de 2026 (ej: 1A tiene a Alvarez en vez de Alburquenque) ---
-                const classKeys2025 = Object.keys(masterData["2025"].classes);
-                // Chequeo rápido: Si 2025 tiene "1A" (formato nuevo) en vez de "Primero Medio A" (formato antiguo) o nombres incorrectos
-                if (masterData["2025"].classes["Primero Medio A"] && masterData["2025"].classes["Primero Medio A"][0].name !== LISTA_2025["Primero Medio A"][0]) {
-                     console.log("Corrigiendo nómina 2025 (estaba alterada)...");
-                     for (const [clsName, studentList] of Object.entries(LISTA_2025)) {
-                        masterData["2025"].classes[clsName] = studentList.map(name => ({ name: name, grades: [], attendance: {}, observations: [] }));
-                     }
-                     modified = true;
-                }
-                
-                // Si faltan clases del 2025, agregarlas
-                for (const [clsName, studentList] of Object.entries(LISTA_2025)) {
-                    if(!masterData["2025"].classes[clsName]) {
-                        masterData["2025"].classes[clsName] = studentList.map(name => ({ name: name, grades: [], attendance: {}, observations: [] }));
-                        modified = true;
-                    }
-                }
-
-                if (modified) saveToCloud(true);
-                loadYearData(els.yearSelector.value);
-            }, (error) => {
-                getEl('loadingError').textContent = "Error: " + error.message;
-                getEl('loadingError').classList.remove('hidden');
-            });
-        }
-
-        function loadYearData(year) {
-            currentYear = year;
-            allClassesData = masterData[currentYear].classes || {};
-            const keys = Object.keys(allClassesData).sort();
-            
-            // Actualizar selector de clases
-            els.classSel.innerHTML = keys.map(k => `<option value="${k}">${k}</option>`).join('');
-            
-            // Seleccionar primera clase por defecto si no hay selección válida
-            if (!keys.includes(currentClass)) currentClass = keys[0] || null;
-            els.classSel.value = currentClass || "";
-            
-            refreshTable();
-        }
-
-        function getUniqueEvaluations(list) { const evals = new Set(); list.forEach(s => s.grades.forEach(g => evals.add(g.type || "EVALUACIÓN"))); return Array.from(evals).sort(); }
-
-        function refreshTable() {
-            if(!currentClass) { els.mainTable.classList.add('hidden'); return; }
-            students = allClassesData[currentClass] || []; els.mainTable.classList.remove('hidden');
-            const evalCols = getUniqueEvaluations(students);
-
-            let htmlHead = `<tr><th class="p-3 text-left border w-48 bg-slate-50">Estudiante</th><th class="p-3 text-center border w-16 bg-slate-50">Prom</th>`;
-            evalCols.forEach(col => htmlHead += `<th class="p-3 text-center border min-w-[80px] bg-indigo-50 text-indigo-700 font-bold text-xs">${col}</th>`);
-            htmlHead += `<th class="p-3 text-center border w-24 bg-slate-50">Asistencia</th><th class="p-3 text-center border w-32 bg-slate-50">Acciones</th></tr>`;
-            els.tableHeader.innerHTML = htmlHead;
-
-            els.tableBody.innerHTML = students.map((s, idx) => {
-                if(!s.grades) s.grades=[]; if(!s.attendance) s.attendance={}; if(!s.observations) s.observations=[];
-                const avg = calculateAverage(s.grades); const att = s.attendance[currentDateString]; const hasObs = s.observations.length > 0;
-                const cells = evalCols.map(col => {
-                    const g = s.grades.slice().reverse().find(gr => (gr.type || "EVALUACIÓN") === col);
-                    if(g) return `<td class="border p-1 text-center bg-slate-50"><div class="flex items-center justify-center gap-1"><span class="font-bold text-slate-700">${g.value.toFixed(1)}</span><button onclick="window.editGrade(${idx},${s.grades.indexOf(g)})" class="text-[10px] text-indigo-400 hover:text-indigo-700">✏️</button></div></td>`;
-                    return `<td class="border p-1 text-center empty-grade">-</td>`;
-                }).join('');
-
-                return `<tr class="hover:bg-slate-50 transition"><td class="border p-2 font-medium text-slate-700 truncate max-w-[200px]">${s.name}</td><td class="border p-2 text-center font-bold ${parseFloat(avg)<4?'text-rose-500':'text-slate-700'}">${avg}</td>${cells}<td class="border p-1 text-center"><div class="flex justify-center gap-1 scale-90">${renderAtt(idx,'P','bg-emerald-500',att)}${renderAtt(idx,'A','bg-rose-500',att)}${renderAtt(idx,'J','bg-amber-400',att)}</div></td><td class="border p-1"><div class="flex justify-end gap-2 pr-2"><div class="flex items-center border border-slate-300 rounded bg-white"><input type="number" id="g-${idx}" class="w-10 text-center text-xs outline-none font-bold" placeholder="-"><button onclick="window.addGrade(${idx})" class="px-2 bg-slate-100 hover:bg-slate-200 border-l border-slate-300 text-xs font-bold">+</button></div>
-                
-                <button onclick="window.generateStudentPDF(${idx})" class="text-slate-400 hover:text-blue-600 transition" title="Generar Hoja de Vida PDF">🖨️</button>
-                
-                <button onclick="window.openModal(${idx})" class="w-7 h-7 rounded-full flex items-center justify-center ${hasObs?'bg-indigo-100 text-indigo-600':'bg-slate-100 text-slate-400'}">${hasObs?'📝':'💬'}</button><button onclick="window.delStudent(${idx})" class="text-slate-300 hover:text-rose-500">🗑️</button></div></td></tr>`;
-            }).join('');
-        }
-
-        function renderAtt(idx,t,c,cur) { return `<button onclick="window.setAtt(${idx},'${t}')" class="w-6 h-6 rounded-full text-[10px] font-bold transition ${cur===t?`${c} text-white scale-110 shadow`:'bg-slate-100 text-slate-300 hover:bg-slate-200'}">${t}</button>`; }
-
-        window.setAtt = (i,s) => { students[i].attendance[currentDateString]=s; saveLoc(); }
-        window.addGrade = (i) => {
-            const v = parseFloat(getEl(`g-${i}`).value); if(isNaN(v)||v<1||v>7) return alert("Nota inválida");
-            const type = els.evalName.value.trim().toUpperCase() || "EVALUACIÓN";
-            const exists = students[i].grades.find(g => (g.type||"EVALUACIÓN")===type);
-            if(exists && !confirm(`Ya existe nota para ${type}. ¿Agregar igual?`)) return;
-            students[i].grades.push({ value:v, date:currentDateString, type:type, id:Date.now() }); getEl(`g-${i}`).value=''; saveLoc();
-        }
-        window.editGrade = (si, gi) => {
-            const g = students[si].grades[gi]; const n = prompt(`Editar ${g.type||"Nota"}:`, g.value);
-            if(n==='borrar') students[si].grades.splice(gi,1); else if(n&&!isNaN(parseFloat(n))) students[si].grades[gi].value=parseFloat(n);
-            saveLoc();
-        }
-        window.delStudent = (i) => { if(confirm("¿Eliminar?")) { students.splice(i,1); saveLoc(); } }
-        
-        window.openModal = (i) => { 
-            currentStudentIndex=i;
-            els.modal.el.classList.remove('hidden','flex'); els.modal.el.classList.add('flex');
-            els.modal.title.textContent=students[i].name; els.modal.date.value=currentDateString;
-            renderObs(students[i].observations); 
-        }
-
-        function renderObs(l) { 
-            const s = [...l].sort((a,b)=>new Date(b.date)-new Date(a.date));
-            els.modal.history.innerHTML = s.map(o=>`<div class="border-b pb-2 mb-2 border-slate-100"><strong class="text-[10px] text-indigo-500 bg-indigo-50 px-1 rounded">${o.date}</strong><p class="text-xs text-slate-700 mt-1">${o.text}</p></div>`).join('');
-        }
-
-        function saveLoc() { masterData[currentYear].classes[currentClass] = students; refreshTable(); }
-        async function saveCloud() {
-            if(!auth.currentUser) return;
-            try { await setDoc(getMyPrivateDocRef(), masterData); els.saveBtn.innerHTML = "✅ Listo"; els.saveBtn.classList.add("bg-emerald-600"); setTimeout(() => { els.saveBtn.innerHTML = "💾 Guardar Todo"; els.saveBtn.classList.remove("bg-emerald-600"); }, 2000); } catch(e) { alert("Error al guardar: "+e.message); }
-        }
-
-        function downloadBackup() { const a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(masterData)); a.download=`Respaldo_${currentDateString}.json`; a.click(); }
-        function calculateAverage(g) { if(!g.length) return '0.0'; return (g.reduce((a,b)=>a+b.value,0)/g.length).toFixed(1); }
-        function updateDateDisplay() { const d=new Date(currentDateString+'T12:00:00'); getEl('currentDate').textContent = d.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
-
-        // --- LÓGICA IMPORTACIÓN CSV ---
-        function parseCSV(text) {
-            const lines = text.split('\n'); let addedCount = 0;
-            lines.forEach(line => {
-                const separator = line.includes(';') ? ';' : ',';
-                const parts = line.split(separator);
-                if(parts.length >= 2) {
-                    const className = parts[0].trim();
-                    let studentName = "";
-                    if (separator === ';' && parts.length > 2) { studentName = parts[2].trim().toUpperCase(); } 
-                    else if (parts[1]) { studentName = parts[1].trim().toUpperCase(); }
-
-                    if(className && studentName) {
-                        if(!allClassesData[className]) allClassesData[className] = [];
-                        const exists = allClassesData[className].find(s => s.name === studentName);
-                        if(!exists) { allClassesData[className].push({ name: studentName, grades: [], attendance: {}, observations: [] }); addedCount++; }
-                    }
-                }
-            });
-            if(addedCount > 0) { saveLoc(); saveCloud(); loadYearData(currentYear); alert(`✅ ${addedCount} importados.`); } else { alert("ℹ️ Nada nuevo."); }
-        }
-
-        // --- GENERAR PDF INDIVIDUAL ---
-        window.generateStudentPDF = async (index) => {
-            const s = students[index];
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            doc.setFontSize(16); doc.setTextColor(40, 40, 40);
-            doc.text("Hoja de Vida del Estudiante", 105, 20, null, null, "center");
-            
-            doc.setFontSize(10);
-            doc.text(`Escuela Agrícola Sagrados Corazones - Año ${currentYear}`, 105, 26, null, null, "center");
-            
-            doc.setDrawColor(200); doc.line(14, 30, 196, 30);
-            doc.setFontSize(12); doc.setTextColor(0, 0, 0);
-            doc.text(`Nombre: ${s.name}`, 14, 40);
-            doc.text(`Curso: ${currentClass}`, 14, 46);
-            const avg = calculateAverage(s.grades);
-            doc.text(`Promedio Actual: ${avg}`, 14, 52);
-            if(parseFloat(avg)<4) { doc.setTextColor(200,0,0); doc.text("(Riesgo Académico)", 70, 52); doc.setTextColor(0,0,0); }
-
-            const gradesData = s.grades.map(g => [g.type || "Evaluación", g.date, g.value]);
-            if(gradesData.length > 0) {
-                doc.autoTable({ startY: 60, head: [['Evaluación', 'Fecha', 'Nota']], body: gradesData, theme: 'grid', headStyles: { fillColor: [79, 70, 229] } });
-            } else { doc.text("Sin calificaciones registradas.", 14, 65); }
-
-            let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 70;
-            doc.setFontSize(14); doc.text("Observaciones / Anotaciones", 14, finalY);
-            doc.setLineWidth(0.5); doc.line(14, finalY+2, 100, finalY+2);
-            
-            if(s.observations.length > 0) {
-                const obsData = s.observations.map(o => [o.date, o.text]);
-                doc.autoTable({ startY: finalY + 5, head: [['Fecha', 'Detalle']], body: obsData, theme: 'striped', styles: { fontSize: 9 }, columnStyles: { 0: { cellWidth: 30 } } });
-            } else { doc.setFontSize(10); doc.text("Sin observaciones registradas.", 14, finalY + 10); }
-
-            const pageCount = doc.internal.getNumberOfPages();
-            for(let i = 1; i <= pageCount; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150); doc.text(`Generado por ProfeAle Admin - ${new Date().toLocaleDateString()}`, 105, 290, null, null, "center"); }
-
-            doc.save(`Hoja_Vida_${s.name.replace(/\s+/g, '_')}.pdf`);
+                select.disabled = false;
+            }
         };
 
-        function setupEvents() {
-            els.loginForm.onsubmit = handleLogin;
-            getEl('btnLogout').onclick = () => { if(confirm("Salir?")) signOut(auth).then(()=>location.reload()); };
-            els.saveBtn.onclick = saveCloud;
-            els.addStudentBtn.onclick = () => { const n=getEl('studentNameInput').value.trim().toUpperCase(); if(n&&!students.find(s=>s.name===n)){ students.push({name:n,grades:[],attendance:{},observations:[]}); getEl('studentNameInput').value=''; saveLoc(); } };
-            els.addClassBtn.onclick = () => { const n=prompt("Nombre curso:"); if(n&&!allClassesData[n]) { allClassesData[n]=[]; saveLoc(); saveCloud(); loadYearData(currentYear); } };
-            els.importBtn.onclick = () => els.csvInput.click();
-            els.csvInput.onchange = (e) => { const file = e.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = (e) => parseCSV(e.target.result); reader.readAsText(file); } els.csvInput.value = ''; };
-            els.backupBtn.onclick = downloadBackup;
-            els.yearSel.onchange = (e) => loadYearData(e.target.value);
-            els.classSel.onchange = (e) => { currentClass=e.target.value; refreshTable(); };
-            els.dateSel.onchange = (e) => { currentDateString=e.target.value; updateDateDisplay(); refreshTable(); };
-            els.modal.close.onclick = () => els.modal.el.classList.add('hidden');
-            els.modal.save.onclick = () => { const t=els.modal.input.value.trim(); const d=els.modal.date.value; if(t&&d) { students[currentStudentIndex].observations.push({text:t,date:d,id:Date.now()}); els.modal.el.classList.add('hidden'); els.modal.input.value=''; saveLoc(); } };
-            getEl('showReportBtn').onclick = () => generateReport('summary');
-            getEl('showDetailedReportBtn').onclick = () => generateReport('detail');
-            getEl('backToTableBtn').onclick = () => { els.tableContainer.classList.remove('hidden'); els.controls.classList.remove('hidden'); els.backNav.classList.add('hidden'); els.reportSummary.classList.add('hidden'); els.reportDetail.classList.add('hidden'); refreshTable(); };
-            getEl('printReportBtn').onclick = () => window.print();
-        }
-
-        function generateReport(type) {
-            if(!currentClass) return;
-            els.tableContainer.classList.add('hidden'); els.controls.classList.add('hidden'); els.backNav.classList.remove('hidden');
-            if(type==='summary') {
-                els.reportSummary.classList.remove('hidden'); els.reportDetail.classList.add('hidden');
-                const data = Object.keys(allClassesData).map(c=>{ const l=allClassesData[c]; let p=0,a=0,j=0,t=0; l.forEach(s=>Object.values(s.attendance||{}).forEach(v=>{ if(v==='P')p++;if(v==='A')a++;if(v==='J')j++;t++; })); return {c, count:l.length, p,a,j, rate: t?((p+j)/t*100).toFixed(1)+'%':'N/A'}; });
-                els.reportSummary.innerHTML = `<h2 class="text-xl font-bold mb-4 text-center">Resumen General ${currentYear}</h2><table class="w-full text-sm text-left"><thead class="bg-slate-100 uppercase"><tr><th class="px-4 py-2">Clase</th><th class="px-4 py-2 text-center">Matrícula</th><th class="text-center px-4 py-2 text-green-600">P</th><th class="text-center px-4 py-2 text-rose-600">A</th><th class="text-center px-4 py-2">%</th></tr></thead><tbody>${data.map(d=>`<tr class="border-b"><td class="px-4 py-2 font-medium">${d.c}</td><td class="text-center">${d.count}</td><td class="text-center text-green-600 font-bold">${d.p}</td><td class="text-center text-rose-600 font-bold">${d.a}</td><td class="text-center font-bold">${d.rate}</td></tr>`).join('')}</tbody></table>`;
-            } else {
-                els.reportDetail.classList.remove('hidden'); els.reportSummary.classList.add('hidden');
-                const list = allClassesData[currentClass];
-                const dates = new Set(); list.forEach(s=>Object.keys(s.attendance||{}).forEach(d=>dates.add(d)));
-                const sortedDates = Array.from(dates).sort();
-                const evalCols = getUniqueEvaluations(list);
-                els.reportDetail.innerHTML = `<h2 class="text-xl font-bold mb-4 text-center">Detalle: ${currentClass}</h2><table class="w-full text-xs border border-slate-200"><thead class="bg-slate-100"><tr><th class="px-2 py-2 text-left border w-40">Estudiante</th><th class="px-1 py-2 border w-10">Prom</th>${evalCols.map(e=>`<th class="px-1 py-2 border bg-indigo-50 text-indigo-700 w-12">${e}</th>`).join('')}${sortedDates.map(d=>`<th class="px-1 py-2 border w-8">${d.slice(5)}</th>`).join('')}<th class="px-2 py-2 text-left border">Obs</th></tr></thead><tbody>${list.map((s,i)=>{
-                    const grades = evalCols.map(c=>{ const g=s.grades.slice().reverse().find(gr=>(gr.type||"EVALUACIÓN")===c); return `<td class="text-center border font-bold ${g?'text-slate-700':'text-slate-200'}">${g?g.value.toFixed(1):'-'}</td>`; }).join('');
-                    const atts = sortedDates.map(d=>{ const v=s.attendance[d]||'-'; let c='text-slate-300'; if(v==='P')c='bg-green-100 text-green-700 font-bold'; if(v==='A')c='bg-rose-100 text-rose-700 font-bold'; return `<td class="text-center border ${c}">${v}</td>`; }).join('');
-                    const obs = s.observations.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(o=>`${o.date}: ${o.text}`).join(' | ');
-                    return `<tr class="${i%2===0?'bg-white':'bg-slate-50'}"><td class="px-2 py-2 border font-medium truncate max-w-[150px]">${s.name}</td><td class="px-1 py-2 border text-center font-bold bg-slate-100">${calculateAverage(s.grades)}</td>${grades}${atts}<td class="px-2 py-2 border text-[10px] leading-tight">${obs}</td></tr>`;
-                }).join('')}</tbody></table>`;
+        window.loadStudentFromList = () => {
+            const rut = document.getElementById('student-select').value;
+            const student = STUDENTS_DATA.find(s => s[1] === rut);
+            if(student) {
+                const fullName = `${student[3]} ${student[2]}`;
+                document.getElementById('inp-nombre').value = fullName;
+                document.getElementById('inp-rut').value = student[1];
+                document.getElementById('inp-curso').value = student[0];
+                
+                updateTutoriaHeader();
             }
+        };
+
+        window.updateChart = () => {
+            const ctx = document.getElementById('gapChart');
+            const p1 = parseFloat(document.getElementById('inp-sem1').value) || 0;
+            const p2 = parseFloat(document.getElementById('inp-sem2').value) || 0;
+            const final = (p1 && p2) ? (p1+p2)/2 : 0;
+            const curso = parseFloat(document.getElementById('inp-prom-curso').value) || 5.5;
+
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Estudiante', 'Prom. Curso'],
+                    datasets: [{
+                        label: 'Notas',
+                        data: [final, curso],
+                        backgroundColor: [final<4?'#ef4444':'#3b82f6', '#94a3b8']
+                    }]
+                },
+                options: { responsive:true, maintainAspectRatio: false, scales: { y: { min:1, max:7 } } }
+            });
+        };
+
+        // --- GESTIÓN DE DATOS ---
+        window.saveData = async () => {
+            const rut = document.getElementById('inp-rut').value;
+            if(!rut) { Swal.fire('Falta RUT', 'Seleccione un alumno.', 'warning'); return; }
+
+            const reportData = {
+                reportInfo: { number: "MANUAL-" + Date.now().toString().substr(-4) },
+                student: {
+                    name: document.getElementById('inp-nombre').value,
+                    run: rut,
+                    course: document.getElementById('inp-curso').value,
+                    tutor: document.getElementById('inp-profesor').value
+                },
+                academic: {
+                    sem1Avg: document.getElementById('inp-sem1').value,
+                    sem2Avg: document.getElementById('inp-sem2').value,
+                    courseAvg: document.getElementById('inp-prom-curso').value,
+                    failedSubjectsText: document.getElementById('inp-asignaturas').value 
+                },
+                decree67Analysis: {
+                    progress: document.getElementById('inp-analisis-ped').value,
+                    socioemotional: document.getElementById('inp-analisis-soc').value
+                },
+                decision: {
+                    status: document.getElementById('inp-decision').value,
+                    justification: document.getElementById('inp-fundamentacion').value,
+                    attendance: document.getElementById('inp-asistencia').value
+                },
+                tutoria: {
+                    tutor1: document.getElementById('inp-tutor').value,
+                    reportDate: document.getElementById('inp-fecha-tut').value,
+                    sem2: { agreements: document.getElementById('inp-acciones').value } // Guardado legacy
+                },
+                savedAt: new Date().toISOString()
+            };
+
+            try {
+                await db.collection('artifacts').doc('liceo-agricola').collection('public').doc('data').collection('informes')
+                        .doc('REP_' + rut.replace(/[^0-9kK]/g, '')).set(reportData);
+                Swal.fire('Guardado', 'Informe registrado.', 'success');
+                loadHistory();
+            } catch (e) { console.error(e); Swal.fire('Error', e.message, 'error'); }
+        };
+
+        window.loadHistory = async () => {
+            const tbody = document.getElementById('history-body');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Cargando...</td></tr>';
+            try {
+                const snap = await db.collection('artifacts').doc('liceo-agricola').collection('public').doc('data').collection('informes').get();
+                tbody.innerHTML = '';
+                if(snap.empty) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Sin informes.</td></tr>'; return; }
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const date = d.savedAt ? new Date(d.savedAt).toLocaleDateString() : '---';
+                    const type = d.decision?.status || 'Informe';
+                    tbody.innerHTML += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-4 py-2">${date}</td>
+                            <td class="px-4 py-2"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-bold">${type}</span></td>
+                            <td class="px-4 py-2">${d.student?.name || '---'}</td>
+                            <td class="px-4 py-2">${d.student?.course || '---'}</td>
+                            <td class="px-4 py-2 text-right"><button onclick="loadReport('${doc.id}')" class="text-blue-600 hover:text-blue-800 underline text-xs font-bold">ABRIR</button></td>
+                        </tr>
+                    `;
+                });
+            } catch (e) { console.error(e); }
+        };
+
+        window.loadReport = async (id) => {
+            try {
+                const docSnap = await db.collection('artifacts').doc('liceo-agricola').collection('public').doc('data').collection('informes').doc(id).get();
+                if(docSnap.exists) {
+                    const d = docSnap.data();
+                    document.getElementById('inp-nombre').value = d.student?.name || '';
+                    document.getElementById('inp-rut').value = d.student?.run || '';
+                    document.getElementById('inp-curso').value = d.student?.course || '';
+                    document.getElementById('inp-profesor').value = d.student?.tutor || '';
+                    
+                    document.getElementById('inp-sem1').value = d.academic?.sem1Avg || 0;
+                    document.getElementById('inp-sem2').value = d.academic?.sem2Avg || 0;
+                    document.getElementById('inp-prom-curso').value = d.academic?.courseAvg || 5.5;
+                    
+                    document.getElementById('inp-analisis-ped').value = d.decree67Analysis?.progress || '';
+                    document.getElementById('inp-analisis-soc').value = d.decree67Analysis?.socioemotional || '';
+                    
+                    document.getElementById('inp-decision').value = d.decision?.status || 'Repitencia';
+                    document.getElementById('inp-fundamentacion').value = d.decision?.justification || '';
+                    document.getElementById('inp-asignaturas').value = d.academic?.failedSubjectsText || d.decision?.failedSubjects || '';
+                    document.getElementById('inp-asistencia').value = d.decision?.attendance || '';
+                    
+                    document.getElementById('inp-tutor').value = d.tutoria?.tutor1 || '';
+                    
+                    updateChart();
+                    updateTutoriaHeader();
+                    switchTab('ficha');
+                    Swal.fire('Cargado', 'Informe recuperado.', 'success');
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.getElementById(`btn-${tab}`).classList.add('active');
+            
+            if(tab === 'historial') loadHistory();
+            if(tab === 'analisis') setTimeout(updateChart, 200);
         }
 
-        window.onload = initApp;
+        window.updateTutoriaHeader = () => {
+            document.getElementById('view-nombre').textContent = document.getElementById('inp-nombre').value;
+            document.getElementById('view-curso').textContent = document.getElementById('inp-curso').value;
+            document.getElementById('view-tutor').textContent = document.getElementById('inp-tutor').value;
+            document.getElementById('view-sign-tutor').textContent = document.getElementById('inp-tutor').value;
+        };
+
+        window.addTutoriaRow = () => {
+            const sem = document.getElementById('tut-semestre').value;
+            const fechaInp = document.getElementById('tut-fecha').value;
+            const obs = document.getElementById('tut-obs').value;
+            const acu = document.getElementById('tut-acuerdos').value;
+
+            if(!fechaInp || !obs) return Swal.fire('Falta información', 'Ingresa al menos fecha y observación.', 'warning');
+
+            const parts = fechaInp.split('-');
+            const fechaStr = `${parts[2]}/${parts[1]}`;
+
+            const tbody = document.getElementById(sem === '1' ? 'table-sem1' : 'table-sem2').querySelector('tbody');
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="font-bold border px-2 py-1 align-top">${fechaStr}</td>
+                <td class="border px-2 py-1 align-top">${obs}</td>
+                <td class="border px-2 py-1 align-top italic text-gray-700">${acu || '-'}</td>
+            `;
+            
+            tr.ondblclick = function() { if(confirm('¿Borrar esta línea?')) this.remove(); };
+            tr.title = "Doble clic para borrar esta fila";
+            
+            tbody.appendChild(tr);
+
+            document.getElementById('tut-obs').value = '';
+            document.getElementById('tut-acuerdos').value = '';
+        };
+
+        window.printReport = (type) => {
+            const getVal = (id) => document.getElementById(id).value || "---";
+            let content = '';
+
+            if (type === 'tutoria') {
+                content = document.getElementById('hoja-tutoria-visual').outerHTML;
+            } else {
+                const p1 = parseFloat(getVal('inp-sem1')) || 0;
+                const p2 = parseFloat(getVal('inp-sem2')) || 0;
+                const promAlumno = ((p1 + p2) / 2).toFixed(1);
+                const promCurso = parseFloat(getVal('inp-prom-curso')) || 5.5;
+                const pctAlumno = Math.min((promAlumno / 7) * 100, 100);
+                const pctCurso = Math.min((promCurso / 7) * 100, 100);
+                const colorAlumno = promAlumno < 4.0 ? '#ef4444' : '#3b82f6';
+
+                const visualGraph = `
+                    <div style="margin-top:10px; border:1px solid #ddd; padding:10px; border-radius:4px; margin-bottom:15px; page-break-inside: avoid;">
+                        <div class="visual-bar-container">
+                            <div class="visual-bar-label">Promedio Alumno (${promAlumno}):</div>
+                            <div class="visual-bar-track"><div class="visual-bar-fill" style="width:${pctAlumno}%; background-color:${colorAlumno} !important; -webkit-print-color-adjust: exact;"></div></div>
+                        </div>
+                        <div class="visual-bar-container">
+                            <div class="visual-bar-label">Promedio Curso (${promCurso}):</div>
+                            <div class="visual-bar-track"><div class="visual-bar-fill" style="width:${pctCurso}%; background-color:#9ca3af !important; -webkit-print-color-adjust: exact;"></div></div>
+                        </div>
+                    </div>
+                `;
+
+                content = `
+                    <div class="doc-container">
+                        <div class="doc-header">
+                            <div style="display:flex; gap:15px; align-items:center;">
+                                <img src="logo.jpg" style="height:70px;" onerror="this.style.display='none'">
+                                <div>
+                                    <h2 style="margin:0; font-weight:bold; font-size:12pt; text-transform:uppercase;">${SCHOOL_NAME}</h2>
+                                    <p style="margin:0; font-size:10pt;">${LOCATION} • UTP</p>
+                                </div>
+                            </div>
+                            <div style="text-align:right; font-size:10pt;">
+                                <p><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        <div class="doc-title">INFORME DE SITUACIÓN ACADÉMICA</div>
+                        
+                        <div class="doc-section">I. ANTECEDENTES</div>
+                        <table style="width:100%; margin-bottom:10px;">
+                            <tr><td><strong>Nombre:</strong> ${getVal('inp-nombre')}</td><td><strong>RUT:</strong> ${getVal('inp-rut')}</td></tr>
+                            <tr><td><strong>Curso:</strong> ${getVal('inp-curso')}</td><td><strong>Asistencia:</strong> ${getVal('inp-asistencia')}</td></tr>
+                        </table>
+
+                        <div class="doc-section">II. ANÁLISIS DECRETO 67</div>
+                        ${visualGraph}
+                        
+                        <div style="margin-top:15px;">
+                            <p class="doc-field"><strong>Análisis Pedagógico:</strong></p>
+                            <div class="doc-box">${getVal('inp-analisis-ped')}</div>
+                        </div>
+                        
+                        <div style="margin-top:15px;">
+                            <p class="doc-field"><strong>Factores Socioemocionales:</strong></p>
+                            <div class="doc-box">${getVal('inp-analisis-soc')}</div>
+                        </div>
+
+                        <div class="doc-section">III. RESOLUCIÓN</div>
+                        <p class="doc-field"><strong>Decisión Final:</strong> <span style="border:1px solid black; padding:2px 5px; font-weight:bold;">${getVal('inp-decision')}</span></p>
+                        <p class="doc-field"><strong>Fundamentación:</strong></p>
+                        <div class="doc-box" style="min-height:100px;">${getVal('inp-fundamentacion')}</div>
+
+                        <div class="doc-signatures">
+                            <div class="doc-sign-line">
+                                ${getVal('inp-profesor')}<br>
+                                <span style="font-weight:normal; font-size:9pt;">Profesor Tutor/Jefe</span>
+                            </div>
+                            <div class="doc-sign-line">
+                                Alejandra Morales G.<br>
+                                <span style="font-weight:normal; font-size:9pt;">Unidad Técnico Pedagógica</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('print-zone').innerHTML = content;
+            window.print();
+        };
+
     </script>
 </body>
 </html>
