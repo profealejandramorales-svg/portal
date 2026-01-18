@@ -3,453 +3,511 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador ProfeAle v5.9</title>
+    <title>SGE Suite 31 - Rúbrica Inteligente</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Lora:ital,wght@0,400;0,700;1,400&family=Open+Sans:wght@400;600;800&display=swap');
         
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; height: 100vh; overflow: hidden; }
+        body { font-family: 'Inter', sans-serif; background-color: #e5e7eb; height: 100vh; overflow: hidden; }
         
-        /* Hoja A4 */
+        /* HOJA A4 */
         .hoja-a4 {
-            width: 210mm;
-            min-height: 297mm;
-            padding: 20mm;
-            margin: 0 auto;
-            background: white;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            color: #000;
-            position: relative;
+            width: 210mm; min-height: 297mm; padding: 20mm; margin: 0 auto;
+            background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            color: #000; position: relative; transition: all 0.2s ease;
         }
 
-        .font-oficial { font-family: 'Lora', serif; }
+        /* ESTILOS RÚBRICA CUADRICULADA (ESTRICTOS) */
+        table.tabla-rubrica { 
+            width: 100% !important; 
+            border-collapse: collapse !important; 
+            margin-top: 10px; 
+            margin-bottom: 20px; 
+            font-family: inherit; 
+            border: 2px solid #000 !important; /* Borde externo grueso */
+        }
+        table.tabla-rubrica th { 
+            background-color: #e5e7eb !important; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            border: 1px solid #000 !important; 
+            padding: 8px; 
+            text-align: center; 
+            font-size: 0.75em; 
+        }
+        table.tabla-rubrica td { 
+            border: 1px solid #000 !important; 
+            padding: 6px; 
+            vertical-align: middle; 
+            font-size: 0.8em; 
+        }
+        /* Columna de puntaje (detectada por contenido corto) */
+        table.tabla-rubrica td.puntaje { text-align: center; font-weight: bold; width: 50px; }
 
-        .modo-pauta .opcion-correcta { background-color: #fee2e2; border: 1px solid #ef4444; border-radius: 4px; padding: 2px 5px; color: #b91c1c; font-weight: bold; }
-        .modo-pauta .desarrollo-profe { color: #dc2626; font-family: 'Inter', sans-serif; font-size: 0.9em; margin-top: 10px; border-left: 3px solid #dc2626; padding-left: 10px; background: #fef2f2; }
-
-        @media print {
-            body * { visibility: hidden; }
-            #vista-previa, #vista-previa * { visibility: visible; }
-            #vista-previa { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20mm; box-shadow: none; }
-            .no-print { display: none !important; }
+        .rubrica-title { 
+            font-weight: 800; 
+            font-size: 1em; 
+            margin-top: 20px; 
+            margin-bottom: 5px; 
+            text-transform: uppercase; 
+            background-color: #f3f4f6;
+            padding: 5px;
+            border: 1px solid #000;
+            border-bottom: none; /* Para unir con la tabla si sigue */
         }
 
-        .input-field { width: 100%; padding: 0.4rem; border: 1px solid #d1d5db; rounded: 0.375rem; font-size: 0.85rem; }
-        .input-field:focus { outline: none; border-color: #15803d; ring: 2px solid #bbf7d0; }
+        /* MODOS NEE */
+        .mode-normal { font-family: 'Lora', serif; font-size: 14px; }
+        .mode-dislexia { font-family: 'Open Sans', Verdana, sans-serif !important; font-size: 16px !important; line-height: 1.6 !important; background-color: #fffbeb !important; color: #1f2937 !important; }
+        .mode-tdah .pregunta-block { border-left: 5px solid #f59e0b; padding-left: 15px; background: #fffdf5; margin-bottom: 20px; padding-top: 10px; border-radius: 0 8px 8px 0; }
+        .instruction-verb { background-color: #fde68a; font-weight: 800; border-bottom: 2px solid #d97706; padding: 0 4px; text-transform: uppercase; }
+        .mode-tea .pregunta-block { border: 1px solid #94a3b8; padding: 15px; border-radius: 8px; margin-bottom: 20px; background: #f8fafc; }
+        .picto-badge { display: inline-flex; align-items: center; background: #e0f2fe; border: 1px dashed #0284c7; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-right: 8px; }
+        .mode-vision { font-family: Arial, sans-serif !important; font-size: 20pt !important; font-weight: bold !important; background-color: white !important; color: black !important; }
         
-        /* Toggle Switch */
-        .toggle-checkbox:checked { right: 0; border-color: #16a34a; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #16a34a; }
+        .modo-pauta .opcion-correcta { background-color: #fee2e2; border: 1px solid #ef4444; border-radius: 4px; padding: 2px 5px; color: #b91c1c; font-weight: bold; }
+
+        /* IMPRESIÓN */
+        #print-area { display: none; }
+        @media print {
+            body { background: white; height: auto !important; overflow: visible !important; }
+            #panel-izquierdo, #main-area, .no-print, dialog { display: none !important; }
+            #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; z-index: 9999; }
+            .hoja-a4 { box-shadow: none !important; margin: 0 !important; width: 100% !important; padding: 15mm !important; page-break-after: always; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+
+        .input-field { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.85rem; }
+        .tab-btn { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-size: 10px; font-weight: 800; color: #6b7280; background: #f3f4f6; border-bottom: 3px solid transparent; text-transform: uppercase; }
+        .tab-btn.active { background: white; color: #4338ca; border-bottom-color: #4338ca; }
+        .tab-content { display: none; height: 100%; overflow: hidden; flex-direction: column; }
+        .tab-content.active { display: flex; }
     </style>
 </head>
-<body class="flex h-screen">
+<body class="flex h-screen w-full">
 
-    <div class="w-1/3 bg-white border-r border-gray-200 flex flex-col h-full z-10 shadow-xl no-print">
-        
-        <div class="bg-gray-800 p-3 text-white shadow flex flex-col gap-3">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="font-bold text-lg">💾 Generador v5.9</h1>
-                    <p class="text-[10px] opacity-70">Encabezado Detallado</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-bold text-gray-400">PAUTA:</span>
-                    <div class="relative inline-block w-8 align-middle select-none">
-                        <input type="checkbox" name="toggle" id="toggle-pauta" onclick="togglePauta()" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 left-0 transition-all duration-300"/>
-                        <label for="toggle-pauta" class="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer"></label>
-                    </div>
+    <div id="print-area"></div>
+
+    <div id="panel-izquierdo" class="w-1/3 bg-white border-r border-gray-300 flex flex-col h-full z-20 shadow-2xl no-print">
+        <div class="bg-gray-900 p-4 text-white shadow-md">
+            <div class="flex justify-between items-center mb-1">
+                <h1 class="font-bold text-lg text-indigo-400 leading-tight">Generador de<br>Evaluaciones</h1>
+                <div class="flex items-center gap-2 bg-gray-800 px-2 py-1 rounded border border-gray-700">
+                    <span class="text-[10px] font-bold text-gray-300 uppercase">Pauta:</span>
+                    <input type="checkbox" id="toggle-pauta" onclick="renderVista()" class="accent-indigo-500 w-4 h-4 cursor-pointer">
                 </div>
             </div>
-
-            <div class="flex gap-2">
-                <button onclick="descargarRespaldo()" class="flex-1 bg-blue-600 hover:bg-blue-500 py-1 px-2 rounded text-xs font-bold border border-blue-400 flex justify-center items-center gap-1">
-                    💾 Guardar
-                </button>
-                <label class="flex-1 bg-gray-600 hover:bg-gray-500 py-1 px-2 rounded text-xs font-bold border border-gray-500 cursor-pointer text-center flex justify-center items-center gap-1">
-                    📂 Cargar
-                    <input type="file" id="file-upload" accept=".json" onchange="cargarRespaldo(this)" class="hidden">
-                </label>
+            <div class="mt-2 border-t border-gray-700 pt-1">
+                <span class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Desarrollado por <span class="text-pink-400">ProfeAle</span></span>
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-            
-            <div class="bg-white p-4 rounded-lg border shadow-sm space-y-3">
-                <h3 class="font-bold text-gray-700 text-xs uppercase border-b pb-1 mb-2">1. Datos Institucionales</h3>
+        <div class="flex border-b border-gray-300 bg-gray-100">
+            <div class="tab-btn active" onclick="switchTab('crear')">1. Prueba</div>
+            <div class="tab-btn" onclick="switchTab('rubrica')">2. Rúbrica</div>
+            <div class="tab-btn" onclick="switchTab('hoja')">3. Hoja Resp</div>
+            <div class="tab-btn" onclick="switchTab('corregir')">4. Corregir</div>
+        </div>
+
+        <div id="tab-crear" class="tab-content active bg-gray-50">
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm space-y-2">
+                    <h3 class="font-bold text-gray-500 text-[10px] uppercase border-b pb-1">Encabezado</h3>
+                    <div class="flex gap-2 items-center">
+                        <input type="file" id="input-logo" accept="image/*" onchange="cargarLogo()" class="text-xs w-full text-gray-500"/>
+                        <button onclick="borrarLogo()" class="text-[10px] text-red-500 font-bold hover:underline">X</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="edit-colegio" value="ESCUELA AGRÍCOLA SAGRADOS CORAZONES" class="input-field text-xs font-bold" oninput="renderVista()">
+                        <input type="text" id="edit-asignatura" value="ED. TECNOLÓGICA" class="input-field text-xs" oninput="renderVista()">
+                        <input type="text" id="edit-docente" value="Alejandra Morales G." class="input-field text-xs" oninput="renderVista()">
+                        <input type="text" id="edit-titulo" value="EVALUACIÓN N°1" class="input-field text-xs font-bold" oninput="renderVista()">
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200 shadow-sm space-y-2">
+                    <h3 class="font-bold text-yellow-800 text-[10px] uppercase border-b border-yellow-200 pb-1">Contexto (Se copia a Rúbrica)</h3>
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Objetivo:</label><textarea id="edit-objetivo" rows="2" class="input-field text-xs" placeholder="Se copiará a la rúbrica también" oninput="renderVista()"></textarea></div>
+                    <div><label class="text-[10px] font-bold text-gray-500 uppercase">Instrucciones:</label><textarea id="edit-instrucciones" rows="2" class="input-field text-xs" placeholder="Se copiará a la rúbrica también" oninput="renderVista()"></textarea></div>
+                </div>
+
+                <div class="bg-green-50 p-3 rounded-lg border border-green-200 shadow-sm space-y-2">
+                    <div class="flex items-center gap-4">
+                        <div class="w-1/2"><label class="text-[10px] font-bold text-green-700 block">TOTAL:</label><input type="number" id="edit-puntaje-total" value="40" min="1" class="input-field text-sm font-bold text-center border-green-400" oninput="calcularEscala()"></div>
+                        <div class="w-1/2 text-center bg-white rounded border border-green-200 p-1"><label class="text-[9px] font-bold text-gray-400 block">NOTA 4.0 (60%):</label><span id="display-corte" class="text-lg font-bold text-green-600">24</span> <span class="text-[9px]">pts</span></div>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-200 shadow-sm space-y-2">
+                    <h3 class="font-bold text-indigo-800 text-[10px] uppercase border-b border-indigo-200 pb-1">Adecuación PACI</h3>
+                    <select id="sel-adecuacion" onchange="actualizarEtiquetaAuto()" class="input-field border-indigo-300 font-bold text-indigo-900 text-xs w-full">
+                        <option value="normal">⚪ Estándar</option>
+                        <optgroup label="NEE Transitorias"><option value="tdah">🟡 TDAH</option><option value="dislexia">🟠 Dislexia</option><option value="tea">🔵 TEA</option></optgroup>
+                        <optgroup label="NEE Permanentes"><option value="intelectual">🟢 D. Intelectual</option><option value="vision">⚫ Baja Visión</option></optgroup>
+                    </select>
+                    <input type="text" id="edit-etiqueta" value="EVALUACIÓN ESTÁNDAR" class="input-field text-[10px] bg-white text-indigo-800 font-bold uppercase text-center" oninput="renderVista()">
+                </div>
+
+                <div class="bg-blue-50 p-3 rounded-lg border border-blue-200 shadow-sm flex flex-col h-64 relative">
+                    <div class="flex justify-between items-center mb-1"><h3 class="font-bold text-blue-800 text-[10px] uppercase">Preguntas</h3><span id="q-counter" class="text-[10px] bg-blue-200 text-blue-800 px-2 rounded-full font-bold">0 P</span></div>
+                    <textarea id="texto-masivo" class="flex-1 w-full text-xs p-2 border border-blue-300 rounded font-mono resize-none" placeholder="Pega tu prueba..." oninput="procesarTextoMasivo()"></textarea>
+                    
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="insertarPictoModal()" class="bg-white border text-gray-700 text-[10px] font-bold px-2 py-1 rounded">🖼️ Icon</button>
+                        <button onclick="document.getElementById('upload-img-pregunta').click()" class="bg-pink-600 text-white text-[10px] font-bold px-2 py-1 rounded">📷 Foto</button>
+                        <input type="file" id="upload-img-pregunta" accept="image/*" class="hidden" onchange="subirImagenPregunta(this)">
+                        <button onclick="imprimirPrueba()" class="bg-gray-800 text-white text-[10px] font-bold px-3 py-1 rounded shadow">🖨️ Imprimir Prueba</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-rubrica" class="tab-content bg-orange-50 p-4">
+            <div class="bg-white p-4 rounded shadow space-y-4 h-full flex flex-col">
+                <h3 class="font-bold text-orange-800 text-sm uppercase">Editor de Rúbrica</h3>
+                <p class="text-[10px] text-gray-500">Copia tu texto y presiona "Reparar Tabla" para crear el cuadriculado.</p>
                 
-                <div class="bg-blue-50 p-2 rounded border border-blue-100">
-                    <label class="text-[10px] font-bold text-blue-600 uppercase block mb-1">📸 Subir Logo</label>
-                    <input type="file" id="input-logo" accept="image/*" onchange="cargarLogo()" class="block w-full text-xs text-gray-500"/>
-                    <p class="text-[9px] text-gray-400 mt-1" id="msg-logo">*Si no aparece, usa una imagen más pequeña.</p>
-                </div>
-
-                <div class="grid grid-cols-1 gap-2">
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-500 uppercase">Nombre Colegio</label>
-                        <input type="text" id="edit-colegio" value="ESCUELA AGRÍCOLA SAGRADOS CORAZONES" class="input-field uppercase" oninput="actualizarGeneral()">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-500 uppercase">Asignatura</label>
-                        <input type="text" id="edit-asignatura" value="ED. TECNOLÓGICA" class="input-field uppercase" oninput="actualizarGeneral()">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-500 uppercase">Docente</label>
-                        <input type="text" id="edit-docente" value="Prof. Alejandro" class="input-field uppercase" oninput="actualizarGeneral()">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-500 uppercase">Código</label>
-                        <input type="text" id="edit-codigo" value="EVAL-01-2025" class="input-field uppercase" oninput="actualizarGeneral()">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Título Evaluación</label>
-                    <input type="text" id="edit-titulo" value="EVALUACIÓN DIAGNÓSTICA" class="input-field font-bold uppercase" oninput="actualizarGeneral()">
-                </div>
-
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Objetivo</label>
-                    <textarea id="edit-objetivo" rows="2" class="input-field text-xs" placeholder="Objetivo de aprendizaje..." oninput="actualizarGeneral()"></textarea>
-                </div>
-
-                <div>
-                    <label class="text-[10px] font-bold text-gray-500 uppercase">Instrucciones</label>
-                    <textarea id="edit-instrucciones" rows="3" class="input-field text-xs font-bold text-gray-700 bg-yellow-50 border-yellow-200" placeholder="Instrucciones generales..." oninput="actualizarGeneral()"></textarea>
+                <textarea id="texto-rubrica" class="flex-1 w-full text-xs p-2 border border-orange-300 rounded font-mono resize-none" 
+                placeholder="Pegar aquí el texto de la rúbrica...
+Ejemplo:
+1. USO DEL TIEMPO (20 PUNTOS)
+Criterio Indicador Puntaje Descripción
+Uso del tiempo Eficiencia 10 pts Trabaja sin parar." oninput="renderRubrica()"></textarea>
+                
+                <div class="flex gap-2">
+                    <button onclick="repararTablaRubrica()" class="flex-1 bg-purple-600 text-white text-xs font-bold py-2 rounded hover:bg-purple-700 shadow animate-pulse">🪄 Reparar Tabla</button>
+                    <button onclick="imprimirRubrica()" class="flex-1 bg-orange-600 text-white text-xs font-bold py-2 rounded hover:bg-orange-700">🖨️ Imprimir</button>
                 </div>
             </div>
-
-            <div id="contenedor-preguntas" class="space-y-4"></div>
-
-            <button onclick="agregarPregunta()" class="w-full py-3 border-2 border-dashed border-gray-300 text-gray-500 font-bold rounded-lg hover:border-green-500 hover:text-green-600 transition text-sm">
-                + Agregar Pregunta
-            </button>
         </div>
 
-        <div class="p-4 border-t bg-white">
-            <button onclick="window.print()" class="w-full bg-green-700 text-white font-bold py-3 rounded-lg hover:bg-green-800 transition flex justify-center items-center gap-2 text-sm shadow">
-                🖨️ Imprimir PDF
-            </button>
-        </div>
+        <div id="tab-hoja" class="tab-content bg-gray-50 p-4"><button onclick="imprimirHojaRespuestas()" class="mt-4 w-full bg-green-600 text-white font-bold py-3 rounded">Imprimir Hoja Resp</button></div>
+        <div id="tab-corregir" class="tab-content bg-black p-0 relative"><button class="text-white">Escáner activo</button></div>
     </div>
 
-    <div class="w-2/3 bg-gray-200 overflow-y-auto p-8 flex justify-center">
-        <div id="vista-previa" class="hoja-a4 text-sm leading-relaxed font-oficial">
-            
-            <div class="flex items-start justify-between border-b-2 border-black pb-2 mb-6">
-                <div class="flex items-center gap-4 w-2/3">
-                    <img id="view-logo" src="" class="hidden h-24 w-24 object-contain" alt="Logo">
+    <div class="w-2/3 bg-gray-200 h-full overflow-y-auto p-8 flex justify-center relative" id="main-area">
+        
+        <div id="vista-prueba" class="hoja-a4 mode-normal text-sm leading-relaxed">
+            <div class="header-comun flex items-start justify-between border-b-2 border-black pb-2 mb-6">
+                <div class="flex items-center gap-4 w-3/4">
+                    <img id="view-logo" src="" class="hidden h-20 w-20 object-contain">
                     <div class="text-black">
-                        <h2 id="view-colegio" class="font-bold text-base leading-tight uppercase tracking-wide">ESCUELA AGRICOLA<br>SAGRADOS CORAZONES</h2>
-                        <p id="view-asignatura" class="text-sm mt-1 uppercase font-normal">ED. TECNOLÓGICA</p>
+                        <h2 id="view-colegio" class="font-bold text-base leading-tight uppercase">COLEGIO</h2>
+                        <p id="view-asignatura" class="text-sm mt-1 uppercase">ASIGNATURA</p>
                     </div>
                 </div>
-                <div class="w-1/3 text-right mt-1 text-xs space-y-1">
+                <div class="w-1/4 text-right mt-1 text-xs space-y-1">
                     <p><b>DOCENTE:</b> <span id="view-docente"></span></p>
-                    <p><b>CÓDIGO:</b> <span id="view-codigo"></span></p>
                     <p><b>FECHA:</b> ___/___/___</p>
-                    <div id="badge-pauta" class="hidden text-red-600 font-bold border-2 border-red-600 px-1 rounded uppercase text-center mt-2">Pauta</div>
+                    <p><span id="view-etiqueta" class="bg-black text-white px-1 font-bold text-[9px] uppercase">ESTÁNDAR</span></p>
                 </div>
             </div>
-
-            <div class="text-center mb-6">
-                <h1 id="view-titulo" class="text-xl font-bold mb-6 uppercase tracking-wider">EVALUACIÓN DIAGNÓSTICA</h1>
-                
-                <div class="border border-black rounded mb-6 font-sans text-xs">
+            
+            <div class="info-alumno text-center mb-6">
+                <h1 id="view-titulo" class="text-xl font-bold mb-4 uppercase">EVALUACIÓN</h1>
+                <div class="border border-black rounded mb-4 font-sans text-xs box-datos">
                     <div class="flex border-b border-black">
-                        <div class="flex-1 p-2 font-bold uppercase">
-                            NOMBRE: ___________________________________________________________
-                        </div>
-                        <div class="w-24 border-l border-black p-2 text-center bg-gray-100 font-bold text-gray-500 text-[10px] flex items-center justify-center">
-                            NOTA
-                        </div>
+                        <div class="flex-1 p-2 font-bold uppercase">NOMBRE: __________________________________________________</div>
+                        <div class="w-24 border-l border-black p-2 text-center bg-gray-100 font-bold">NOTA</div>
                     </div>
                     <div class="flex">
-                        <div class="w-1/2 p-2 border-r border-black font-bold uppercase">
-                            CURSO: _______________
-                        </div>
-                        <div class="w-1/2 p-2 font-bold uppercase">
-                            FECHA: _______________
+                        <div class="w-1/2 p-2 border-r border-black font-bold uppercase">CURSO: _________</div>
+                        <div class="w-1/2 p-2 font-bold uppercase bg-gray-50 flex justify-between px-4">
+                            <span>PTJE: _____ / <span id="view-total-pts">40</span></span>
+                            <span class="text-[9px] text-gray-500 font-normal self-center">(4.0 = <span id="view-corte-pts">24</span> pts)</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="bloque-objetivo" class="hidden mb-4 text-sm text-justify font-sans pl-1">
-                <span class="font-bold">Objetivo:</span> <span id="view-objetivo"></span>
+            <div id="bloque-contexto-prueba">
+                <div id="view-objetivo-block" class="mb-4 text-justify hidden"><span class="font-bold underline">Objetivo:</span> <span id="view-objetivo"></span></div>
+                <div id="view-instrucciones-block" class="mb-6 p-2 border border-gray-300 rounded bg-gray-50 text-xs hidden"><span class="font-bold block mb-1">INSTRUCCIONES:</span> <span id="view-instrucciones"></span></div>
+            </div>
+            
+            <div id="view-contenido" class="space-y-4 min-h-[200px]"></div>
+        </div>
+
+        <div id="vista-rubrica" class="hoja-a4 hidden mode-normal text-sm leading-relaxed">
+            <div id="rubrica-header-placeholder"></div>
+            
+            <div class="text-center mb-4 mt-2">
+                <h1 class="text-xl font-bold uppercase border-b-2 border-gray-300 pb-2 inline-block">RÚBRICA DE EVALUACIÓN</h1>
             </div>
 
-            <div id="bloque-instrucciones" class="hidden mb-6 text-sm text-justify font-sans font-bold pl-1 pt-2 border-t border-gray-200">
-                <span id="view-instrucciones"></span>
-            </div>
+            <div id="rubrica-contexto-placeholder" class="mb-6 text-xs italic text-gray-600"></div>
 
-            <div id="view-contenido" class="space-y-6 font-sans"></div>
+            <div id="contenedor-rubrica"></div>
+        </div>
+
+        <div id="vista-hoja-respuestas" class="hoja-a4 hidden flex flex-col items-center pt-10">
+            <h1 class="text-2xl font-bold uppercase mb-2">Hoja de Respuestas</h1>
+            <div id="grid-ovalos" class="grid grid-cols-2 gap-x-20 gap-y-4 w-full px-10 mt-8"></div>
         </div>
     </div>
+
+    <dialog id="modal-config-pauta" class="rounded-lg shadow-xl border p-4 w-96 backdrop:bg-gray-500/50">
+        <h3 class="font-bold text-sm mb-3 text-center border-b pb-2">🔑 Selecciona las Correctas</h3>
+        <div id="lista-pauta-visual" class="h-64 overflow-y-auto pr-2"></div>
+        <button onclick="document.getElementById('modal-config-pauta').close(); renderVista();" class="mt-4 w-full bg-green-600 text-white text-xs py-2 rounded font-bold hover:bg-green-700">Guardar Pauta</button>
+    </dialog>
+
+    <dialog id="modal-pictos" class="rounded-lg shadow-xl border p-4 w-96 backdrop:bg-gray-500/50">
+        <div class="grid grid-cols-4 gap-2">
+            <div class="cursor-pointer border p-2 rounded text-center hover:bg-gray-100" onclick="insertarPicto('👁️')">👁️</div>
+            <div class="cursor-pointer border p-2 rounded text-center hover:bg-gray-100" onclick="insertarPicto('✏️')">✏️</div>
+            <div class="cursor-pointer border p-2 rounded text-center hover:bg-gray-100" onclick="insertarPicto('⭕')">⭕</div>
+            <div class="cursor-pointer border p-2 rounded text-center hover:bg-gray-100" onclick="insertarPicto('🔗')">🔗</div>
+        </div>
+        <button onclick="document.getElementById('modal-pictos').close()" class="mt-4 w-full bg-red-500 text-white text-xs py-2 rounded font-bold">Cerrar</button>
+    </dialog>
 
     <script>
         let preguntas = [];
-        let modoPauta = false; 
+        let imagenesLocales = {};
+        let stream = null;
 
         document.addEventListener("DOMContentLoaded", () => {
-            // Valores por defecto
-            document.getElementById('edit-colegio').value = "ESCUELA AGRÍCOLA SAGRADOS CORAZONES";
-            document.getElementById('edit-asignatura').value = "ED. TECNOLÓGICA";
-            document.getElementById('edit-titulo').value = "EVALUACIÓN DIAGNÓSTICA";
-            document.getElementById('edit-docente').value = "Prof. Alejandro";
-            document.getElementById('edit-codigo').value = "EVAL-01";
-            
-            // Logo
             try {
-                const savedLogo = localStorage.getItem('profeAleLogo');
-                if(savedLogo && savedLogo.startsWith('data:image')) {
-                    const img = document.getElementById('view-logo');
-                    img.src = savedLogo;
-                    img.classList.remove('hidden');
-                } else if (savedLogo) {
-                    localStorage.removeItem('profeAleLogo');
+                const savedLogo = localStorage.getItem('sgeLogo_safe');
+                if(savedLogo) {
+                    document.getElementById('view-logo').src = savedLogo;
+                    document.getElementById('view-logo').classList.remove('hidden');
                 }
-            } catch (e) { console.log("Error memoria local", e); }
-
-            agregarPregunta();
-            actualizarGeneral();
+            } catch(e) {}
+            calcularEscala(); 
+            if(!document.getElementById('texto-masivo').value) {
+                document.getElementById('texto-masivo').value = "Objetivo: Evaluar conocimientos.\n1. Escribe tu primera pregunta.\na) Alt 1\nb) Alt 2";
+                procesarTextoMasivo();
+            }
+            renderVista();
         });
 
-        // --- SISTEMA ARCHIVOS ---
-        function descargarRespaldo() {
-            const data = {
-                preguntas: preguntas,
-                config: {
-                    colegio: document.getElementById('edit-colegio').value,
-                    asignatura: document.getElementById('edit-asignatura').value,
-                    titulo: document.getElementById('edit-titulo').value,
-                    objetivo: document.getElementById('edit-objetivo').value,
-                    instrucciones: document.getElementById('edit-instrucciones').value,
-                    docente: document.getElementById('edit-docente').value,
-                    codigo: document.getElementById('edit-codigo').value,
-                    logo: document.getElementById('view-logo').src 
-                }
-            };
-            const jsonStr = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            const nombreArchivo = (data.config.titulo || "prueba").replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".json";
-            link.download = nombreArchivo;
-            link.click();
+        // --- FUNCIONES COMUNES ---
+        function calcularEscala() {
+            const total = parseInt(document.getElementById('edit-puntaje-total').value) || 0;
+            const corte = Math.round(total * 0.6);
+            document.getElementById('display-corte').innerText = corte;
+            document.getElementById('view-total-pts').innerText = total;
+            document.getElementById('view-corte-pts').innerText = corte;
+            if(!document.getElementById('vista-rubrica').classList.contains('hidden')) renderRubrica();
         }
 
-        function cargarRespaldo(input) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if(data.config) {
-                        document.getElementById('edit-colegio').value = data.config.colegio || "";
-                        document.getElementById('edit-asignatura').value = data.config.asignatura || "";
-                        document.getElementById('edit-titulo').value = data.config.titulo || "";
-                        document.getElementById('edit-objetivo').value = data.config.objetivo || "";
-                        document.getElementById('edit-instrucciones').value = data.config.instrucciones || "";
-                        document.getElementById('edit-docente').value = data.config.docente || "";
-                        document.getElementById('edit-codigo').value = data.config.codigo || "";
-                        
-                        if(data.config.logo && data.config.logo.length > 100) {
-                            const img = document.getElementById('view-logo');
-                            img.src = data.config.logo;
-                            img.classList.remove('hidden');
-                        }
-                    }
-                    if(data.preguntas) {
-                        preguntas = data.preguntas;
-                        renderEditor();
-                        actualizarGeneral(); 
-                    }
-                    alert("✅ Respaldo cargado.");
-                } catch (err) { alert("Archivo inválido."); }
-            };
-            reader.readAsText(file);
-            input.value = ''; 
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('vista-prueba').classList.add('hidden');
+            document.getElementById('vista-hoja-respuestas').classList.add('hidden');
+            document.getElementById('vista-rubrica').classList.add('hidden');
+            document.getElementById('tab-' + tabId).classList.add('active');
+            const btns = document.querySelectorAll('.tab-btn');
+            if(tabId==='crear') { btns[0].classList.add('active'); document.getElementById('vista-prueba').classList.remove('hidden'); }
+            if(tabId==='rubrica') { btns[1].classList.add('active'); document.getElementById('vista-rubrica').classList.remove('hidden'); renderRubrica(); }
+            if(tabId==='hoja') { btns[2].classList.add('active'); document.getElementById('vista-hoja-respuestas').classList.remove('hidden'); generarHojaGrid(); }
+            if(tabId==='corregir') { btns[3].classList.add('active'); iniciarCamara(); }
         }
 
-        function cargarLogo() {
-            const input = document.getElementById('input-logo');
-            const imgView = document.getElementById('view-logo');
-            const msg = document.getElementById('msg-logo');
+        // --- RÚBRICA INTELIGENTE ---
+        function repararTablaRubrica() {
+            let txt = document.getElementById('texto-rubrica').value;
+            // 1. Detectar encabezado común
+            txt = txt.replace(/(Criterio|Indicador|Puntaje|Descripción)/gi, "|$1");
+            // 2. Detectar puntajes (números solos o con pts)
+            // Esta Regex busca un número aislado que parezca un puntaje (ej: "10 ", "5 pts") y le pone barras
+            txt = txt.replace(/(\s|^)(\d{1,2}\s*(pts|puntos|pto)?)(\s|$)/gim, "$1|$2|$4");
+            // 3. Limpieza
+            txt = txt.replace(/\|\|/g, "|"); 
+            txt = txt.replace(/^\s*\|/, ""); // Quitar barra inicial sobrante
+            document.getElementById('texto-rubrica').value = txt;
+            renderRubrica();
+        }
+
+        function renderRubrica() {
+            // Clonar Header y Contexto
+            const headerOriginal = document.querySelector('#vista-prueba .header-comun');
+            const infoOriginal = document.querySelector('#vista-prueba .info-alumno');
+            const contextoOriginal = document.getElementById('bloque-contexto-prueba');
+            const rubricaHeader = document.getElementById('rubrica-header-placeholder');
+            rubricaHeader.innerHTML = '';
             
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                if (!file.type.startsWith('image/')) {
-                    alert('Solo imágenes (JPG, PNG).');
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imgView.src = e.target.result;
-                    imgView.classList.remove('hidden');
-                    msg.innerText = "✅ Logo cargado.";
-                    msg.classList.add("text-green-600");
-                    try { localStorage.setItem('profeAleLogo', e.target.result); } 
-                    catch (err) { 
-                        msg.innerText = "⚠️ Logo visible (no guardado)."; 
-                        msg.classList.remove("text-green-600");
-                        msg.classList.add("text-orange-500");
+            if(headerOriginal) rubricaHeader.appendChild(headerOriginal.cloneNode(true));
+            if(infoOriginal) {
+                const infoClone = infoOriginal.cloneNode(true);
+                const h1 = infoClone.querySelector('h1');
+                if(h1) h1.style.display = 'none'; // Ocultar título evaluación
+                rubricaHeader.appendChild(infoClone);
+            }
+            const rubricaContexto = document.getElementById('rubrica-contexto-placeholder');
+            rubricaContexto.innerHTML = '';
+            if(contextoOriginal) {
+                const ctxClone = contextoOriginal.cloneNode(true);
+                ctxClone.querySelectorAll('.hidden').forEach(el => el.classList.remove('hidden'));
+                rubricaContexto.appendChild(ctxClone);
+            }
+
+            // Procesar Tabla
+            const raw = document.getElementById('texto-rubrica').value;
+            const container = document.getElementById('contenedor-rubrica');
+            container.innerHTML = '';
+            const lineas = raw.split('\n');
+            let table = null;
+
+            lineas.forEach(linea => {
+                linea = linea.trim();
+                if(!linea) return;
+
+                if(linea.includes('|')) {
+                    if(!table) {
+                        table = document.createElement('table');
+                        table.className = "tabla-rubrica";
+                        const thead = document.createElement('tr');
+                        linea.split('|').forEach(c => {
+                            const th = document.createElement('th');
+                            th.innerText = c.trim();
+                            thead.appendChild(th);
+                        });
+                        table.appendChild(thead);
+                        container.appendChild(table);
+                    } else {
+                        const tr = document.createElement('tr');
+                        linea.split('|').forEach(c => {
+                            const td = document.createElement('td');
+                            td.innerText = c.trim();
+                            // Detectar si es columna de puntaje (corta y con número)
+                            if(c.length < 10 && /\d/.test(c)) td.className = "puntaje"; 
+                            tr.appendChild(td);
+                        });
+                        table.appendChild(tr);
                     }
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function togglePauta() {
-            modoPauta = document.getElementById('toggle-pauta').checked;
-            document.getElementById('badge-pauta').classList.toggle('hidden', !modoPauta);
-            document.getElementById('vista-previa').classList.toggle('modo-pauta', modoPauta);
-            renderVista();
-        }
-
-        function actualizarGeneral() {
-            const colText = document.getElementById('edit-colegio').value;
-            document.getElementById('view-colegio').innerHTML = colText.replace(/\n/g, "<br>");
-            document.getElementById('view-asignatura').innerText = document.getElementById('edit-asignatura').value;
-            document.getElementById('view-titulo').innerText = document.getElementById('edit-titulo').value;
-            document.getElementById('view-docente').innerText = document.getElementById('edit-docente').value;
-            document.getElementById('view-codigo').innerText = document.getElementById('edit-codigo').value;
-            
-            const objText = document.getElementById('edit-objetivo').value;
-            const objBlock = document.getElementById('bloque-objetivo');
-            document.getElementById('view-objetivo').innerText = objText;
-            if(objText.trim() !== "") objBlock.classList.remove('hidden');
-            else objBlock.classList.add('hidden');
-
-            const instrText = document.getElementById('edit-instrucciones').value;
-            const instrBlock = document.getElementById('bloque-instrucciones');
-            document.getElementById('view-instrucciones').innerText = instrText;
-            if(instrText.trim() !== "") instrBlock.classList.remove('hidden');
-            else instrBlock.classList.add('hidden');
-
-            renderVista();
-        }
-
-        function agregarPregunta() {
-            const id = Date.now();
-            preguntas.push({
-                id: id,
-                texto: "Pregunta nueva...",
-                tipo: 'alternativas',
-                solucion: "",
-                correctaIndex: 0,
-                opciones: ["Opción A", "Opción B", "Opción C", "Opción D", "Opción E"]
-            });
-            renderEditor();
-            renderVista();
-        }
-
-        function borrarPregunta(id) {
-            preguntas = preguntas.filter(p => p.id !== id);
-            renderEditor();
-            renderVista();
-        }
-
-        function actualizarDato(id, campo, valor) {
-            const p = preguntas.find(p => p.id === id);
-            if(p) { p[campo] = valor; renderVista(); }
-        }
-        function actualizarOpcion(id, indice, valor) {
-            const p = preguntas.find(p => p.id === id);
-            if(p) { p.opciones[indice] = valor; renderVista(); }
-        }
-        function agregarOpcion(id) {
-            const p = preguntas.find(p => p.id === id);
-            if(p) {
-                const letra = String.fromCharCode(65 + p.opciones.length);
-                p.opciones.push("Alternativa " + letra);
-                renderEditor(); renderVista();
-            }
-        }
-        function eliminarOpcion(id, index) {
-            const p = preguntas.find(p => p.id === id);
-            if(p) {
-                if(p.opciones.length <= 2) { alert("Mínimo 2 opciones."); return; }
-                p.opciones.splice(index, 1);
-                if(p.correctaIndex === index) p.correctaIndex = 0;
-                else if(p.correctaIndex > index) p.correctaIndex--;
-                renderEditor(); renderVista();
-            }
-        }
-
-        function renderEditor() {
-            const contenedor = document.getElementById('contenedor-preguntas');
-            contenedor.innerHTML = '';
-            preguntas.forEach((p, index) => {
-                const div = document.createElement('div');
-                div.className = "bg-white p-3 rounded-lg border border-gray-200 shadow-sm group relative";
-                div.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs font-bold text-white bg-gray-600 px-2 py-1 rounded">#${index + 1}</span>
-                        <div class="flex gap-2">
-                             <select onchange="actualizarDato(${p.id}, 'tipo', this.value); renderEditor();" class="text-xs border rounded p-1 bg-gray-50">
-                                <option value="desarrollo" ${p.tipo === 'desarrollo' ? 'selected' : ''}>📝 Desarrollo</option>
-                                <option value="alternativas" ${p.tipo === 'alternativas' ? 'selected' : ''}>🔠 Alternativas</option>
-                            </select>
-                            <button onclick="borrarPregunta(${p.id})" class="text-red-400 hover:text-red-600 font-bold text-xs">🗑️ Borrar</button>
-                        </div>
-                    </div>
-                    <textarea oninput="actualizarDato(${p.id}, 'texto', this.value)" class="input-field mb-2 text-sm" rows="2">${p.texto}</textarea>
-                    
-                    <div class="bg-red-50 p-2 rounded border border-red-100 mt-2">
-                        <div class="${p.tipo === 'alternativas' ? 'hidden' : 'block'}">
-                            <textarea oninput="actualizarDato(${p.id}, 'solucion', this.value)" class="w-full text-xs border border-red-200 p-1 rounded focus:outline-none text-red-700" rows="2" placeholder="Respuesta correcta...">${p.solucion || ''}</textarea>
-                        </div>
-                        <div class="${p.tipo === 'desarrollo' ? 'hidden' : 'block'} space-y-1">
-                            ${p.opciones.map((opt, i) => `
-                                <div class="flex items-center gap-1 group/opt">
-                                    <input type="radio" name="correcta-${p.id}" ${p.correctaIndex == i ? 'checked' : ''} onchange="actualizarDato(${p.id}, 'correctaIndex', ${i})" title="Marcar correcta">
-                                    <span class="text-[10px] font-bold text-gray-500 w-4">${String.fromCharCode(97+i)})</span>
-                                    <input type="text" value="${opt}" oninput="actualizarOpcion(${p.id}, ${i}, this.value)" class="text-xs border p-1 rounded w-full">
-                                    <button onclick="eliminarOpcion(${p.id}, ${i})" class="text-gray-300 hover:text-red-500 px-1 font-bold" title="Eliminar">×</button>
-                                </div>
-                            `).join('')}
-                            <button onclick="agregarOpcion(${p.id})" class="text-[10px] text-blue-600 hover:text-blue-800 font-bold mt-1 ml-6">+ Agregar Alternativa</button>
-                        </div>
-                    </div>
-                `;
-                contenedor.appendChild(div);
-            });
-        }
-
-        function renderVista() {
-            const contenedor = document.getElementById('view-contenido');
-            contenedor.innerHTML = '';
-            preguntas.forEach((p, index) => {
-                const bloque = document.createElement('div');
-                bloque.className = "mb-6 break-inside-avoid"; 
-                let htmlPregunta = `<div class="font-bold text-sm mb-2 text-black">${index + 1}. ${p.texto}</div>`;
-                
-                let htmlRespuesta = '';
-                if (p.tipo === 'desarrollo') {
-                    if (modoPauta) htmlRespuesta = `<div class="desarrollo-profe"><b>Solución:</b><br>${p.solucion || '...'}</div>`;
-                    else htmlRespuesta = `<div class="mt-2 space-y-3 pl-5"><div class="border-b border-dotted border-gray-400 h-6 w-full"></div><div class="border-b border-dotted border-gray-400 h-6 w-full"></div></div>`;
                 } else {
-                    htmlRespuesta = `<div class="mt-2 pl-4 grid gap-2 text-sm">`;
-                    p.opciones.forEach((opt, i) => {
-                        let estilo = (modoPauta && i === p.correctaIndex) ? "opcion-correcta" : "";
-                        let check = (modoPauta && i === p.correctaIndex) ? " ✅" : "";
-                        htmlRespuesta += `<div class="flex gap-2 items-center ${estilo}"><div class="font-bold w-4 lowercase">${String.fromCharCode(97+i)})</div><div>${opt}${check}</div></div>`;
-                    });
-                    htmlRespuesta += `</div>`;
+                    table = null; 
+                    const p = document.createElement('div');
+                    if(linea.length < 80 && linea === linea.toUpperCase()) {
+                        p.className = "rubrica-title";
+                    } else {
+                        p.className = "rubrica-text";
+                    }
+                    p.innerText = linea;
+                    container.appendChild(p);
                 }
-                bloque.innerHTML = htmlPregunta + htmlRespuesta;
-                contenedor.appendChild(bloque);
             });
-            if(window.MathJax) { MathJax.typesetPromise(); }
         }
+
+        // --- RESTO DE FUNCIONES (RenderVista, ProcesarTexto, etc) IGUAL QUE ANTES ---
+        function renderVista() {
+            const colegio = document.getElementById('edit-colegio').value.replace(/\n/g, "<br>");
+            const asignatura = document.getElementById('edit-asignatura').value;
+            const docente = document.getElementById('edit-docente').value;
+            const titulo = document.getElementById('edit-titulo').value;
+            const etiqueta = document.getElementById('edit-etiqueta').value;
+            const objetivo = document.getElementById('edit-objetivo').value;
+            const instrucciones = document.getElementById('edit-instrucciones').value;
+
+            document.getElementById('view-colegio').innerHTML = colegio;
+            document.getElementById('view-asignatura').innerText = asignatura;
+            document.getElementById('view-docente').innerText = docente;
+            document.getElementById('view-titulo').innerText = titulo;
+            document.getElementById('view-etiqueta').innerText = etiqueta;
+            
+            document.getElementById('view-objetivo').innerText = objetivo;
+            document.getElementById('view-objetivo-block').classList.toggle('hidden', !objetivo.trim());
+            document.getElementById('view-instrucciones').innerText = instrucciones;
+            document.getElementById('view-instrucciones-block').classList.toggle('hidden', !instrucciones.trim());
+
+            const modo = document.getElementById('sel-adecuacion').value;
+            const hojas = [document.getElementById('vista-prueba'), document.getElementById('vista-rubrica')];
+            hojas.forEach(h => h.className = `hoja-a4 mode-${modo}`);
+        }
+
+        function actualizarEtiquetaAuto() {
+            const map = {
+                'normal': 'EVALUACIÓN ESTÁNDAR',
+                'tdah': 'ADECUACIÓN: TDAH',
+                'dislexia': 'ADECUACIÓN: DEA / DISLEXIA',
+                'tea': 'ADECUACIÓN: TEA',
+                'intelectual': 'ADECUACIÓN: D. INTELECTUAL',
+                'vision': 'ADECUACIÓN: BAJA VISIÓN',
+                'sorda': 'ADECUACIÓN: D. AUDITIVA'
+            };
+            const val = document.getElementById('sel-adecuacion').value;
+            document.getElementById('edit-etiqueta').value = map[val] || 'ADECUACIÓN PACI';
+            renderVista();
+            if(!document.getElementById('vista-rubrica').classList.contains('hidden')) renderRubrica();
+        }
+
+        function procesarTextoMasivo() {
+            // (Misma lógica v29)
+            let texto = document.getElementById('texto-masivo').value;
+            const objMatch = texto.match(/(?:objetivo|oa)[\s\.:]+(.*?)(?=\n|$)/i);
+            if(objMatch) document.getElementById('edit-objetivo').value = objMatch[1].trim();
+            const instMatch = texto.match(/(?:instrucciones)[\s\.:]+(.*?)(?=\n|$)/i);
+            if(instMatch) document.getElementById('edit-instrucciones').value = instMatch[1].trim();
+            
+            texto = texto.replace(/([a-zA-Záéíóúñ\.])\s*(\d+[\.\)\-])/g, '$1\n$2');
+            texto = texto.replace(/([a-zA-Záéíóúñ])\s+([a-e][\)\.])/gi, '$1\n$2');
+
+            preguntas = [];
+            const lineas = texto.split('\n');
+            let actual = null;
+
+            lineas.forEach(l => {
+                l = l.trim();
+                if(!l || l.match(/^(objetivo|instrucciones)/i)) return;
+                const matchP = l.match(/^(\d+)[\.\)\-]\s*(.*)/);
+                const matchA = l.match(/^([a-zA-Z])[\.\)\-]\s*(.*)/);
+
+                if(matchP) {
+                    if(actual) preguntas.push(actual);
+                    actual = { texto: matchP[2], tipo: 'desarrollo', opciones: [], correcta: -1 };
+                } else if(matchA && actual) {
+                    actual.tipo = 'alternativas';
+                    actual.opciones.push(matchA[2]);
+                    if(l.includes('*')) actual.correcta = actual.opciones.length - 1;
+                } else {
+                    if(actual) actual.texto += " <br>" + l;
+                    else if(l.match(/^\[IMG/)) preguntas.push({texto:l, tipo:'texto_suelto'});
+                }
+            });
+            if(actual) preguntas.push(actual);
+            document.getElementById('q-counter').innerText = preguntas.length + " P";
+            
+            const cont = document.getElementById('view-contenido');
+            cont.innerHTML = '';
+            preguntas.forEach((p, idx) => {
+                const b = document.createElement('div');
+                b.className = "pregunta-block break-inside-avoid mb-4";
+                let t = p.texto.replace(/\[(IMG_\d+)\]/g, (m,id)=>`<img src="${imagenesLocales[id]||''}" class="max-w-full h-auto mx-auto my-2 rounded border">`);
+                if(p.tipo === 'texto_suelto') b.innerHTML = `<div class="mb-2 text-center font-bold">${t}</div>`;
+                else {
+                    let html = `<div class="font-bold mb-1 text-sm flex gap-2"><span>${idx+1}.</span><span>${t}</span></div>`;
+                    if(p.tipo==='alternativas') {
+                        html += `<div class="grid gap-1 pl-4">`;
+                        p.opciones.forEach((o,i) => html += `<div class="flex gap-2 text-sm"><span class="font-bold w-4">${String.fromCharCode(97+i)})</span><span>${o.replace('*','')}</span></div>`);
+                        html += `</div>`;
+                    } else {
+                        html += `<div class="mt-2 space-y-3 opacity-50 pl-2"><div class="border-b border-black h-6 w-full"></div><div class="border-b border-black h-6 w-full"></div></div>`;
+                    }
+                    b.innerHTML = html;
+                }
+                cont.appendChild(b);
+            });
+            renderVista();
+        }
+
+        function subirImagenPregunta(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = function(e) { const imgID = "IMG_" + Date.now(); imagenesLocales[imgID] = e.target.result; const ta = document.getElementById('texto-masivo'); ta.value = ta.value.slice(0, ta.selectionStart) + `\n[${imgID}]\n` + ta.value.slice(ta.selectionStart); procesarTextoMasivo(); }; reader.readAsDataURL(input.files[0]); } input.value = ""; }
+        function cargarLogo() { const input = document.getElementById('input-logo'); if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById('view-logo').src = e.target.result; document.getElementById('view-logo').classList.remove('hidden'); try{ localStorage.setItem('sgeLogo_safe', e.target.result); }catch(e){} }; reader.readAsDataURL(input.files[0]); } }
+        function insertarPictoModal() { document.getElementById('modal-pictos').showModal(); }
+        function insertarPicto(txt) { const ta = document.getElementById('texto-masivo'); ta.value += ` [${txt}] `; procesarTextoMasivo(); document.getElementById('modal-pictos').close(); }
+        function imprimirPrueba() { const area = document.getElementById('print-area'); const contenido = document.getElementById('vista-prueba'); area.innerHTML = contenido.innerHTML; area.className = contenido.className; window.print(); }
+        function imprimirRubrica() { const area = document.getElementById('print-area'); const contenido = document.getElementById('vista-rubrica'); area.innerHTML = contenido.innerHTML; area.className = "hoja-a4 " + contenido.className; window.print(); }
+        function imprimirHojaRespuestas() { const area = document.getElementById('print-area'); const contenido = document.getElementById('vista-hoja-respuestas'); area.innerHTML = contenido.innerHTML; area.className = "hoja-a4"; window.print(); }
+        function generarHojaGrid() { const grid = document.getElementById('grid-ovalos'); grid.innerHTML = ''; let count = 0; preguntas.forEach((p, idx) => { if(p.tipo === 'alternativas') { count++; let html = `<div class="flex items-center border-b border-gray-200 py-1"><span class="font-bold w-6 text-right mr-4">${count}.</span><div class="flex gap-3">`; ['A','B','C','D','E'].slice(0, p.opciones.length).forEach(l => { html += `<div class="flex flex-col items-center"><div class="w-4 h-4 border border-black rounded-full mb-1"></div><span class="text-[9px] font-bold">${l}</span></div>`; }); html += `</div></div>`; grid.innerHTML += html; } }); }
+        async function iniciarCamara() { if(stream) return; try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); document.getElementById('video').srcObject = stream; document.getElementById('status-scanner').innerText = "🟢 Cámara Activa"; } catch(e) { document.getElementById('status-scanner').innerText = "🔴 Error Cámara"; } }
+        function escanear() { alert("Simulación Scanner"); }
     </script>
 </body>
 </html>
