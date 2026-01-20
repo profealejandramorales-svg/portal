@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SGE 2026 - Sistema Integral</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- ESTILOS GENERALES (PANTALLA) --- */
+        :root { --primary: #1a237e; --bg: #f4f6f8; --text: #333; }
+        html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+        body { display: flex; }
+        
+        /* SIDEBAR */
+        .sidebar { width: 280px; background: white; border-right: 1px solid #ccc; display: flex; flex-direction: column; padding: 15px; box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 10; overflow-y: auto; }
+        .logo-container { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .logo-img { width: 100px; height: auto; border-radius: 5px; }
+        .sidebar h2 { color: var(--primary); margin: 10px 0 0 0; font-size: 16px; font-weight: 800; text-align: center; }
+        .control-group { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .control-group label { font-size: 11px; font-weight: bold; color: #666; display: block; margin-bottom: 4px; }
+        select, input { width: 100%; padding: 6px; border: 1px solid #999; border-radius: 4px; font-weight: bold; font-size: 12px; box-sizing: border-box; }
+        .credits { margin-top: auto; text-align: center; padding-top: 15px; border-top: 1px solid #eee; }
+        .credits img { width: 100px; opacity: 0.9; margin-bottom: 5px; }
+        .credits p { font-size: 10px; color: #999; margin: 0; }
+
+        /* AREA PRINCIPAL */
+        .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .top-tabs { display: flex; background: white; border-bottom: 1px solid #ccc; padding: 0 20px; flex-shrink: 0; }
+        .tab-btn { padding: 10px 15px; border: none; background: transparent; cursor: pointer; font-weight: bold; color: #666; border-bottom: 3px solid transparent; font-size: 12px; transition: 0.2s; }
+        .tab-btn:hover { background: #f9f9f9; color: var(--primary); }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-content { display: none; flex: 1; overflow: auto; padding: 20px; flex-direction: column; }
+        .tab-content.active { display: flex; }
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-shrink: 0; }
+        .header-actions h3 { margin: 0; color: var(--primary); font-size: 18px; }
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; margin-left: 5px; font-size: 11px; display: inline-flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-print { background: #1a237e; }
+        .btn-clear { background: #d32f2f; }
+        .btn-save { background: #2e7d32; }
+        .btn-excel { background: #1b5e20; }
+        .btn-add { background: #0277bd; }
+
+        /* TABLAS Y DRAG */
+        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); table-layout: fixed; }
+        th, td { border: 1px solid #ccc; padding: 4px; text-align: center; vertical-align: middle; font-size: 11px; color: #333; }
+        th { background: var(--primary); color: white; text-transform: uppercase; height: 25px; font-size: 10px; }
+        .asignaturas-list { flex: 1; overflow-y: auto; padding-right: 5px; }
+        .draggable-item { background: white; border: 1px solid #bbb; padding: 6px; margin-bottom: 4px; border-radius: 4px; cursor: grab; font-size: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .draggable-item:hover { border-color: var(--primary); background: #f0f7ff; }
+        .badge { background: #eee; padding: 1px 5px; border-radius: 8px; font-weight: bold; font-size: 9px; }
+        .drop-zone { height: 40px; transition: 0.2s; position: relative; }
+        .drop-zone:hover { background-color: #e3f2fd; }
+        .blocked { background: #eee; background-image: repeating-linear-gradient(45deg, #eee, #eee 10px, #e0e0e0 10px, #e0e0e0 20px); }
+        .assigned-cell { width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; font-weight:bold; font-size:10px; position:relative; }
+        .prof-badge { font-size: 8px; background: rgba(255,255,255,0.9); padding: 1px 3px; border-radius: 3px; margin-top: 1px; border: 1px solid #999; }
+        .btn-remove-cell { position:absolute; top:0; right:0; background:#c62828; color:white; width:12px; height:12px; line-height:10px; font-size:10px; cursor:pointer; display:none; }
+        .assigned-cell:hover .btn-remove-cell { display:block; }
+
+        /* NOMINA, ADMIN Y CONSOLIDADO */
+        .nomina-list { list-style: none; padding: 0; }
+        .nomina-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; font-size: 12px; }
+        .nomina-actions { display: flex; gap: 5px; }
+        .btn-icon { border: none; background: transparent; cursor: pointer; font-size: 14px; opacity: 0.6; padding: 4px; border-radius: 4px; transition:0.2s; }
+        .btn-icon:hover { background: #eee; opacity: 1; transform: scale(1.1); }
+        .btn-icon.del:hover { color: #d32f2f; background: #ffebee; }
+        .btn-icon.edit:hover { color: #1976d2; background: #e3f2fd; }
+        
+        .admin-panel { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .inp-time { border: 1px solid #ccc; padding: 4px; width: 80px; text-align: center; border-radius: 3px; }
+        .calc-status { font-size: 12px; margin-top: 5px; padding: 8px; border-radius: 4px; text-align: center; font-weight: bold; display:none; }
+        .calc-imputable { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .calc-deductible { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+        
+        /* ESTADÍSTICAS CONSOLIDADO */
+        .stats-panel { margin-top: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; border-top: 4px solid var(--primary); }
+        .stat-card { background: #fafafa; padding: 12px; border-radius: 6px; text-align: center; border: 1px solid #eee; display: flex; flex-direction: column; gap: 5px; }
+        
+        /* CONTRATOS */
+        .contract-workspace { display: flex; height: 100%; gap: 20px; }
+        .contract-controls { width: 420px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-y: auto; display:flex; flex-direction:column; gap:10px;}
+        .contract-preview { flex: 1; background: #525659; padding: 20px; border-radius: 8px; overflow-y: auto; display: flex; justify-content: center; }
+        .c-form-group label { display: block; font-size: 11px; font-weight: bold; color: #555; margin-bottom: 2px; }
+        .c-section-title { background: #eee; padding: 5px; font-size: 11px; font-weight: bold; margin-top: 10px; border-left: 3px solid var(--primary); }
+        .type-selector { display: flex; gap: 5px; background: #e3f2fd; padding: 5px; border-radius: 6px; }
+        .type-btn { flex: 1; padding: 8px; border: 1px solid #90caf9; background: white; cursor: pointer; font-weight: bold; color: #1565c0; font-size: 11px; }
+        .type-btn.active { background: #1565c0; color: white; }
+        .h-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .h-item label { font-size: 9px; margin-bottom: 1px; color:#777; }
+
+        .paper { width: 21.59cm; min-height: 27.94cm; background: white; padding: 2.5cm 3cm; box-shadow: 0 0 15px rgba(0,0,0,0.5); font-family: 'Arial', sans-serif; font-size: 11pt; line-height: 1.35 !important; color: black; box-sizing: border-box; }
+        .c-header-corp { text-align: center; font-weight: bold; margin-bottom: 20px; font-size: 8pt; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .c-title { text-align: center; font-weight: bold; text-decoration: underline; margin-bottom: 5px; text-transform: uppercase; font-size: 12pt; }
+        .c-subtitle-meta { text-align: center; font-size: 9pt; color: #444; margin-bottom: 20px; font-weight: bold; }
+        .c-p { text-align: justify; margin-bottom: 12px; }
+        .c-bold { font-weight: bold; }
+        .c-clause { font-weight: bold; text-decoration: underline; margin-right: 5px; }
+        .c-list { margin: 5px 0 10px 20px; padding: 0; list-style-type: disc; text-align: justify; }
+        .signatures-contract { margin-top: 60px; display: flex; justify-content: space-between; }
+        .sign-box { width: 40%; border-top: 1px solid #333; text-align: center; padding-top: 10px; font-size: 11pt; font-weight: bold; line-height: 1.3; }
+
+        /* LOADER */
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index:2000; display:flex; justify-content:center; align-items:center; flex-direction: column; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- IMPRESIÓN ROBUSTA CORREGIDA (VERSIÓN FINAL) --- */
+        @media print {
+            /* 1. FORZAR COLORES */
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            
+            body, html { height: auto !important; overflow: visible !important; background: white !important; color: black !important; margin: 0 !important; }
+            .sidebar, .top-tabs, .header-actions, .contract-controls, .nomina-container, .btn, .stats-panel, .btn-remove-cell { display: none !important; }
+            .main-area { position: static !important; overflow: visible !important; display: block !important; padding: 0 !important; margin: 0 !important; }
+            .tab-content { display: none !important; }
+            #print-report-container { display: block !important; position: absolute; top: 0; left: 0; width: 100%; z-index: 9999; background: white; }
+            
+            /* CONTRATOS */
+            #print-report-container .paper {
+                box-shadow: none !important; margin: 0 !important; width: 100% !important;
+                padding: 2.5cm 2.5cm 2.5cm 3cm !important;
+                line-height: 1.35 !important;
+                height: auto !important; min-height: 0 !important; border: none !important;
+            }
+            #print-report-container .c-header-corp { font-size: 8pt !important; margin-bottom: 25px !important; }
+            #print-report-container .signatures-contract { margin-top: 60px !important; page-break-inside: avoid !important; }
+            #print-report-container .sign-box { font-size: 11pt !important; padding-top: 10px !important; width: 48% !important; }
+
+            /* HORARIOS (1 PLANA FIJA) */
+            .fit-one-page { 
+                width: 100%; height: 98vh; 
+                display: flex; flex-direction: column; justify-content: flex-start;
+                padding: 1cm; box-sizing: border-box; page-break-after: always;
+            }
+            .fit-one-page.curso { zoom: 0.85; }
+            .fit-one-page.docente { zoom: 0.70; } 
+            .fit-one-page.admin { zoom: 0.85; }
+
+            .rh-logo img { max-height: 45px; width: auto; }
+            
+            .table-print { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 10px; }
+            .table-print th { background-color: var(--primary) !important; color: white !important; padding: 3px; }
+            .table-print td { border: 1px solid #333; padding: 2px; text-align: center; }
+            
+            .report-header { display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); margin-bottom: 10px; padding-bottom: 5px; }
+            .sabana-container { zoom: 60%; page-break-after: always; padding: 1cm; }
+        }
+        #print-report-container { display: none; } 
+    </style>
+</head>
+<body>
+
+    <div id="loader"><div class="spinner"></div><div>Cargando Sistema...</div></div>
+
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="logo.jpg" alt="Logo Escuela" class="logo-img">
+            <h2>SGE 2026</h2>
+        </div>
+        <div class="control-group">
+            <label>1. CURSO:</label>
+            <select id="selCurso" onchange="cargarHorarioCurso()">
+                <option value="1A">1º MEDIO A</option>
+                <option value="2A">2º MEDIO A</option>
+                <option value="3A">3º MEDIO A (TP)</option>
+                <option value="3HC">3º MEDIO HC</option>
+                <option value="4A">4º MEDIO A (TP)</option>
+                <option value="4C">4º MEDIO C (HC)</option>
+            </select>
+        </div>
+        <div class="control-group" style="background:#f9fbe7; border:1px solid #dce775; padding:10px; border-radius:4px;">
+            <label style="color:#827717;">2. DOCENTE:</label>
+            <select id="selProfesor">
+                <option value="">-- Sin Profesor --</option>
+            </select>
+        </div>
+        <div style="font-size:10px; color:#666; margin-bottom:5px; font-weight:bold;">3. ASIGNATURAS:</div>
+        <div id="listaAsignaturas" class="asignaturas-list"></div>
+        <div class="credits">
+            <img src="profeale.jpg" alt="ProfeAle">
+            <p>Desarrollado con ❤️ por ProfeAle</p>
+        </div>
+    </div>
+
+    <div class="main-area">
+        <div class="top-tabs">
+            <button class="tab-btn active" onclick="cambiarPestana('editor')">✏️ Editor</button>
+            <button class="tab-btn" onclick="cambiarPestana('general')">👁️ Sábana</button>
+            <button class="tab-btn" onclick="cambiarPestana('profesores')">👨‍🏫 Ficha Docente</button>
+            <button class="tab-btn" onclick="cambiarPestana('admin')">⏱️ Admin</button>
+            <button class="tab-btn" onclick="cambiarPestana('contratos')">📄 Contratos</button>
+            <button class="tab-btn" onclick="cambiarPestana('consolidado')">📊 Consolidado</button>
+            <button class="tab-btn" onclick="cambiarPestana('asistentes')">👥 Asistentes</button>
+            <button class="tab-btn" onclick="cambiarPestana('nomina')">⚙️ Nómina</button>
+        </div>
+
+        <div id="tab-editor" class="tab-content active">
+            <div class="header-actions">
+                <h3 id="tituloHorario">Horario de Clases</h3>
+                <div>
+                    <button class="btn btn-excel" onclick="exportarExcelIndividual()"><i class="fas fa-file-excel"></i> Excel</button>
+                    <button class="btn btn-save" onclick="guardarManual()"><i class="fas fa-save"></i> Guardar</button>
+                    <button class="btn btn-clear" onclick="borrarHorario()"><i class="fas fa-trash"></i> Borrar</button>
+                    <button class="btn btn-print" onclick="imprimirReporte('CURSO')"><i class="fas fa-print"></i> PDF</button>
+                </div>
+            </div>
+            <table id="tablaHorario">
+                <thead><tr><th style="width:60px">Hora</th><th>LUNES</th><th>MARTES</th><th>MIÉRCOLES</th><th>JUEVES</th><th>VIERNES</th></tr></thead>
+                <tbody id="bodyEditor"></tbody>
+            </table>
+        </div>
+
+        <div id="tab-general" class="tab-content">
+            <div class="header-actions">
+                <h3>Vista General</h3>
+                <div>
+                    <button class="btn btn-excel" onclick="exportarExcelSabanaConFormato()"><i class="fas fa-file-excel"></i> Excel</button>
+                    <button class="btn btn-print" onclick="imprimirReporte('SABANA')"><i class="fas fa-print"></i> Imprimir</button>
+                </div>
+            </div>
+            <div style="overflow-x:auto;"><table id="tablaMaster"></table></div>
+        </div>
+
+        <div id="tab-profesores" class="tab-content">
+            <div class="header-actions">
+                <h3>Ficha Horaria Docente</h3>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <select id="selProfesorView" onchange="renderHorarioProfesorVista()"></select>
+                    <button class="btn btn-print" onclick="imprimirReporte('DOCENTE')"><i class="fas fa-print"></i> Imprimir Ficha</button>
+                </div>
+            </div>
+            <table id="tablaProfesorVista">
+                <thead><tr><th style="width:60px">Hora</th><th>LUNES</th><th>MARTES</th><th>MIÉRCOLES</th><th>JUEVES</th><th>VIERNES</th></tr></thead>
+                <tbody id="bodyProfesorVista"></tbody>
+            </table>
+        </div>
+
+        <div id="tab-admin" class="tab-content">
+            <div class="header-actions"><h3>Carga Horaria Administrativa</h3></div>
+            <div class="admin-panel">
+                <div style="display:flex; gap:10px; margin-bottom:15px; align-items:center;">
+                    <div style="flex:1;">
+                        <label>Funcionario:</label>
+                        <select id="selFuncionarioAdmin" onchange="cargarAdminFuncionario()">
+                            <option value="">-- Seleccionar --</option>
+                            <optgroup label="Docentes" id="optDocentes"></optgroup>
+                            <optgroup label="Asistentes" id="optAsistentes"></optgroup>
+                        </select>
+                    </div>
+                    <div style="width:100px;">
+                        <label>Contrato:</label>
+                        <input type="number" id="inputContrato" placeholder="44" style="text-align:center;" onchange="calcAdmin()">
+                    </div>
+                </div>
+                <div id="avisoLegalCalculo" class="calc-status"></div>
+                <table class="table-admin" style="margin-top:10px; width:100%;">
+                    <thead><tr><th>DÍA</th><th>ENTRADA</th><th>INICIO COL.</th><th>FIN COL.</th><th>SALIDA</th><th>TOTAL</th></tr></thead>
+                    <tbody id="bodyAdmin"></tbody>
+                </table>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; background:#f5f5f5; padding:10px; border-radius:8px;">
+                    <div><div style="font-size:10px; text-transform:uppercase; color:#666;">Total:</div><div id="lblAdminTotal" style="font-size:20px; font-weight:bold; color:var(--primary);">00:00</div></div>
+                    <div>
+                        <button class="btn btn-print" onclick="imprimirReporte('ADMIN')"><i class="fas fa-print"></i> Imprimir Ficha</button>
+                        <button class="btn btn-save" onclick="guardarAdmin()"><i class="fas fa-save"></i> Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-contratos" class="tab-content">
+            <div class="header-actions">
+                <h3>Generador de Contratos</h3>
+                <div>
+                    <button class="btn btn-save" onclick="guardarContrato()"><i class="fas fa-save"></i> Guardar</button>
+                    <button class="btn btn-print" onclick="imprimirReporte('CONTRATO')"><i class="fas fa-print"></i> Imprimir Contrato</button>
+                </div>
+            </div>
+            <div class="contract-workspace">
+                <div class="contract-controls">
+                    <div class="type-selector"><button class="type-btn active" onclick="setTipoContrato('DOC')" id="btn_c_doc">DOCENTE</button><button class="type-btn" onclick="setTipoContrato('ASIS')" id="btn_c_asis">ASISTENTE</button></div>
+                    <div class="c-form-group"><label>Buscar Funcionario:</label><select id="sel_funcionario_contrato" onchange="cargarDatosFuncionario()"><option value="">-- Seleccionar --</option></select></div>
+                    <div class="c-section-title">DATOS PERSONALES</div>
+                    <div class="c-form-group"><label>Género</label><select id="in_genero" onchange="updateContrato()"><option value="M">Masculino</option><option value="F">Femenino</option></select></div>
+                    <div class="c-form-group"><label>Nombre Completo</label><input type="text" id="in_nombre" oninput="updateContrato()"></div>
+                    <div style="display:flex; gap:5px;"><div class="c-form-group" style="flex:1"><label>RUT</label><input type="text" id="in_rut" oninput="updateContrato()"></div><div class="c-form-group" style="flex:1"><label>Nacionalidad</label><input type="text" id="in_nacion" oninput="updateContrato()" value="CHILENA"></div></div>
+                    <div class="c-form-group"><label>Domicilio</label><input type="text" id="in_domicilio" oninput="updateContrato()"></div>
+                    <div class="c-form-group"><label>Estado Civil</label><select id="in_civil" onchange="updateContrato()"><option value="SOLTERO">Soltero/a</option><option value="CASADO">Casado/a</option><option value="VIUDO">Viudo/a</option><option value="DIVORCIADO">Divorciado/a</option></select></div>
+                    <div class="c-form-group"><label>Fecha Nacimiento</label><input type="date" id="in_nacim" oninput="updateContrato()"></div>
+                    <div class="c-form-group"><label>Profesión</label><input type="text" id="in_profesion" oninput="updateContrato()"></div>
+                    <div class="c-section-title">CONTRATO</div>
+                    <div class="c-form-group"><label>Cargo</label><input type="text" id="in_cargo" oninput="updateContrato()"></div>
+                    <div id="modulos_docentes_c" class="modules-container">
+                        <label class="check-group"><input type="checkbox" id="chk_jefe_esp" onchange="updateFunciones()"> Mostrar Func. Jefatura Esp.</label>
+                        <label class="check-group"><input type="checkbox" id="chk_coord_pie" onchange="updateFunciones()"> Mostrar Func. Coord. PIE</label>
+                    </div>
+                    <div id="modulos_asistentes_c" class="c-form-group" style="display:none; background:#fff3e0; padding:5px;"><label style="color:#e65100;">Cargo:</label><select id="sel_cargo_asis_c" onchange="updateFunciones()"><option value="GENERICO">Manual</option><option value="NOCHERO">Nochero</option><option value="INSPECTOR">Inspector</option><option value="AUXILIAR">Auxiliar</option><option value="PSICOLOGO">Psicólogo</option><option value="SOCIAL">A. Social</option><option value="BIBLIOTECA">Biblioteca</option><option value="TECNICO">Técnico</option><option value="MONITOR">Monitor</option><option value="APOYO">Apoyo</option><option value="PASTORAL">Pastoral</option></select></div>
+                    <div style="display:flex; gap:5px; margin-top:10px;"><div class="c-form-group" style="flex:1"><label>Modalidad</label><select id="in_tipo_contrato" onchange="updateContrato()"><option value="PLAZO FIJO">Plazo Fijo</option><option value="INDEFINIDO">Indefinido</option><option value="REEMPLAZO LICENCIA MÉDICA">Reemplazo</option><option value="POR PROYECTO">Proyecto</option></select></div><div class="c-form-group" style="flex:1"><label>CC</label><select id="in_cc" onchange="updateContrato()"><option value="SUBVENCIÓN GENERAL">Gral</option><option value="SUBVENCIÓN PIE">PIE</option><option value="SUBVENCIÓN SEP">SEP</option></select></div></div>
+                    
+                    <div style="background:#e3f2fd; padding:10px; border-radius:4px; margin-bottom:10px;">
+                        <div id="grp_horas_doc_c">
+                            <div style="margin-bottom:5px; border-bottom:1px solid #bbdefb; padding-bottom:5px;">
+                                <label style="font-size:11px; font-weight:bold;">Horas Totales Contrato:</label>
+                                <input type="number" id="in_ht" style="font-weight:bold; color:#0d47a1;" oninput="calcSueldo()">
+                            </div>
+                        </div>
+                        <div id="grp_horas_asis_c" style="display:none;"><label style="font-size:10px">Total Horas Semanales</label><input type="number" id="in_h_simple" oninput="calcSueldo()"></div>
+                    </div>
+                    
+                    <div style="display:flex; gap:5px; background:#e8f5e9; padding:10px; border-radius:4px;"><div style="flex:1"><label style="font-size:10px">Valor Hora</label><input type="number" id="in_valor_hora" oninput="calcSueldo()"></div><div style="flex:1"><label style="font-size:10px">Sueldo Base</label><input type="text" id="in_sueldo" readonly></div></div>
+                    <div style="display:flex; gap:5px; margin-top:10px;"><div class="c-form-group" style="flex:1"><label>Inicio</label><input type="date" id="in_inicio" oninput="updateContrato()"></div><div class="c-form-group" style="flex:1"><label>Término</label><input type="date" id="in_fin" oninput="updateContrato()"></div></div>
+                    <div class="c-section-title">PAGO</div>
+                    <div style="display:flex; gap:5px;"><div class="c-form-group" style="flex:1"><label>AFP</label><input type="text" id="in_afp" oninput="updateContrato()"></div><div class="c-form-group" style="flex:1"><label>Salud</label><input type="text" id="in_salud" oninput="updateContrato()"></div></div>
+                    <div style="display:flex; gap:5px;"><div class="c-form-group" style="flex:1"><label>Banco</label><input type="text" id="in_banco" oninput="updateContrato()"></div><div class="c-form-group" style="flex:1"><label>N° Cta</label><input type="text" id="in_cta" oninput="updateContrato()"></div></div>
+                </div>
+                <div class="contract-preview" id="contract-view-area">
+                    <div class="paper">
+                        <div class="c-header-corp">CORPORACIÓN EDUCACIONAL VELOZ EDUCA<br>ESCUELA AGRÍCOLA SAGRADOS CORAZONES<br>RBD 3478-9 • DECRETO COOPERADOR 17576<br>LONCOMILLA S/N, VILLA ALEGRE</div>
+                        <div class="c-title">CONTRATO DE TRABAJO <span id="txt_tipo_titulo">DOCENTE</span>, <span id="txt_modalidad_titulo">PLAZO FIJO</span></div>
+                        <div class="c-subtitle-meta">CC: <span id="txt_cc_display">SUBVENCIÓN GENERAL</span></div>
+                        <div class="c-p">En Villa Alegre, a <span class="c-bold" id="txt_fecha_hoy"></span>, entre la <span class="c-bold">Corporación Educacional Veloz Educa</span>, RUT N° 65.114.932-0, Representado por el Sr. <span class="c-bold">MIGUEL ANTONIO DIAZ JARA</span>, Rut. 15.114.472-5 en su calidad de Representante Legal, ambos domiciliados en Loncomilla s/n, comuna de Villa Alegre, Región del Maule, en adelante "El Empleador" y <span id="txt_trato">don</span> <span class="c-bold" id="txt_nombre">___________________</span>, de nacionalidad <span id="txt_nacion">CHILENA</span>, Cédula de Identidad N° <span class="c-bold" id="txt_rut">___________</span>, <span id="txt_nacido_label">nacido</span> el <span id="txt_nacim">___________</span>, estado civil <span id="txt_civil">SOLTERO</span>.</div>
+                        <div class="c-p"><span id="txt_domiciliado_label">Domiciliado</span> en <span id="txt_domicilio">________________________</span>, de profesión <span id="txt_profesion">________________</span> en adelante <span class="ref_trabajador">"El Trabajador"</span>, se ha convenido el siguiente Contrato de Trabajo de acuerdo a las normas contenidas en <span id="txt_marco_legal">el Título IV del DFL N° 1 de 1996, Estatuto Docente y supletoriamente por el Código del Trabajo</span>:</div>
+                        <div class="c-p"><span class="c-clause">PRIMERO:</span> <span class="ref_trabajador">"El Trabajador"</span>, se desempeñará a partir de esta fecha como <span class="c-bold" id="txt_cargo">DOCENTE DE AULA</span>.</div>
+                        <div class="c-p"><span class="c-clause">SEGUNDO:</span> El trabajo se efectuará en el establecimiento educacional denominado <span class="c-bold">ESCUELA AGRÍCOLA SAGRADOS CORAZONES</span>, ubicado en el SECTOR LONCOMILLA, comuna de VILLA ALEGRE, y en las actividades educativas que se realicen fuera de este lugar conforme a las instrucciones de la dirección del colegio.</div>
+                        <div class="c-p"><span class="c-clause">TERCERO:</span> La jornada semanal ordinaria de labores de <span class="ref_trabajador_plain">el trabajador</span> tendrá una duración de <span class="c-bold" id="txt_ht">44</span> horas cronológicas<span id="txt_desglose"></span>. Estas horas cronológicas se distribuirán por la Dirección del Establecimiento y una vez conocida por las partes se anexarán firmadas al presente contrato.</div>
+                        <div class="c-p"><span class="c-clause">CUARTO:</span> Se deja constancia que las funciones propias del cargo incluyen:
+                        Al mismo tiempo se obliga al trabajador a cumplir las siguientes funciones:
+                        <div id="lista_funciones"></div>Las partes acuerdan que la inobservancia de lo expresado en esta cláusula constituye incumplimiento grave de las obligaciones contractuales.</div>
+                        
+                        <div class="c-p"><span class="c-clause">QUINTO:</span> “El Empleador'', se compromete a remunerar a <span class="ref_trabajador">''El Trabajador''</span>, con la suma de <span class="c-bold" id="txt_sueldo">_______</span>.- mensuales por las horas contratadas (<span id="txt_valor_hora_display"></span> por hora). 
+                        
+                        <span id="txt_leyes_docente" style="display:none;">Esta suma se incrementará con las leyes 19.933 y 19.410, bonificación proporcional, planilla complementaria, ley 20.158, (BRP) y asignaciones que disponga la ley según corresponda o acuerden las partes. En ningún caso la remuneración Total Mensual de <span class="ref_trabajador">"El Trabajador"</span>, podrá ser inferior a la suma de <span class="c-bold" id="txt_sueldo_2"></span>.- mensuales por las <span class="c-bold" id="txt_ht_2"></span> horas cronológicas semanales de docencia contratadas.</span> 
+                        
+                        La remuneración se pagará el último día hábil de cada mes. <strong>Las partes acuerdan que la jornada de trabajo no dará lugar a pago de horas extraordinarias, salvo acuerdo previo y por escrito entre trabajador y empleador.</strong></div>
+                        
+                        <div class="c-p"><span class="c-clause">SEXTO:</span> A petición de <span class="ref_trabajador">"El Trabajador"</span>, sus cotizaciones previsionales y de salud serán depositadas en <span class="c-bold">AFP <span id="txt_afp">___</span></span> y <span class="c-bold"><span id="txt_salud">___</span></span>. Sus remuneraciones serán depositadas en <span class="c-bold"><span id="txt_banco">___</span></span>, Cuenta N° <span class="c-bold" id="txt_cta">___</span>.</div>
+                        <div class="c-p"><span class="c-clause">SÉPTIMO:</span> <span class="ref_trabajador">"El Trabajador"</span> se compromete a:</div>
+                        <div class="c-p">Guardar una conducta personal compatible con su calidad de educador a fin de ser ejemplo positivo para sus alumnos y la comunidad escolar. Respetar los valores y principios propios del Establecimiento e Institución, expresados en los Estatutos y los Reglamentos Internos que declara conocer.</div>
+                        
+                        <div class="c-p"><span class="c-clause">OCTAVO:</span> El Reglamento Interno de Orden Higiene y Seguridad de la Corporación forma parte del presente Contrato, y todo aquello no expresamente estipulado en este instrumento se regirá por dicho reglamento.</div>
+                        
+                        <div class="c-p"><span class="c-clause">NOVENO:</span> El carácter del presente contrato es <span class="c-bold" id="txt_modalidad_cuerpo">PLAZO FIJO</span><span id="span_termino">, poniendo termino el <span class="c-bold" id="txt_fin">28 de febrero de 2026</span></span>. Podrá terminar anticipadamente por las causales contempladas en el Código del Trabajo.</div>
+                        
+                        <div class="c-p"><span class="c-clause">DÉCIMO:</span> Se deja constancia que <span class="ref_trabajador">"El Trabajador"</span>, ingresó al servicio el <span class="c-bold" id="txt_inicio">_________</span>.</div>
+                        <div class="c-p"><span class="c-clause">DÉCIMO PRIMERO:</span> <span class="ref_trabajador_may">El trabajador</span> declara expresamente conocer y aceptar que las funciones a desempeñar requieren de su constante desplazamiento e indica que lo anterior en ningún caso lo considera menoscabo. Lo expuesto se entiende sin perjuicio de lo dispuesto en el <strong>artículo 12 del Código del Trabajo</strong> en cuanto a la facultad del Empleador de alterar la naturaleza de los servicios o el sitio en que éstos deban prestarse, ajustado a las normas respectivas.</div>
+                        <div class="c-p"><span class="c-clause">DÉCIMO SEGUNDO:</span> Se deja constancia que, debido a la naturaleza de las funciones, <span class="ref_trabajador_plain">el trabajador</span> guardará estricta confidencialidad respecto de los antecedentes personales de estudiantes y apoderados a los que tenga acceso.</div>
+                        <div class="c-p"><span class="c-clause">DÉCIMO TERCERO:</span> El presente contrato se firma en tres ejemplares, declarando <span class="ref_trabajador">"El Trabajador"</span>, haber recibido una copia de él, del Reglamento Interno y el anexo con el horario para el año académico 2026.</div>
+                        <div class="signatures-contract">
+                            <div class="sign-box">MIGUEL ANTONIO DIAZ JARA<br>RUT: 15.114.472-5<br>REPRESENTANTE LEGAL<br>CORPORACIÓN EDUCACIONAL VELOZ EDUCA</div>
+                            <div class="sign-box"><span id="sig_nombre" style="text-transform:uppercase;">TRABAJADOR</span><br>RUT: <span id="sig_rut">___________</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-consolidado" class="tab-content">
+            <div class="header-actions">
+                <h3>Consolidado de Personal</h3>
+                <button class="btn btn-excel" onclick="exportarConsolidado()"><i class="fas fa-file-excel"></i> Excel</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table id="tablaConsolidado">
+                    <thead><tr><th>RUT</th><th>NOMBRE</th><th>CARGO</th><th>TIPO</th><th>HORAS</th><th>SUELDO BASE</th><th>CENTRO DE COSTO</th></tr></thead>
+                    <tbody id="bodyConsolidado"></tbody>
+                </table>
+            </div>
+            <div class="stats-panel" id="panelStats"></div>
+        </div>
+
+        <div id="tab-asistentes" class="tab-content">
+            <div class="header-actions"><h3>Nómina Asistentes</h3></div>
+            <div class="admin-panel">
+                <div style="display:flex; gap:5px; margin-bottom:10px;">
+                    <input type="text" id="newAsisName" placeholder="NOMBRE COMPLETO" style="flex:2;">
+                    <input type="text" id="newAsisRut" placeholder="RUT" style="flex:1;">
+                    <input type="text" id="newAsisCargo" placeholder="CARGO (Ej: Secretaria)" style="flex:1;">
+                    <button class="btn btn-add" onclick="agregarAsistente()">+ Agregar</button>
+                </div>
+                <ul id="listaAsistentesUI" class="nomina-list"></ul>
+            </div>
+        </div>
+        
+        <div id="tab-nomina" class="tab-content">
+             <div class="header-actions"><h3>Nómina Docente</h3></div>
+             <div class="admin-panel">
+                <div style="display:flex; gap:5px; margin-bottom:10px;">
+                    <input type="text" id="nuevoProfeInput" placeholder="NOMBRE DOCENTE" style="flex:1;">
+                    <button class="btn btn-add" onclick="agregarProfesor()">+ Agregar</button>
+                </div>
+                <ul id="listaNominaUI" class="nomina-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-report-container"></div>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyCbZNKv2Dnk4pmrxcyUAdrYxiAW2Yo9rTE", authDomain: "libroclases-sscc.firebaseapp.com", projectId: "libroclases-sscc", storageBucket: "libroclases-sscc.firebasestorage.app", appId: "1:556632878686:web:528ae162b5be19f21a0ecf" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // --- DEFINICIONES INICIALES ---
+        let GLOBAL_CACHE = {}; 
+        let ADMIN_DATA = {}; 
+        let LISTA_DOCENTES = ["DIEGO ANDRÉS LUNA RAMÍREZ", "DANIELA ALEJANDRA FUENTES ALEGRÍA", "JAVIER IGNACIO LARA FAUNDEZ", "NATALIA DE LOS ÁNGELES REYES CEBALLOS"]; 
+        let LISTA_ASISTENTES = [{nombre: "JUAN PEREZ", rut: "12.345.678-9", cargo: "INSPECTOR"}]; 
+        let CONTRATOS_CACHE_ALL = {}; 
+        let CONTRATO_ACTUAL = 'DOC';
+
+        const DIAS = [{k:"L",n:"LUNES"},{k:"M",n:"MARTES"},{k:"W",n:"MIÉRCOLES"},{k:"J",n:"JUEVES"},{k:"V",n:"VIERNES"}];
+        const DIAS_ADMIN = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+        
+        const BLOQUES = [
+            { id: "B1a", time: "08:25-09:10", label: "BLOQUE 1" }, { id: "B1b", time: "09:10-09:55", label: "" },
+            { id: "R1", type: "break", label: "RECREO (15 min)" },
+            { id: "B2a", time: "10:10-10:55", label: "BLOQUE 2" }, { id: "B2b", time: "10:55-11:40", label: "" },
+            { id: "R2", type: "break", label: "RECREO (10 min)" },
+            { id: "B3a", time: "11:50-12:35", label: "BLOQUE 3" }, { id: "B3b", time: "12:35-13:20", label: "" },
+            { id: "LUNCH", type: "lunch", label: "ALMUERZO (45 min)" },
+            { id: "B4a", time: "14:05-14:50", label: "BLOQUE 4" }, { id: "B4b", time: "14:50-15:35", label: "" },
+            { id: "R3", type: "break", label: "RECREO (10 min)" },
+            { id: "B5", time: "15:45-16:30", label: "BLOQUE 5" }
+        ];
+
+        const FUNCIONES_DB = { 
+            DOCENTE: `<span class="c-subtitle">De las actividades de aula:</span><ul class="c-list"><li>Cumplir los horarios de clases...</li><li>Planificar clases y evaluar...</li><li>Mantener orden y disciplina...</li><li>Completar libro de clases...</li></ul><span class="c-subtitle">De las actividades administrativas:</span><ul class="c-list"><li>Asistir a consejos y reuniones...</li><li>Atención de apoderados...</li><li>Cuidado del material...</li></ul>`,
+            NOCHERO: `<ul class="c-list"><li>Cuidar instalaciones y máquinas.</li><li>Informar novedades.</li><li>Cumplir turnos nocturnos.</li></ul>`, 
+            INSPECTOR: `<ul class="c-list"><li>Orientar comportamiento estudiantil.</li><li>Controlar accesos.</li><li>Supervisar recreos.</li></ul>`, 
+            AUXILIAR: `<ul class="c-list"><li>Realizar aseo y mantención de dependencias.</li><li>Apoyar en movimiento de mobiliario.</li></ul>`, 
+            PSICOLOGO: `<ul class="c-list"><li>Evaluar y diagnosticar estudiantes NEE.</li><li>Realizar intervenciones psicoeducativas.</li></ul>`, 
+            SOCIAL: `<ul class="c-list"><li>Gestionar becas y beneficios (JUNAEB).</li><li>Realizar visitas domiciliarias.</li></ul>`, 
+            BIBLIOTECA: `<ul class="c-list"><li>Administrar inventario bibliográfico.</li><li>Atender a estudiantes en biblioteca.</li></ul>`, 
+            TECNICO: `<ul class="c-list"><li>Asistir a docentes en prácticas de campo.</li><li>Mantener herramientas y maquinaria.</li></ul>`, 
+            MONITOR: `<ul class="c-list"><li>Elaborar plan de taller.</li><li>Dirigir sesiones prácticas.</li></ul>`, 
+            APOYO: `<ul class="c-list"><li>Organizar material de matrícula.</li><li>Estadística de vacantes.</li></ul>`, 
+            PASTORAL: `<ul class="c-list"><li>Diseñar plan pastoral.</li><li>Coordinar campañas solidarias.</li></ul>` 
+        };
+        const EXTRAS = { 
+            JEFE: `<span class="c-subtitle">Jefatura Especialidad:</span><ul class="c-list"><li>Coordinar uso de predio e insumos.</li><li>Velar por seguridad en prácticas.</li></ul>`, 
+            PIE: `<span class="c-subtitle">Coordinación PIE:</span><ul class="c-list"><li>Liderar equipo PIE.</li><li>Gestionar plataforma MINEDUC.</li></ul>` 
+        };
+
+        const DATA_CURSOS = {
+            "1A": [ {n:"Lengua y Lit.", h:6}, {n:"Inglés", h:4}, {n:"Matemática", h:7}, {n:"Historia", h:4}, {n:"Biología", h:2}, {n:"Física", h:2}, {n:"Química", h:2}, {n:"Artes/Música", h:2}, {n:"Tecnología", h:2}, {n:"Ed. Física", h:2}, {n:"Religión", h:2}, {n:"Consejo", h:1}, {n:"Inducción Agro", h:2}, {n:"Hab. Lingüísticas", h:2}, {n:"Hábitos Est.", h:1}, {n:"Orientación", h:1} ],
+            "2A": [ {n:"Lengua y Lit.", h:6}, {n:"Inglés", h:4}, {n:"Matemática", h:7}, {n:"Historia", h:4}, {n:"Biología", h:2}, {n:"Física", h:2}, {n:"Química", h:2}, {n:"Artes/Música", h:2}, {n:"Tecnología", h:2}, {n:"Ed. Física", h:2}, {n:"Religión", h:2}, {n:"Consejo", h:1}, {n:"Inducción Agro", h:2}, {n:"Hab. Lingüísticas", h:2}, {n:"Hábitos Est.", h:1}, {n:"Orientación", h:1} ],
+            "3A": [ {n:"Lenguaje", h:3}, {n:"Inglés", h:2}, {n:"Matemática", h:3}, {n:"Ed. Ciudadana", h:2}, {n:"Filosofía", h:2}, {n:"Cs. Ciudadanía", h:2}, {n:"Ed. Física", h:2}, {n:"Manejo Suelos", h:5}, {n:"Manejo Riego", h:4}, {n:"Reprod. Vegetal", h:5}, {n:"Aliment. Pecuaria", h:4}, {n:"Control Plagas", h:4}, {n:"Consejo de Curso", h:1}, {n:"Orientación", h:1}, {n:"Hab. Lingüísticas", h:1}, {n:"Religión", h:2} ],
+            "3HC": [ {n:"Lenguaje", h:3}, {n:"Inglés", h:2}, {n:"Matemática", h:3}, {n:"Ed. Ciudadana", h:2}, {n:"Filosofía", h:2}, {n:"Cs. Ciudadanía", h:2}, {n:"Lectura Esp.", h:6}, {n:"Economía", h:6}, {n:"Límites", h:6}, {n:"Química", h:6}, {n:"Interpretación", h:6}, {n:"Promoción Estilos", h:6}, {n:"Historia", h:2}, {n:"Biología", h:2}, {n:"Ed. Física", h:2}, {n:"Consejo de Curso", h:1}, {n:"Orientación", h:2}, {n:"Religión", h:2} ],
+            "4A": [ {n:"Lenguaje", h:3}, {n:"Inglés", h:2}, {n:"Matemática", h:3}, {n:"Ed. Ciudadana", h:2}, {n:"Filosofía", h:2}, {n:"Cs. Ciudadanía", h:2}, {n:"Ed. Física", h:2}, {n:"Viticultura", h:5}, {n:"Cosecha Vides", h:4}, {n:"Elab. Vinos", h:4}, {n:"Envasado", h:4}, {n:"Bodegas", h:3}, {n:"Emprendimiento", h:2}, {n:"Consejo de Curso", h:1}, {n:"Orientación", h:1}, {n:"Hab. Lingüísticas", h:1}, {n:"Religión", h:2} ],
+            "4C": [ {n:"Lenguaje", h:3}, {n:"Inglés", h:2}, {n:"Matemática", h:3}, {n:"Ed. Ciudadana", h:2}, {n:"Filosofía", h:2}, {n:"Cs. Ciudadanía", h:2}, {n:"Participación", h:6}, {n:"Geografía", h:6}, {n:"Probabilidades", h:6}, {n:"Física", h:6}, {n:"Creación y Comp.", h:6}, {n:"Cs. Ejercicio", h:6}, {n:"Historia", h:2}, {n:"Biología Cel.", h:2}, {n:"Ed. Física 2", h:2}, {n:"Consejo de Curso", h:1}, {n:"Orientación", h:2}, {n:"Religión", h:2} ]
+        };
+
+        // --- FUNCIONES CORE ---
+        function t2m(t) { if(!t) return 0; const [h,m] = t.split(':').map(Number); return h*60+m; }
+        function m2t(m) { const h = Math.floor(m/60); const min = m % 60; return `${h.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}`; }
+
+        function actualizarSelects() {
+            const selP = document.getElementById("selProfesor");
+            const selV = document.getElementById("selProfesorView");
+            const optD = document.getElementById("sel_funcionario_contrato");
+            const selAdmin = document.getElementById("selFuncionarioAdmin");
+            
+            let h = '<option value="">-- Sin Profesor --</option>';
+            LISTA_DOCENTES.forEach(p => h+=`<option value="${p}">${p}</option>`); 
+            if(selP) selP.innerHTML = h;
+            if(selV) selV.innerHTML = h;
+            
+            let h2 = '<option value="">-- Seleccionar --</option>';
+            LISTA_DOCENTES.forEach(p => h2+=`<option value="${p}">${p}</option>`);
+            LISTA_ASISTENTES.forEach(a => h2+=`<option value="${a.nombre}">${a.nombre}</option>`);
+            if(optD) optD.innerHTML = h2;
+
+            if(selAdmin) {
+                const optDoc = document.getElementById("optDocentes");
+                const optAsis = document.getElementById("optAsistentes");
+                if(optDoc) {
+                    optDoc.innerHTML = "";
+                    LISTA_DOCENTES.forEach(p => {
+                        optDoc.innerHTML += `<option value="DOC:${p}">${p}</option>`;
+                    });
+                }
+                if(optAsis) {
+                    optAsis.innerHTML = "";
+                    LISTA_ASISTENTES.forEach(a => {
+                        optAsis.innerHTML += `<option value="ASIS:${a.nombre}">${a.nombre}</option>`;
+                    });
+                }
+            }
+        }
+
+        // --- GESTIÓN DE PERSONAL CON EDICIÓN ---
+        function renderListasNomina() {
+            const ulDoc = document.getElementById("listaNominaUI");
+            if (ulDoc) {
+                ulDoc.innerHTML = "";
+                LISTA_DOCENTES.forEach((doc, index) => {
+                    const li = document.createElement("li");
+                    li.className = "nomina-item";
+                    li.innerHTML = `
+                    <span>${doc}</span>
+                    <div class="nomina-actions">
+                        <button class="btn-icon edit" onclick="editarProfesor(${index})" title="Editar"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon del" onclick="borrarProfesor(${index})" title="Borrar"><i class="fas fa-trash"></i></button>
+                    </div>`;
+                    ulDoc.appendChild(li);
+                });
+            }
+            const ulAsis = document.getElementById("listaAsistentesUI");
+            if (ulAsis) {
+                ulAsis.innerHTML = "";
+                LISTA_ASISTENTES.forEach((asis, index) => {
+                    const li = document.createElement("li");
+                    li.className = "nomina-item";
+                    li.innerHTML = `
+                    <div><strong>${asis.nombre}</strong><br><span style="font-size:10px;">${asis.cargo}</span></div>
+                    <div class="nomina-actions">
+                        <button class="btn-icon edit" onclick="editarAsistente(${index})" title="Editar"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon del" onclick="borrarAsistente(${index})" title="Borrar"><i class="fas fa-trash"></i></button>
+                    </div>`;
+                    ulAsis.appendChild(li);
+                });
+            }
+        }
+        
+        async function agregarProfesor() { const n=document.getElementById("nuevoProfeInput").value.toUpperCase(); if(n){ LISTA_DOCENTES.push(n); LISTA_DOCENTES.sort(); await guardarConfig(); actualizarSelects(); renderListasNomina(); document.getElementById("nuevoProfeInput").value=""; } }
+        async function borrarProfesor(idx) { if(confirm("¿Borrar?")) { LISTA_DOCENTES.splice(idx, 1); await guardarConfig(); actualizarSelects(); renderListasNomina(); } }
+        async function editarProfesor(idx) {
+            const nuevoNombre = prompt("Editar nombre del docente:", LISTA_DOCENTES[idx]);
+            if (nuevoNombre && nuevoNombre.trim() !== "") {
+                LISTA_DOCENTES[idx] = nuevoNombre.toUpperCase();
+                LISTA_DOCENTES.sort();
+                await guardarConfig();
+                actualizarSelects();
+                renderListasNomina();
+            }
+        }
+
+        async function agregarAsistente() { const n=document.getElementById("newAsisName").value.toUpperCase(); const r=document.getElementById("newAsisRut").value; const c=document.getElementById("newAsisCargo").value; if(n){ LISTA_ASISTENTES.push({nombre:n, rut:r, cargo:c}); await guardarConfig(); actualizarSelects(); renderListasNomina(); document.getElementById("newAsisName").value=""; } }
+        async function borrarAsistente(idx) { if(confirm("¿Borrar?")) { LISTA_ASISTENTES.splice(idx, 1); await guardarConfig(); actualizarSelects(); renderListasNomina(); } }
+        async function editarAsistente(idx) {
+            const asis = LISTA_ASISTENTES[idx];
+            const nuevoNombre = prompt("Nombre:", asis.nombre);
+            if (nuevoNombre) {
+                const nuevoCargo = prompt("Cargo:", asis.cargo);
+                const nuevoRut = prompt("RUT:", asis.rut);
+                
+                LISTA_ASISTENTES[idx].nombre = nuevoNombre.toUpperCase();
+                if(nuevoCargo) LISTA_ASISTENTES[idx].cargo = nuevoCargo.toUpperCase();
+                if(nuevoRut) LISTA_ASISTENTES[idx].rut = nuevoRut;
+                
+                await guardarConfig();
+                actualizarSelects();
+                renderListasNomina();
+            }
+        }
+
+        function updateFunciones() {
+            const el = document.getElementById("lista_funciones");
+            if (!el) return;
+            if(CONTRATO_ACTUAL==='DOC') {
+                let h = FUNCIONES_DB.DOCENTE;
+                if(document.getElementById("chk_jefe_esp").checked) h += EXTRAS.JEFE;
+                if(document.getElementById("chk_coord_pie").checked) h += EXTRAS.PIE;
+                el.innerHTML = h;
+            } else {
+                const sel = document.getElementById("sel_cargo_asis_c");
+                const c = sel ? sel.value : "AUXILIAR";
+                el.innerHTML = FUNCIONES_DB[c] || FUNCIONES_DB.AUXILIAR;
+            }
+        }
+        
+        // --- FUNCIONES ADMIN ---
+        function cargarAdminFuncionario() {
+            const v = document.getElementById("selFuncionarioAdmin").value;
+            const body = document.getElementById("bodyAdmin");
+            body.innerHTML = "";
+            document.getElementById("inputContrato").value = "";
+            document.getElementById("lblAdminTotal").innerText = "00:00";
+            document.getElementById("avisoLegalCalculo").style.display = "none";
+            
+            if(!v) return;
+            const n = v.split(":")[1];
+            const data = ADMIN_DATA[n] || {contrato: 44, horario: {}};
+            document.getElementById("inputContrato").value = data.contrato;
+            
+            DIAS_ADMIN.forEach(dia => {
+                const h = data.horario[dia] || {in:"", lin:"", lout:"", out:""};
+                body.innerHTML += `
+                <tr>
+                    <td>${dia}</td>
+                    <td><input type="time" class="inp-time" id="in_${dia}" value="${h.in}" onchange="calcAdmin()"></td>
+                    <td><input type="time" class="inp-time" id="lin_${dia}" value="${h.lin}" onchange="calcAdmin()"></td>
+                    <td><input type="time" class="inp-time" id="lout_${dia}" value="${h.lout}" onchange="calcAdmin()"></td>
+                    <td><input type="time" class="inp-time" id="out_${dia}" value="${h.out}" onchange="calcAdmin()"></td>
+                    <td id="tot_${dia}" style="font-weight:bold; font-size:11px;">00:00</td>
+                </tr>`;
+            });
+            calcAdmin();
+        }
+
+        function calcAdmin() {
+            let totalSemana = 0;
+            const contrato = parseFloat(document.getElementById("inputContrato").value) || 44;
+            const v = document.getElementById("selFuncionarioAdmin").value;
+            const esDocente = v.startsWith("DOC");
+            const umbral = esDocente ? 42 : 38; 
+            
+            const aviso = document.getElementById("avisoLegalCalculo");
+            if (contrato >= umbral) {
+                aviso.innerText = "ℹ️ Colación imputable a la jornada.";
+                aviso.className = "calc-status calc-imputable";
+            } else {
+                aviso.innerText = "ℹ️ Colación NO imputable.";
+                aviso.className = "calc-status calc-deductible";
+            }
+            aviso.style.display = "block";
+
+            DIAS_ADMIN.forEach(dia => {
+                const i = document.getElementById("in_" + dia).value;
+                const o = document.getElementById("out_" + dia).value;
+                const li = document.getElementById("lin_" + dia).value;
+                const lo = document.getElementById("lout_" + dia).value;
+                const celda = document.getElementById("tot_" + dia);
+                
+                if (i && o) {
+                    let mIn = t2m(i);
+                    let mOut = t2m(o);
+                    if (mOut < mIn) mOut += 1440; 
+                    
+                    let diario = mOut - mIn;
+                    
+                    if (contrato < umbral && li && lo && dia !== "Viernes") {
+                        let cIn = t2m(li);
+                        let cOut = t2m(lo);
+                        if(cOut < cIn) cOut += 1440;
+                        diario -= (cOut - cIn);
+                    }
+                    
+                    diario = Math.max(0, diario);
+                    celda.innerText = m2t(diario);
+                    totalSemana += diario;
+                } else {
+                    celda.innerText = "00:00";
+                }
+            });
+            
+            document.getElementById("lblAdminTotal").innerText = m2t(totalSemana);
+            const minutosContrato = contrato * 60;
+            if(totalSemana > minutosContrato + 10) document.getElementById("lblAdminTotal").style.color = "red";
+            else document.getElementById("lblAdminTotal").style.color = "#1a237e";
+        }
+
+        async function guardarAdmin() {
+            const v = document.getElementById("selFuncionarioAdmin").value;
+            if(!v) return;
+            const n = v.split(":")[1];
+            const contrato = document.getElementById("inputContrato").value;
+            let horario = {};
+            
+            DIAS_ADMIN.forEach(dia => {
+                horario[dia] = {
+                    in: document.getElementById("in_" + dia).value,
+                    lin: document.getElementById("lin_" + dia).value,
+                    lout: document.getElementById("lout_" + dia).value,
+                    out: document.getElementById("out_" + dia).value
+                };
+            });
+            
+            ADMIN_DATA[n] = {contrato, horario};
+            try {
+                await db.collection("admin_horarios_2026").doc(n).set(ADMIN_DATA[n]);
+                alert("Horario Administrativo Guardado");
+            } catch(e) {
+                alert("Error al guardar");
+            }
+        }
+
+        // --- SABANA PANTALLA ---
+        async function renderSabanaPantalla() {
+            if(Object.keys(GLOBAL_CACHE).length === 0) await cargarCacheGlobal();
+            const tabla = document.getElementById("tablaMaster");
+            tabla.innerHTML = "";
+            const cursos = Object.keys(DATA_CURSOS);
+
+            // Header
+            let html = `<thead><tr><th style="width:70px; background:#333; color:white;">BLOQUE</th>`;
+            cursos.forEach(c => html += `<th style="background:#1a237e; color:white;">${c}</th>`);
+            html += `</tr></thead><tbody>`;
+
+            // Body
+            DIAS.forEach(d => {
+                html += `<tr style="background:#444; color:white; font-weight:bold; text-align:center;"><td colspan="${cursos.length + 1}">${d.n}</td></tr>`;
+                BLOQUES.forEach(b => {
+                    if (b.type) {
+                        html += `<tr style="background:#eee; font-size:10px; text-align:center;"><td colspan="${cursos.length + 1}"><strong>${b.label}</strong></td></tr>`;
+                    } else {
+                        html += `<tr><td style="font-weight:bold; font-size:11px; background:#f5f5f5;">${b.time}</td>`;
+                        cursos.forEach(c => {
+                            const key = `${d.k}_${b.id}`;
+                            const cellData = GLOBAL_CACHE[c] ? GLOBAL_CACHE[c][key] : null;
+                            let cellContent = "";
+                            if (cellData) {
+                                if (Array.isArray(cellData)) {
+                                    // Split block
+                                    cellContent = `<div style="display:flex; flex-direction:column; gap:2px;">
+                                        <div style="background:${obtenerColorProfesor(cellData[0].prof)}; padding:2px; border-radius:2px; font-size:9px;">
+                                            <b>${cellData[0].asig}</b><br>${cellData[0].prof || '?'}
+                                        </div>
+                                        <div style="border-top:1px solid #ccc;"></div>
+                                        <div style="background:${obtenerColorProfesor(cellData[1].prof)}; padding:2px; border-radius:2px; font-size:9px;">
+                                            <b>${cellData[1].asig}</b><br>${cellData[1].prof || '?'}
+                                        </div>
+                                    </div>`;
+                                } else {
+                                    // Single block
+                                    cellContent = `<div style="background:${obtenerColorProfesor(cellData.prof)}; padding:4px; border-radius:3px; height:100%;">
+                                        <div style="font-weight:bold; font-size:10px;">${cellData.asig}</div>
+                                        <div style="font-size:9px;">${cellData.prof || ''}</div>
+                                    </div>`;
+                                }
+                            }
+                            html += `<td style="vertical-align:top; height:50px;">${cellContent}</td>`;
+                        });
+                        html += `</tr>`;
+                    }
+                });
+            });
+            html += "</tbody>";
+            tabla.innerHTML = html;
+        }
+
+        async function init() {
+            try {
+                const configDoc = await db.collection("horarios_2026").doc("_config").get();
+                if(configDoc.exists) {
+                    const d = configDoc.data();
+                    if(d.docentes && d.docentes.length > 0) LISTA_DOCENTES = d.docentes;
+                    if(d.asistentes && d.asistentes.length > 0) LISTA_ASISTENTES = d.asistentes;
+                }
+                await cargarCacheGlobal(); 
+                await cargarAdminData();
+            } catch (e) { console.log("Modo offline/local activado"); }
+            
+            construirTablaEditor(); 
+            cargarHorarioCurso(); 
+            actualizarSelects(); 
+            renderListasNomina();
+            updateFunciones();
+            setTipoContrato('DOC');
+            
+            document.getElementById('txt_fecha_hoy').innerText = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById("loader").style.display = "none";
+        }
+
+        // --- FIREBASE ---
+        async function cargarCacheGlobal() { try { const s = await db.collection("horarios_2026").get(); GLOBAL_CACHE = {}; s.forEach(d => { if(d.id!=="_config") GLOBAL_CACHE[d.id]=d.data(); }); } catch(e){} }
+        async function cargarAdminData() { try { const s = await db.collection("admin_horarios_2026").get(); ADMIN_DATA = {}; s.forEach(d => ADMIN_DATA[d.id]=d.data()); } catch(e){} }
+        async function cargarCacheContratos() { try { const s = await db.collection("contratos_data_2026").get(); CONTRATOS_CACHE_ALL = {}; s.forEach(d => { CONTRATOS_CACHE_ALL[d.id] = d.data(); }); } catch(e){} }
+        async function guardarConfig() { try { await db.collection("horarios_2026").doc("_config").set({docentes:LISTA_DOCENTES, asistentes:LISTA_ASISTENTES}, {merge:true}); } catch(e){} }
+        
+        function normalizarTexto(txt) { if(!txt) return ""; return txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim(); }
+        function obtenerColorProfesor(n) { if(!n) return "#fff"; const s=normalizarTexto(n); let h=0; for(let i=0;i<s.length;i++) h=s.charCodeAt(i)+((h<<5)-h); return `hsl(${Math.abs(h)%360}, 85%, 88%)`; }
+
+        // --- EDITOR ---
+        function construirTablaEditor() {
+            const b = document.getElementById("bodyEditor"); let h="";
+            BLOQUES.forEach(bl => {
+                if(bl.type) h+=`<tr class="${bl.type==='break'?'break-row':'lunch-row'}"><td colspan="6">${bl.label}</td></tr>`;
+                else {
+                    h+=`<tr><td style="font-weight:bold; background:#f5f5f5;">${bl.time}</td>`;
+                    DIAS.forEach(d => { const isBl = (d.k==='V' && (bl.id.startsWith('B4')||bl.id==='B5')); h+=`<td class="${isBl?'blocked':'drop-zone'}" id="${d.k}_${bl.id}"></td>`; });
+                    h+=`</tr>`;
+                }
+            }); b.innerHTML = h; aplicarDnD();
+        }
+        async function cargarHorarioCurso() {
+            const c = document.getElementById("selCurso").value; estadoAsignaturas = JSON.parse(JSON.stringify(DATA_CURSOS[c]));
+            let data = {};
+            try { const doc = await db.collection("horarios_2026").doc(c).get(); data = doc.exists ? doc.data() : {}; } catch(e){}
+            document.querySelectorAll(".drop-zone").forEach(z => z.innerHTML="");
+            Object.keys(data).forEach(k => {
+                const celda = document.getElementById(k);
+                if(celda && !celda.classList.contains("blocked")) {
+                    const d = data[k];
+                    if(Array.isArray(d)) { celda.innerHTML = renderSplit(d); d.forEach(x=>restarH(x.asig)); } else { celda.innerHTML = renderCell(d.asig, d.prof); restarH(d.asig); }
+                }
+            }); renderListaAsig();
+        }
+        function renderListaAsig() { 
+            const l = document.getElementById("listaAsignaturas"); l.innerHTML=""; 
+            estadoAsignaturas.forEach((i, idx) => {
+                const d = document.createElement("div"); d.className=`draggable-item`;
+                d.draggable = true; d.innerHTML = `<span>${i.n}</span><span class="badge">${i.h}</span>`;
+                d.ondragstart = (e) => e.dataTransfer.setData("text", JSON.stringify({n:i.n, p:document.getElementById("selProfesor").value}));
+                l.appendChild(d);
+            });
+        }
+        function renderCell(a, p) { return `<div class="assigned-cell" style="background:${obtenerColorProfesor(p)}"><div>${a}</div>${p?`<div class="prof-badge">${p}</div>`:''}<span class="btn-remove-cell" onclick="borrarCell(this)">×</span></div>`; }
+        function renderSplit(items) { let h = `<div style="display:flex; height:100%;">`; items.forEach((x,i) => h+=`<div style="flex:1; border-right:${i===0?'1px dashed #000':'none'}; background:${obtenerColorProfesor(x.prof)}; position:relative;" class="assigned-cell"><div>${x.asig}</div><div class="prof-badge">${x.prof||''}</div><span class="btn-remove-cell" onclick="borrarSplit(this, ${i})">×</span></div>`); return h+`</div>`; }
+        function aplicarDnD() {
+            document.querySelectorAll(".drop-zone").forEach(z => {
+                z.ondragover = e => {e.preventDefault(); z.style.background="#e3f2fd";}; z.ondragleave = e => z.style.background="";
+                z.ondrop = async e => {
+                    e.preventDefault(); z.style.background=""; const d = JSON.parse(e.dataTransfer.getData("text"));
+                    if(estadoAsignaturas.find(x=>x.n===d.n).h<=0) return;
+                    let nuevo = {asig:d.n, prof:d.p};
+                    if(z.querySelector(".assigned-cell") && !z.querySelector(".split-container")) {
+                        const oldA = z.innerText.split("\n")[0]; const oldP = z.querySelector(".prof-badge")?.innerText||""; nuevo = [{asig:oldA, prof:oldP}, nuevo]; z.innerHTML = renderSplit(nuevo);
+                    } else { z.innerHTML = renderCell(d.n, d.p); }
+                    restarH(d.n); renderListaAsig();
+                    try { await db.collection("horarios_2026").doc(document.getElementById("selCurso").value).set({[z.id]:nuevo}, {merge:true}); } catch(e){}
+                }
+            });
+        }
+        function restarH(n){ const i=estadoAsignaturas.find(x=>x.n===n); if(i) i.h--; }
+        async function borrarCell(btn) { btn.parentElement.remove(); /* Simplificado para demo */ }
+
+        // --- EXPORTAR ---
+        function exportarExcelIndividual() { const wb = XLSX.utils.book_new(); const ws = XLSX.utils.table_to_sheet(document.getElementById("tablaHorario")); XLSX.utils.book_append_sheet(wb, ws, "Horario"); XLSX.writeFile(wb, "Horario_" + document.getElementById("selCurso").value + ".xlsx"); }
+        function exportarExcelSabanaConFormato() { const wb = XLSX.utils.book_new(); const ws = XLSX.utils.table_to_sheet(document.getElementById("tablaMaster")); XLSX.utils.book_append_sheet(wb, ws, "Sábana"); XLSX.writeFile(wb, "Sabana_2026.xlsx"); }
+
+        // --- REPORTES ---
+        function getHeader(t, s) { return `<div class="report-header"><div class="rh-logo"><img src="logo.jpg"></div><div class="rh-text"><h1>Escuela Agrícola Sagrados Corazones</h1><p>Villa Alegre • UTP</p><p>${new Date().toLocaleDateString()}</p></div></div><div class="report-title">${t} <small>(${s})</small></div>`; }
+        function getFooter() { return `<div class="report-footer">SGE 2026 • ProfeAle</div>`; }
+        
+        async function imprimirReporte(TIPO) {
+            const c = document.getElementById("print-report-container"); c.innerHTML = "";
+            
+            if(TIPO==='CURSO') {
+                const cur = document.getElementById("selCurso").value; 
+                c.innerHTML = `<div class="fit-one-page curso"><div class="report-page">${getHeader("Horario de Clases", cur)}${document.getElementById("tablaHorario").outerHTML.replace('id="tablaHorario"', 'class="table-print"')}${getFooter()}</div></div>`;
+            } 
+            else if (TIPO === 'DOCENTE' || TIPO === 'ADMIN') {
+                let n = "";
+                if(TIPO === 'DOCENTE') { n = document.getElementById("selProfesorView").value; if(!n) return alert("Seleccione Docente"); } 
+                else { const v = document.getElementById("selFuncionarioAdmin").value; if(!v) return alert("Seleccione Funcionario"); n = v.split(":")[1]; }
+                
+                let cargoReal = "DOCENTE DE AULA";
+                if(TIPO === 'ADMIN') { const asisObj = LISTA_ASISTENTES.find(a => a.nombre === n); if(asisObj) cargoReal = asisObj.cargo || "ASISTENTE DE LA EDUCACIÓN"; }
+                
+                const adm = ADMIN_DATA[n] || {contrato:'---', horario:{}};
+                
+                // Construir HTML Clases (Solo Docente)
+                let tCls = "";
+                if(TIPO === 'DOCENTE') {
+                    const pSearch = normalizarTexto(n);
+                    tCls = `<div style="margin-bottom:5px; font-weight:bold; border-bottom:1px solid #ccc; font-size:10px;">A. HORARIO ACADÉMICO</div>
+                            <table class="table-print"><thead><tr><th>HORA</th><th>LUNES</th><th>MARTES</th><th>MIÉRCOLES</th><th>JUEVES</th><th>VIERNES</th></tr></thead><tbody>`;
+                    
+                    BLOQUES.forEach(b => { 
+                        if(b.type) {
+                            tCls+=`<tr style="background:#eee;"><td colspan="6" style="font-weight:bold;">${b.label}</td></tr>`; 
+                        } else { 
+                            tCls+=`<tr><td>${b.time}</td>`; 
+                            DIAS.forEach(d => { 
+                                let txt=""; 
+                                Object.keys(GLOBAL_CACHE).forEach(k => { 
+                                    const c=GLOBAL_CACHE[k][`${d.k}_${b.id}`]; 
+                                    // BÚSQUEDA INSENSIBLE (MEJORADA)
+                                    const chk=(x)=>normalizarTexto(x).includes(pSearch) || pSearch.includes(normalizarTexto(x)); 
+                                    if(c){ 
+                                        if(Array.isArray(c)) c.forEach(i=>{if(chk(i.prof))txt+=`<div class="cell-print-class">${k} - ${i.asig}</div>`}); 
+                                        else if(chk(c.prof)) txt+=`<div class="cell-print-class">${k} - ${c.asig}</div>`; 
+                                    } 
+                                }); 
+                                tCls+=`<td>${txt}</td>`; 
+                            }); 
+                            tCls+=`</tr>`; 
+                        } 
+                    }); 
+                    tCls+=`</tbody></table>`;
+                }
+
+                // Construir HTML Admin (Para ambos)
+                let tAdm = `<div style="margin-top:10px; font-weight:bold; border-bottom:1px solid #ccc; font-size:10px;">B. HORARIO ADMINISTRATIVO</div>
+                            <table class="table-print" style="width:100%; margin-top:5px;"><thead><tr><th>DÍA</th><th>ENTRADA</th><th>INICIO COL.</th><th>FIN COL.</th><th>SALIDA</th><th>TOTAL DÍA</th></tr></thead><tbody>`;
+                
+                let totalSemanal = 0;
+                DIAS_ADMIN.forEach(d => { 
+                    const h = adm.horario[d]||{}; 
+                    if(h.in && h.out) { 
+                        let mIn = t2m(h.in); 
+                        let mOut = t2m(h.out); 
+                        if (mOut < mIn) mOut += 1440; 
+                        let m = mOut - mIn; 
+                        
+                        const contr = parseFloat(adm.contrato) || 44;
+                        const umbral = LISTA_DOCENTES.includes(n) ? 42 : 38; 
+                        
+                        if(d !== "Viernes" && contr < umbral && h.lin && h.lout) { 
+                            let cIn = t2m(h.lin); 
+                            let cOut = t2m(h.lout); 
+                            if(cOut < cIn) cOut += 1440; 
+                            m -= (cOut - cIn); 
+                        } 
+                        m = Math.max(0, m); 
+                        totalSemanal += m;
+                        tAdm+=`<tr><td>${d}</td><td>${h.in}</td><td>${h.lin||'-'}</td><td>${h.lout||'-'}</td><td>${h.out}</td><td>${m2t(m)}</td></tr>`; 
+                    } 
+                }); 
+                tAdm+=`<tr><td colspan="5" style="text-align:right; font-weight:bold;">TOTAL SEMANAL:</td><td style="font-weight:bold;">${m2t(totalSemanal)}</td></tr></tbody></table>`;
+                
+                c.innerHTML = `<div class="fit-one-page ${TIPO==='DOCENTE'?'docente':'admin'}"><div class="report-page">${getHeader(TIPO==='DOCENTE'?"Ficha Docente":"Ficha Funcionario", n)}<div class="info-grid" style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:10px; border:1px solid #ccc; padding:5px;"><div><strong>NOMBRE:</strong> ${n}</div><div><strong>CARGO:</strong> ${cargoReal}</div><div><strong>CONTRATO:</strong> ${adm.contrato} hrs</div></div>${tCls}${tAdm}<div class="signatures" style="margin-top:40px; display:flex; justify-content:space-around;"><div class="sign-box" style="text-align:center; border-top:1px solid #000; width:40%; padding-top:5px;"><p style="margin-bottom:5px;">${n}</p>${cargoReal}</div><div class="sign-box" style="text-align:center; border-top:1px solid #000; width:40%; padding-top:5px;"><p style="margin-bottom:5px;">${TIPO==='DOCENTE' ? 'ALEJANDRA MORALES G.' : 'MIGUEL DÍAZ JARA'}</p>${TIPO==='DOCENTE' ? 'UNIDAD TÉCNICO PEDAGÓGICA' : 'DIRECTOR'}</div></div>${getFooter()}</div></div>`;
+            } 
+            else if (TIPO==='CONTRATO') {
+                document.body.classList.add('contract-only');
+                c.innerHTML = document.querySelector(".paper").outerHTML;
+            } 
+            else if (TIPO==='SABANA') {
+                await renderSabanaPantalla();
+                c.innerHTML = `<div class="sabana-container">${getHeader("Sábana General", "Todos los Cursos")}${document.getElementById("tablaMaster").outerHTML.replace('id="tablaMaster"', 'class="table-print"')}${getFooter()}</div>`;
+            }
+            
+            setTimeout(() => { 
+                window.print(); 
+                document.body.classList.remove('contract-only'); 
+            }, 800);
+        }
+
+        // --- NAVEGACIÓN ---
+        function cambiarPestana(id) {
+            document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            document.getElementById("tab-"+id).classList.add("active");
+            if(event && event.target && event.target.classList.contains('tab-btn')) event.target.classList.add("active");
+            if(id==='general') renderSabanaPantalla();
+            if(id==='profesores') renderHorarioProfesorVista();
+            if(id==='contratos') actualizarSelects();
+            if(id==='consolidado') renderConsolidado();
+        }
+
+        // --- CONSOLIDADO Y OTROS ---
+        async function cargarDatosFuncionario() {
+            const nombre = document.getElementById("sel_funcionario_contrato").value;
+            if(!nombre) return;
+            document.getElementById("in_nombre").value = nombre;
+            try {
+                const doc = await db.collection("contratos_data_2026").doc(nombre).get();
+                if(doc.exists) {
+                    const d = doc.data();
+                    document.getElementById('in_rut').value = d.rut;
+                    document.getElementById('in_cargo').value = d.cargo;
+                    calcSueldo();
+                }
+            } catch(e) {}
+            updateContrato();
+        }
+        function calcSueldo() {
+            let ht = parseFloat(document.getElementById(CONTRATO_ACTUAL==='DOC'?'in_ht':'in_h_simple').value)||0;
+            let val = parseFloat(document.getElementById('in_valor_hora').value)||0;
+            const total = Math.round(ht * val); 
+            document.getElementById('in_sueldo').value = "$" + total.toLocaleString('es-CL');
+            updateContrato();
+        }
+        function updateContrato() {
+             ['nombre','rut','nacion','domicilio','profesion','cargo','sueldo','afp','salud','banco','cta'].forEach(k => {
+                 const el = document.getElementById("in_"+k);
+                 const txt = document.querySelectorAll(`#txt_${k}, #sig_${k}`);
+                 if(el && txt) txt.forEach(t => t.innerText = el.value.toUpperCase() || "_________");
+             });
+        }
+        async function guardarContrato() {
+            const n = document.getElementById("in_nombre").value;
+            try { await db.collection("contratos_data_2026").doc(n).set({ rut: document.getElementById('in_rut').value, cargo: document.getElementById('in_cargo').value }); alert("Guardado"); } catch(e) { alert("Error"); }
+        }
+        async function renderConsolidado() {
+            try { await cargarCacheContratos(); } catch(e){}
+            const tbody = document.getElementById("bodyConsolidado"); tbody.innerHTML = "";
+            let todos = [];
+            LISTA_DOCENTES.forEach(n => todos.push({tipo: 'DOCENTE', nombre: n}));
+            LISTA_ASISTENTES.forEach(a => todos.push({tipo: 'ASISTENTE', nombre: a.nombre}));
+            
+            // ESTADÍSTICAS
+            const stats = {};
+            let tDoc=0, tAsis=0, tP=0;
+
+            todos.forEach(p => {
+                const data = CONTRATOS_CACHE_ALL[p.nombre] || {};
+                const cc = data.cc || "SIN CLASIFICAR";
+                const ht = parseFloat(data.ht)||0;
+                
+                if(!stats[cc]) stats[cc] = {c:0, hd:0, ha:0};
+                stats[cc].c++;
+                if(p.tipo==='DOCENTE') stats[cc].hd += ht;
+                else stats[cc].ha += ht;
+                
+                tbody.innerHTML += `<tr><td>${data.rut||'---'}</td><td>${p.nombre}</td><td>${data.cargo||'---'}</td><td>${p.tipo}</td><td>${data.ht||0}</td><td>${data.sueldo||0}</td><td>${data.cc||'---'}</td></tr>`;
+            });
+            
+            // RENDER STATS PANEL
+            const pS = document.getElementById("panelStats");
+            pS.innerHTML = "";
+            Object.keys(stats).forEach(k => {
+                const s = stats[k];
+                tDoc += s.hd; tAsis += s.ha; tP += s.c;
+                pS.innerHTML += `<div class="stat-card">
+                    <div style="font-weight:bold; font-size:11px; border-bottom:1px solid #ccc; margin-bottom:5px; color:#1a237e;">${k}</div>
+                    <div style="display:flex; justify-content:space-between; font-size:10px;"><span>👥 Dotación:</span> <b>${s.c}</b></div>
+                    <div style="display:flex; justify-content:space-between; font-size:10px;"><span>👨‍🏫 H. Doc:</span> <b>${s.hd}</b></div>
+                    <div style="display:flex; justify-content:space-between; font-size:10px;"><span>🛠️ H. Asis:</span> <b>${s.ha}</b></div>
+                    <div style="background:#e3f2fd; margin-top:3px; font-weight:bold; font-size:11px;">Total: ${s.hd+s.ha} hrs</div>
+                </div>`;
+            });
+            // Total Global
+            pS.innerHTML = `<div class="stat-card" style="border:2px solid var(--primary); background:#e8eaf6;">
+                <div style="font-weight:bold; font-size:12px; color:var(--primary); margin-bottom:5px;">RESUMEN TOTAL</div>
+                <div style="font-size:11px;">Funcionarios: <b>${tP}</b></div>
+                <div style="font-size:11px;">Hrs Docentes: <b>${tDoc}</b></div>
+                <div style="font-size:11px;">Hrs Asistentes: <b>${tAsis}</b></div>
+                <div style="font-size:14px; font-weight:bold; margin-top:5px;">TOTAL: ${tDoc + tAsis} HRS</div>
+            </div>` + pS.innerHTML;
+        }
+        function exportarConsolidado() { const wb = XLSX.utils.table_to_book(document.getElementById("tablaConsolidado"), {sheet: "Consolidado"}); XLSX.writeFile(wb, "Consolidado.xlsx"); }
+        function setTipoContrato(t) { 
+            CONTRATO_ACTUAL = t; updateFunciones(); updateContrato(); 
+            document.getElementById('btn_c_doc').className = t==='DOC'?'type-btn active':'type-btn'; 
+            document.getElementById('btn_c_asis').className = t==='ASIS'?'type-btn active':'type-btn';
+            document.getElementById("grp_horas_doc_c").style.display = t==='DOC'?'block':'none';
+            document.getElementById("grp_horas_asis_c").style.display = t==='ASIS'?'block':'none';
+            document.getElementById("modulos_asistentes_c").style.display = t==='ASIS'?'block':'none';
+            document.getElementById("modulos_docentes_c").style.display = t==='DOC'?'block':'none';
+            const legal = document.getElementById("txt_leyes_docente");
+            if(legal) legal.style.display = t==='DOC'?'inline':'none';
+        }
+
+        function renderHorarioProfesorVista() { 
+            const p = document.getElementById("selProfesorView").value;
+            const b = document.getElementById("bodyProfesorVista"); b.innerHTML = "";
+            if(!p) return;
+            const pNorm = normalizarTexto(p); // Búsqueda normalizada
+            
+            BLOQUES.forEach(bl => {
+                if(bl.type) b.innerHTML+=`<tr class="${bl.type==='break'?'break-row':'lunch-row'}"><td colspan="6">${bl.label}</td></tr>`;
+                else {
+                    let r = `<tr><td style="font-weight:bold; background:#f5f5f5;">${bl.time}</td>`;
+                    DIAS.forEach(d => {
+                        let content = "";
+                        Object.keys(GLOBAL_CACHE).forEach(cursoKey => {
+                           const cData = GLOBAL_CACHE[cursoKey];
+                           const cell = cData[`${d.k}_${bl.id}`];
+                           if(cell) {
+                               // Comparación flexible
+                               const chk = (profName) => profName && normalizarTexto(profName).includes(pNorm);
+                               
+                               if(Array.isArray(cell)) { 
+                                   cell.forEach(x => { 
+                                       if(chk(x.prof)) content += `<div style="font-size:10px; font-weight:bold; background:${obtenerColorProfesor(p)}; padding:2px; margin:1px; border:1px solid #999;">${x.asig} (${cursoKey})</div>`; 
+                                   }); 
+                               }
+                               else if(chk(cell.prof)) { 
+                                   content = `<div style="background:${obtenerColorProfesor(p)}; height:100%; display:flex; flex-direction:column; justify-content:center;"><strong>${cell.asig}</strong><span style="font-size:9px">${cursoKey}</span></div>`; 
+                               }
+                           }
+                        });
+                        r += `<td style="padding:0;">${content}</td>`;
+                    });
+                    b.innerHTML+= r + `</tr>`;
+                }
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
