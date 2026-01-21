@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SGE 2026 - Sistema Integral (Versión Final Robusta)</title>
+    <title>SGE 2026 - Sistema Integral</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -11,24 +11,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* --- ESTILOS GENERALES --- */
+        /* --- ESTILOS ORIGINALES (MANTENIDOS) --- */
         :root { --primary: #1a237e; --bg: #f4f6f8; --text: #333; }
         html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
         body { display: flex; }
         
-        /* SIDEBAR */
         .sidebar { width: 280px; background: white; border-right: 1px solid #ccc; display: flex; flex-direction: column; padding: 15px; box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 10; overflow-y: auto; }
         .logo-container { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
         .logo-img { width: 100px; height: auto; border-radius: 5px; }
         .sidebar h2 { color: var(--primary); margin: 10px 0 0 0; font-size: 16px; font-weight: 800; text-align: center; }
         .control-group { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
         .control-group label { font-size: 11px; font-weight: bold; color: #666; display: block; margin-bottom: 4px; }
-        select, input { width: 100%; padding: 6px; border: 1px solid #999; border-radius: 4px; font-weight: bold; font-size: 12px; box-sizing: border-box; }
+        select, input, textarea { width: 100%; padding: 6px; border: 1px solid #999; border-radius: 4px; font-weight: bold; font-size: 12px; box-sizing: border-box; }
         .credits { margin-top: auto; text-align: center; padding-top: 15px; border-top: 1px solid #eee; }
         .credits img { width: 100px; opacity: 0.9; margin-bottom: 5px; }
         .credits p { font-size: 10px; color: #999; margin: 0; }
 
-        /* AREA PRINCIPAL */
         .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .top-tabs { display: flex; background: white; border-bottom: 1px solid #ccc; padding: 0 20px; flex-shrink: 0; }
         .tab-btn { padding: 10px 15px; border: none; background: transparent; cursor: pointer; font-weight: bold; color: #666; border-bottom: 3px solid transparent; font-size: 12px; transition: 0.2s; }
@@ -46,7 +44,6 @@
         .btn-excel { background: #1b5e20; }
         .btn-add { background: #0277bd; }
 
-        /* TABLAS Y DRAG */
         table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); table-layout: fixed; }
         th, td { border: 1px solid #ccc; padding: 4px; text-align: center; vertical-align: middle; font-size: 11px; color: #333; }
         th { background: var(--primary); color: white; text-transform: uppercase; height: 25px; font-size: 10px; }
@@ -62,12 +59,13 @@
         .btn-remove-cell { position:absolute; top:0; right:0; background:#c62828; color:white; width:12px; height:12px; line-height:10px; font-size:10px; cursor:pointer; display:none; }
         .assigned-cell:hover .btn-remove-cell { display:block; }
 
-        /* NOMINA, ADMIN Y CONSOLIDADO */
         .nomina-list { list-style: none; padding: 0; }
         .nomina-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; font-size: 12px; }
         .nomina-actions { display: flex; gap: 5px; }
         .btn-icon { border: none; background: transparent; cursor: pointer; font-size: 14px; opacity: 0.6; padding: 4px; border-radius: 4px; transition:0.2s; }
         .btn-icon:hover { background: #eee; opacity: 1; transform: scale(1.1); }
+        .btn-icon.del:hover { color: #d32f2f; background: #ffebee; }
+        .btn-icon.edit:hover { color: #1976d2; background: #e3f2fd; }
         
         .admin-panel { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .inp-time { border: 1px solid #ccc; padding: 4px; width: 80px; text-align: center; border-radius: 3px; }
@@ -75,24 +73,19 @@
         .calc-imputable { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
         .calc-deductible { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
         
-        /* ESTADÍSTICAS CONSOLIDADO */
         .stats-panel { margin-top: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; border-top: 4px solid var(--primary); }
         .stat-card { background: #fafafa; padding: 12px; border-radius: 6px; text-align: center; border: 1px solid #eee; display: flex; flex-direction: column; gap: 5px; }
         
-        /* CONTRATOS */
         .contract-workspace { display: flex; height: 100%; gap: 20px; }
-        .contract-controls { width: 450px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-y: auto; display:flex; flex-direction:column; gap:10px;}
+        .contract-controls { width: 420px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-y: auto; display:flex; flex-direction:column; gap:10px;}
         .contract-preview { flex: 1; background: #525659; padding: 20px; border-radius: 8px; overflow-y: auto; display: flex; justify-content: center; }
         .c-form-group label { display: block; font-size: 11px; font-weight: bold; color: #555; margin-bottom: 2px; }
         .c-section-title { background: #eee; padding: 5px; font-size: 11px; font-weight: bold; margin-top: 10px; border-left: 3px solid var(--primary); }
         .type-selector { display: flex; gap: 5px; background: #e3f2fd; padding: 5px; border-radius: 6px; }
         .type-btn { flex: 1; padding: 8px; border: 1px solid #90caf9; background: white; cursor: pointer; font-weight: bold; color: #1565c0; font-size: 11px; }
         .type-btn.active { background: #1565c0; color: white; }
-        
-        /* GRID DE HORAS DETALLADO */
-        .h-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px; background: white; border-radius: 4px; border: 1px solid #fbc02d; }
-        .h-item label { font-size: 10px; margin-bottom: 2px; color:#555; display: block; font-weight: 600; }
-        .h-item input { width: 100%; border: 1px solid #ccc; font-size: 11px; padding: 4px; }
+        .h-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .h-item label { font-size: 9px; margin-bottom: 1px; color:#777; }
 
         .paper { width: 21.59cm; min-height: 27.94cm; background: white; padding: 2.5cm 3cm; box-shadow: 0 0 15px rgba(0,0,0,0.5); font-family: 'Arial', sans-serif; font-size: 11pt; line-height: 1.35 !important; color: black; box-sizing: border-box; }
         .c-header-corp { text-align: center; font-weight: bold; margin-bottom: 20px; font-size: 8pt; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 10px; }
@@ -110,15 +103,18 @@
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* IMPRESIÓN ROBUSTA */
+        /* --- IMPRESIÓN ROBUSTA CORREGIDA (VERSIÓN FINAL) --- */
         @media print {
+            /* 1. FORZAR COLORES */
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            
             body, html { height: auto !important; overflow: visible !important; background: white !important; color: black !important; margin: 0 !important; }
             .sidebar, .top-tabs, .header-actions, .contract-controls, .nomina-container, .btn, .stats-panel, .btn-remove-cell { display: none !important; }
             .main-area { position: static !important; overflow: visible !important; display: block !important; padding: 0 !important; margin: 0 !important; }
             .tab-content { display: none !important; }
             #print-report-container { display: block !important; position: absolute; top: 0; left: 0; width: 100%; z-index: 9999; background: white; }
             
+            /* CONTRATOS */
             #print-report-container .paper {
                 box-shadow: none !important; margin: 0 !important; width: 100% !important;
                 padding: 2.5cm 2.5cm 2.5cm 3cm !important;
@@ -129,6 +125,7 @@
             #print-report-container .signatures-contract { margin-top: 60px !important; page-break-inside: avoid !important; }
             #print-report-container .sign-box { font-size: 11pt !important; padding-top: 10px !important; width: 48% !important; }
 
+            /* HORARIOS (1 PLANA FIJA) */
             .fit-one-page { 
                 width: 100%; height: 98vh; 
                 display: flex; flex-direction: column; justify-content: flex-start;
@@ -139,9 +136,11 @@
             .fit-one-page.admin { zoom: 0.85; }
 
             .rh-logo img { max-height: 45px; width: auto; }
+            
             .table-print { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 10px; }
             .table-print th { background-color: var(--primary) !important; color: white !important; padding: 3px; }
             .table-print td { border: 1px solid #333; padding: 2px; text-align: center; }
+            
             .report-header { display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); margin-bottom: 10px; padding-bottom: 5px; }
             .sabana-container { zoom: 60%; page-break-after: always; padding: 1cm; }
         }
@@ -154,7 +153,7 @@
 
     <div class="sidebar">
         <div class="logo-container">
-            <img src="logo.jpg" alt="Logo Escuela" class="logo-img" onerror="this.src='https://via.placeholder.com/100?text=LOGO'">
+            <img src="logo.jpg" alt="Logo Escuela" class="logo-img">
             <h2>SGE 2026</h2>
         </div>
         <div class="control-group">
@@ -177,7 +176,7 @@
         <div style="font-size:10px; color:#666; margin-bottom:5px; font-weight:bold;">3. ASIGNATURAS:</div>
         <div id="listaAsignaturas" class="asignaturas-list"></div>
         <div class="credits">
-            <img src="profeale.jpg" alt="ProfeAle" onerror="this.style.display='none'">
+            <img src="profeale.jpg" alt="ProfeAle">
             <p>Desarrollado con ❤️ por ProfeAle</p>
         </div>
     </div>
@@ -286,45 +285,44 @@
                     <div class="c-form-group"><label>Domicilio</label><input type="text" id="in_domicilio" oninput="updateContrato()"></div>
                     <div class="c-form-group"><label>Estado Civil</label><select id="in_civil" onchange="updateContrato()"><option value="SOLTERO">Soltero/a</option><option value="CASADO">Casado/a</option><option value="VIUDO">Viudo/a</option><option value="DIVORCIADO">Divorciado/a</option></select></div>
                     <div class="c-form-group"><label>Fecha Nacimiento</label><input type="date" id="in_nacim" oninput="updateContrato()"></div>
-                    <div class="c-form-group"><label>Profesión</label><input type="text" id="in_profesion" oninput="updateContrato()"></div>
+                    <div class="c-form-group"><label>Profesión</label><input type="text" id="in_profesion" oninput="updateContrato()" placeholder="Dejar vacío si no aplica"></div>
                     <div class="c-section-title">CONTRATO</div>
                     <div class="c-form-group"><label>Cargo</label><input type="text" id="in_cargo" oninput="updateContrato()"></div>
-                    <div id="modulos_docentes_c" class="modules-container">
-                        <label class="check-group"><input type="checkbox" id="chk_jefe_esp" onchange="updateFunciones()"> Mostrar Func. Jefatura Esp.</label>
-                        <label class="check-group"><input type="checkbox" id="chk_coord_pie" onchange="updateFunciones()"> Mostrar Func. Coord. PIE</label>
+                    
+                    <div id="grp_horas_doc_c">
+                        <div style="margin-bottom:5px; border-bottom:1px solid #bbdefb; padding-bottom:5px;">
+                            <label style="font-size:11px; font-weight:bold;">Horas Totales Contrato:</label>
+                            <input type="number" id="in_ht" style="font-weight:bold; color:#0d47a1;" oninput="calcSueldo()">
+                        </div>
+                        
+                        <label style="font-size:10px; color:#1a237e; font-weight:bold; margin-top:5px;">Desglose Horario (Docente):</label>
+                        <div class="h-grid" style="grid-template-columns: 1fr 1fr; margin-bottom:5px;">
+                            <div class="h-item"><label>Horas Aula</label><input type="number" id="in_h_aula" oninput="updateContrato()"></div>
+                            <div class="h-item"><label>Prep. Enseñanza</label><input type="number" id="in_h_prep" oninput="updateContrato()"></div>
+                            <div class="h-item"><label>Horas PIE</label><input type="number" id="in_h_pie" oninput="updateContrato()"></div>
+                            <div class="h-item"><label>Profesor Jefe</label><input type="number" id="in_h_jefe" oninput="updateContrato()"></div>
+                            <div class="h-item"><label>Jefe Especialidad</label><input type="number" id="in_h_esp" oninput="updateContrato()"></div>
+                            <div class="h-item"><label>Superv. Prácticas</label><input type="number" id="in_h_prac" oninput="updateContrato()"></div>
+                            <div class="h-item"><label>Talleres</label><input type="number" id="in_h_taller" oninput="updateContrato()"></div>
+                        </div>
+                        <div style="display:flex; gap:5px; margin-bottom:10px;">
+                            <div style="flex:1"><label style="font-size:9px;">Otras (Hrs)</label><input type="number" id="in_h_otra" oninput="updateContrato()"></div>
+                            <div style="flex:2"><label style="font-size:9px;">Descrip. Otras</label><input type="text" id="in_h_otra_desc" placeholder="Ej: Coord. Enlace" oninput="updateContrato()"></div>
+                        </div>
+
+                        <div class="c-form-group">
+                            <label style="color:#c62828;">Agregar función extra:</label>
+                            <textarea id="in_func_extra" oninput="updateFunciones()" placeholder="Pegue aquí el texto con viñetas (•). El sistema lo ordenará automáticamente." style="width:100%; border:1px solid #999; border-radius:4px; padding:5px; font-family:inherit; font-size:11px; height:80px;"></textarea>
+                        </div>
                     </div>
-                    <div id="modulos_asistentes_c" class="c-form-group" style="display:none; background:#fff3e0; padding:5px;"><label style="color:#e65100;">Cargo:</label><select id="sel_cargo_asis_c" onchange="updateFunciones()"><option value="GENERICO">Manual</option><option value="NOCHERO">Nochero</option><option value="INSPECTOR">Inspector</option><option value="AUXILIAR">Auxiliar</option><option value="PSICOLOGO">Psicólogo</option><option value="SOCIAL">A. Social</option><option value="BIBLIOTECA">Biblioteca</option><option value="TECNICO">Técnico</option><option value="MONITOR">Monitor</option><option value="APOYO">Apoyo</option><option value="PASTORAL">Pastoral</option></select></div>
+
+                    <div id="modulos_asistentes_c" class="c-form-group" style="display:none; background:#fff3e0; padding:5px;"><label style="color:#e65100;">Cargo:</label><select id="sel_cargo_asis_c" onchange="updateFunciones()"><option value="GENERICO">Manual</option><option value="NOCHERO">Nochero</option><option value="INSPECTOR">Inspector</option><option value="AUXILIAR">Auxiliar</option><option value="PSICOLOGO">Psicólogo</option><option value="SOCIAL">A. Social</option><option value="BIBLIOTECA">Biblioteca</option><option value="TECNICO">Técnico</option><option value="MONITOR">Monitor</option><option value="APOYO">Apoyo</option><option value="PASTORAL">Pastoral</option></select>
+                        <div id="grp_horas_asis_c" style="margin-top:5px;"><label style="font-size:11px;">Total Horas Semanales:</label><input type="number" id="in_h_simple" oninput="calcSueldo()"></div>
+                    </div>
+                    
                     <div style="display:flex; gap:5px; margin-top:10px;"><div class="c-form-group" style="flex:1"><label>Modalidad</label><select id="in_tipo_contrato" onchange="updateContrato()"><option value="PLAZO FIJO">Plazo Fijo</option><option value="INDEFINIDO">Indefinido</option><option value="REEMPLAZO LICENCIA MÉDICA">Reemplazo</option><option value="POR PROYECTO">Proyecto</option></select></div><div class="c-form-group" style="flex:1"><label>CC</label><select id="in_cc" onchange="updateContrato()"><option value="SUBVENCIÓN GENERAL">Gral</option><option value="SUBVENCIÓN PIE">PIE</option><option value="SUBVENCIÓN SEP">SEP</option></select></div></div>
                     
-                    <div style="background:#e3f2fd; padding:10px; border-radius:4px; margin-bottom:10px;">
-                        <div id="grp_horas_doc_c">
-                            <div style="margin-bottom:10px; border-bottom:2px solid #1a237e; padding-bottom:5px;">
-                                <label style="font-size:12px; font-weight:bold; color:#1a237e;">TOTAL HORAS CONTRATO:</label>
-                                <input type="number" id="in_ht" style="font-size:14px; background:#e8eaf6; font-weight:bold;" oninput="calcSueldo()">
-                            </div>
-                            
-                            <div style="background:#fffde7; padding:8px; border:1px solid #fbc02d; border-radius:4px;">
-                                <label style="font-size:10px; font-weight:bold; color:#ef6c00; margin-bottom:5px; display:block;">👇 DESGLOSE HORARIO DETALLADO:</label>
-                                <div class="h-grid">
-                                    <div class="h-item"><label>Aula</label><input type="number" id="in_ha" oninput="updateContrato()"></div>
-                                    <div class="h-item"><label>Prep. Enseñanza</label><input type="number" id="in_hp" oninput="updateContrato()"></div>
-                                    <div class="h-item"><label>Trab. Colab. PIE</label><input type="number" id="in_h_pie" oninput="updateContrato()"></div>
-                                    <div class="h-item"><label>Profesor Jefe</label><input type="number" id="in_h_jefe" oninput="updateContrato()"></div>
-                                    <div class="h-item"><label>Talleres</label><input type="number" id="in_h_taller" oninput="updateContrato()"></div>
-                                    <div class="h-item"><label>Jefe Especialidad</label><input type="number" id="in_h_jesp" oninput="updateContrato()"></div>
-                                    <div class="h-item"><label>Supervisión Práctica</label><input type="number" id="in_h_prac" oninput="updateContrato()"></div>
-                                    <div class="h-item"><label>Otros</label><input type="number" id="in_h_otro" oninput="updateContrato()"></div>
-                                </div>
-                                <div style="margin-top:5px;">
-                                    <label style="font-size:9px; color:#555;">Detalle "Otros" (Indicar cuál):</label>
-                                    <input type="text" id="in_h_otro_desc" placeholder="Ej: Coordinador UTP / Enlace" oninput="updateContrato()" style="width:100%; border:1px solid #ccc; font-size:10px;">
-                                </div>
-                            </div>
-                        </div>
-                        <div id="grp_horas_asis_c" style="display:none;"><label style="font-size:10px">Total Horas Semanales</label><input type="number" id="in_h_simple" oninput="calcSueldo()"></div>
-                    </div>
-                    
-                    <div style="display:flex; gap:5px; background:#e8f5e9; padding:10px; border-radius:4px;"><div style="flex:1"><label style="font-size:10px">Valor Hora</label><input type="number" id="in_valor_hora" oninput="calcSueldo()"></div><div style="flex:1"><label style="font-size:10px">Sueldo Base</label><input type="text" id="in_sueldo" readonly></div></div>
+                    <div style="display:flex; gap:5px; background:#e8f5e9; padding:10px; border-radius:4px;"><div style="flex:1" id="div_vh"><label style="font-size:10px">Valor Hora</label><input type="number" id="in_valor_hora" oninput="calcSueldo()"></div><div style="flex:1"><label style="font-size:10px">Sueldo Base</label><input type="text" id="in_sueldo"></div></div>
                     <div style="display:flex; gap:5px; margin-top:10px;"><div class="c-form-group" style="flex:1"><label>Inicio</label><input type="date" id="in_inicio" oninput="updateContrato()"></div><div class="c-form-group" style="flex:1"><label>Término</label><input type="date" id="in_fin" oninput="updateContrato()"></div></div>
                     <div class="c-section-title">PAGO</div>
                     <div style="display:flex; gap:5px;"><div class="c-form-group" style="flex:1"><label>AFP</label><input type="text" id="in_afp" oninput="updateContrato()"></div><div class="c-form-group" style="flex:1"><label>Salud</label><input type="text" id="in_salud" oninput="updateContrato()"></div></div>
@@ -336,18 +334,23 @@
                         <div class="c-title">CONTRATO DE TRABAJO <span id="txt_tipo_titulo">DOCENTE</span>, <span id="txt_modalidad_titulo">PLAZO FIJO</span></div>
                         <div class="c-subtitle-meta">CC: <span id="txt_cc_display">SUBVENCIÓN GENERAL</span></div>
                         <div class="c-p">En Villa Alegre, a <span class="c-bold" id="txt_fecha_hoy"></span>, entre la <span class="c-bold">Corporación Educacional Veloz Educa</span>, RUT N° 65.114.932-0, Representado por el Sr. <span class="c-bold">MIGUEL ANTONIO DIAZ JARA</span>, Rut. 15.114.472-5 en su calidad de Representante Legal, ambos domiciliados en Loncomilla s/n, comuna de Villa Alegre, Región del Maule, en adelante "El Empleador" y <span id="txt_trato">don</span> <span class="c-bold" id="txt_nombre">___________________</span>, de nacionalidad <span id="txt_nacion">CHILENA</span>, Cédula de Identidad N° <span class="c-bold" id="txt_rut">___________</span>, <span id="txt_nacido_label">nacido</span> el <span id="txt_nacim">___________</span>, estado civil <span id="txt_civil">SOLTERO</span>.</div>
-                        <div class="c-p"><span id="txt_domiciliado_label">Domiciliado</span> en <span id="txt_domicilio">________________________</span>, de profesión <span id="txt_profesion">________________</span> en adelante <span class="ref_trabajador">"El Trabajador"</span>, se ha convenido el siguiente Contrato de Trabajo de acuerdo a las normas contenidas en <span id="txt_marco_legal">el Título IV del DFL N° 1 de 1996, Estatuto Docente y supletoriamente por el Código del Trabajo</span>:</div>
+                        <div class="c-p"><span id="txt_domiciliado_label">Domiciliado</span> en <span id="txt_domicilio">________________________</span><span id="span_prof_wrapper">, de profesión <span id="txt_profesion">________________</span></span> en adelante <span class="ref_trabajador">"El Trabajador"</span>, se ha convenido el siguiente Contrato de Trabajo de acuerdo a las normas contenidas en <span id="txt_marco_legal">el Título IV del DFL N° 1 de 1996, Estatuto Docente y supletoriamente por el Código del Trabajo</span>:</div>
                         <div class="c-p"><span class="c-clause">PRIMERO:</span> <span class="ref_trabajador">"El Trabajador"</span>, se desempeñará a partir de esta fecha como <span class="c-bold" id="txt_cargo">DOCENTE DE AULA</span>.</div>
                         <div class="c-p"><span class="c-clause">SEGUNDO:</span> El trabajo se efectuará en el establecimiento educacional denominado <span class="c-bold">ESCUELA AGRÍCOLA SAGRADOS CORAZONES</span>, ubicado en el SECTOR LONCOMILLA, comuna de VILLA ALEGRE, y en las actividades educativas que se realicen fuera de este lugar conforme a las instrucciones de la dirección del colegio.</div>
+                        
                         <div class="c-p"><span class="c-clause">TERCERO:</span> La jornada semanal ordinaria de labores de <span class="ref_trabajador_plain">el trabajador</span> tendrá una duración de <span class="c-bold" id="txt_ht">44</span> horas cronológicas<span id="txt_desglose"></span>. Estas horas cronológicas se distribuirán por la Dirección del Establecimiento y una vez conocida por las partes se anexarán firmadas al presente contrato.</div>
+                        
                         <div class="c-p"><span class="c-clause">CUARTO:</span> Se deja constancia que las funciones propias del cargo incluyen:
                         Al mismo tiempo se obliga al trabajador a cumplir las siguientes funciones:
-                        <div id="lista_funciones"></div>Las partes acuerdan que la inobservancia de lo expresado en esta cláusula constituye incumplimiento grave de las obligaciones contractuales.</div>
+                        <div id="lista_funciones" style="margin-top:5px; margin-bottom:10px;"></div>
+                        Las partes acuerdan que la inobservancia de lo expresado en esta cláusula constituye incumplimiento grave de las obligaciones contractuales.</div>
                         
-                        <div class="c-p"><span class="c-clause">QUINTO:</span> “El Empleador'', se compromete a remunerar a <span class="ref_trabajador">''El Trabajador''</span>, con la suma de <span class="c-bold" id="txt_sueldo">_______</span>.- mensuales por las horas contratadas (<span id="txt_valor_hora_display"></span> por hora). 
+                        <div class="c-p"><span class="c-clause">QUINTO:</span> “El Empleador'', se compromete a remunerar a <span class="ref_trabajador">''El Trabajador''</span>, con la suma de <span class="c-bold" id="txt_sueldo">_______</span>.- mensuales<span id="span_sueldo_detalle"> por las horas contratadas (<span id="txt_valor_hora_display"></span> por hora)</span>. 
                         
                         <span id="txt_leyes_docente" style="display:none;">Esta suma se incrementará con las leyes 19.933 y 19.410, bonificación proporcional, planilla complementaria, ley 20.158, (BRP) y asignaciones que disponga la ley según corresponda o acuerden las partes. En ningún caso la remuneración Total Mensual de <span class="ref_trabajador">"El Trabajador"</span>, podrá ser inferior a la suma de <span class="c-bold" id="txt_sueldo_2"></span>.- mensuales por las <span class="c-bold" id="txt_ht_2"></span> horas cronológicas semanales de docencia contratadas.</span> 
                         
+                        <span id="txt_leyes_asistente" style="display:none;">Además “la trabajadora”, percibirá de conformidad a las Leyes N° 19.464, 20.244 una Asignación para el personal Asistente de la Educación, en el monto que le corresponde y asignaciones que disponga la ley según corresponda o acuerden las partes.</span>
+
                         La remuneración se pagará el último día hábil de cada mes. <strong>Las partes acuerdan que la jornada de trabajo no dará lugar a pago de horas extraordinarias, salvo acuerdo previo y por escrito entre trabajador y empleador.</strong></div>
                         
                         <div class="c-p"><span class="c-clause">SEXTO:</span> A petición de <span class="ref_trabajador">"El Trabajador"</span>, sus cotizaciones previsionales y de salud serán depositadas en <span class="c-bold">AFP <span id="txt_afp">___</span></span> y <span class="c-bold"><span id="txt_salud">___</span></span>. Sus remuneraciones serán depositadas en <span class="c-bold"><span id="txt_banco">___</span></span>, Cuenta N° <span class="c-bold" id="txt_cta">___</span>.</div>
@@ -414,16 +417,8 @@
 
     <script>
         const firebaseConfig = { apiKey: "AIzaSyCbZNKv2Dnk4pmrxcyUAdrYxiAW2Yo9rTE", authDomain: "libroclases-sscc.firebaseapp.com", projectId: "libroclases-sscc", storageBucket: "libroclases-sscc.firebasestorage.app", appId: "1:556632878686:web:528ae162b5be19f21a0ecf" };
-        
-        // WRAPPER DE SEGURIDAD PARA FIREBASE
-        let db;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-        } catch(e) {
-            console.error("Error inicializando Firebase:", e);
-            alert("AVISO: No se pudo conectar a la base de datos. El sistema funcionará en modo local pero los cambios no se guardarán en la nube.");
-        }
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         // --- DEFINICIONES INICIALES ---
         let GLOBAL_CACHE = {}; 
@@ -449,7 +444,32 @@
         ];
 
         const FUNCIONES_DB = { 
-            DOCENTE: `<span class="c-subtitle">De las actividades de aula:</span><ul class="c-list"><li>Cumplir los horarios de clases...</li><li>Planificar clases y evaluar...</li><li>Mantener orden y disciplina...</li><li>Completar libro de clases...</li></ul><span class="c-subtitle">De las actividades administrativas:</span><ul class="c-list"><li>Asistir a consejos y reuniones...</li><li>Atención de apoderados...</li><li>Cuidado del material...</li></ul>`,
+            DOCENTE: `
+            <span class="c-subtitle c-bold">De las actividades de aula:</span>
+            <ul class="c-list">
+                <li>Cumplir los horarios de clases, y toma de cursos.</li>
+                <li>Responsabilizarse de las actividades de los alumnos en su horario de clases.</li>
+                <li>Planificar clases, preparar material, desarrollar y evaluar sistemáticamente el proceso de aprendizajes en las asignaturas que le corresponden aplicando diversas didácticas para el aprendizaje.</li>
+                <li>Atender la diversidad de estudiantes según sus capacidades y habilidades personales.</li>
+                <li>Mantener el orden y la disciplina dentro del aula.</li>
+                <li>Velar por la sana convivencia y compañerismo del grupo curso.</li>
+                <li>Mantener al día firmas y contenidos de los libros de clases y otros documentos administrativos, registrando oportunamente la información solicitada, tal cual lo exige la circular N°1 de la Superintendencia de Educación.</li>
+                <li>Resguardar la presentación de los libros de clases manteniéndolos actualizados, limpios, ordenados y sin borrones.</li>
+                <li>Cumplir con los horarios asignados para colaborativos, preparación de material, atención de apoderados y estudiantes entre otros.</li>
+                <li>Y todos los considerados en el art 73 del reglamento de higiene y seguridad del establecimiento.</li>
+            </ul>
+            <span class="c-subtitle c-bold">De las actividades administrativas:</span>
+            <ul class="c-list">
+                <li>Asistir y registrar colaboraciones correspondientes.</li>
+                <li>Cumplir con los horarios de ingreso y salida de la jornada según corresponda, registrando los datos en los sistemas dispuestos para ello.</li>
+                <li>Mantener comunicación oportuna y periódica con apoderados y padres de familia dando a conocer los desarrollos del alumno en su proceso escolar.</li>
+                <li>Velar por los bienes del liceo y responsabilizarse por los que se le asignan.</li>
+                <li>Asistir y participar en los consejos técnicos y administrativos.</li>
+                <li>Participar de actividades extra curriculares dentro de los horarios de la escuela.</li>
+                <li>Mantener la sana convivencia y relaciones cordiales con sus pares y superiores.</li>
+                <li>Resguardar la confidencialidad de la información que por su cargo conoce.</li>
+                <li>Mantener una presentación personal acorde con la función que desempeña (semi-formal).</li>
+            </ul>`,
             NOCHERO: `<ul class="c-list"><li>Cuidar instalaciones y máquinas.</li><li>Informar novedades.</li><li>Cumplir turnos nocturnos.</li></ul>`, 
             INSPECTOR: `<ul class="c-list"><li>Orientar comportamiento estudiantil.</li><li>Controlar accesos.</li><li>Supervisar recreos.</li></ul>`, 
             AUXILIAR: `<ul class="c-list"><li>Realizar aseo y mantención de dependencias.</li><li>Apoyar en movimiento de mobiliario.</li></ul>`, 
@@ -581,17 +601,54 @@
 
         function updateFunciones() {
             const el = document.getElementById("lista_funciones");
+            /* Ahora buscamos un textarea, no un input, pero el ID es el mismo */
+            const extraTxt = document.getElementById("in_func_extra") ? document.getElementById("in_func_extra").value : "";
+            
             if (!el) return;
-            if(CONTRATO_ACTUAL==='DOC') {
-                let h = FUNCIONES_DB.DOCENTE;
-                if(document.getElementById("chk_jefe_esp").checked) h += EXTRAS.JEFE;
-                if(document.getElementById("chk_coord_pie").checked) h += EXTRAS.PIE;
-                el.innerHTML = h;
+            
+            let htmlContent = "";
+            
+            // 1. Cargar funciones base según sea Docente o Asistente
+            if(typeof CONTRATO_ACTUAL !== 'undefined' && CONTRATO_ACTUAL === 'DOC') {
+                htmlContent = FUNCIONES_DB.DOCENTE;
+                // Agregamos los extras de los checkbox si están marcados
+                if(document.getElementById("chk_jefe_esp") && document.getElementById("chk_jefe_esp").checked) htmlContent += EXTRAS.JEFE;
+                if(document.getElementById("chk_coord_pie") && document.getElementById("chk_coord_pie").checked) htmlContent += EXTRAS.PIE;
             } else {
                 const sel = document.getElementById("sel_cargo_asis_c");
                 const c = sel ? sel.value : "AUXILIAR";
-                el.innerHTML = FUNCIONES_DB[c] || FUNCIONES_DB.AUXILIAR;
+                htmlContent = FUNCIONES_DB[c] || FUNCIONES_DB.AUXILIAR;
             }
+
+            // 2. Procesar el texto pegado para convertirlo en lista (CORRECCIÓN VISUAL)
+            if (extraTxt.trim() !== "") {
+                // Detectamos si el texto usa viñetas (•, ·, -) para separar las frases
+                let items = extraTxt.split(/[•·-]/);
+                
+                // Filtramos elementos vacíos
+                items = items.filter(item => item.trim().length > 2);
+
+                if (items.length > 0) {
+                    // Si hay puntos, creamos una lista bonita <ul>
+                    htmlContent += `<div style="margin-top:10px; margin-bottom:5px; font-weight:bold; font-style:italic;">Funciones Específicas del Cargo:</div>`;
+                    htmlContent += `<ul class="c-list">`;
+                    items.forEach(item => {
+                        // Limpiamos caracteres raros al inicio
+                        let textoLimpio = item.trim().replace(/^[:;]+/, '').trim();
+                        // Ponemos mayúscula inicial
+                        if(textoLimpio) {
+                            textoLimpio = textoLimpio.charAt(0).toUpperCase() + textoLimpio.slice(1);
+                            htmlContent += `<li>${textoLimpio}</li>`;
+                        }
+                    });
+                    htmlContent += `</ul>`;
+                } else {
+                    // Si es un párrafo normal sin puntos, lo ponemos tal cual (sin negrita forzada)
+                    htmlContent += `<div class="c-p" style="margin-top:10px;">${extraTxt}</div>`;
+                }
+            }
+
+            el.innerHTML = htmlContent;
         }
         
         // --- FUNCIONES ADMIN ---
@@ -693,10 +750,10 @@
             
             ADMIN_DATA[n] = {contrato, horario};
             try {
-                if(db) await db.collection("admin_horarios_2026").doc(n).set(ADMIN_DATA[n]);
+                await db.collection("admin_horarios_2026").doc(n).set(ADMIN_DATA[n]);
                 alert("Horario Administrativo Guardado");
             } catch(e) {
-                alert("Error al guardar (revise conexión)");
+                alert("Error al guardar");
             }
         }
 
@@ -755,23 +812,16 @@
         }
 
         async function init() {
-            // FORZAR QUITAR LOADER DESPUÉS DE 3 SEGUNDOS POR SI ACASO
-            setTimeout(() => {
-                document.getElementById("loader").style.display = "none";
-            }, 3000);
-
             try {
-                if(db) {
-                    const configDoc = await db.collection("horarios_2026").doc("_config").get();
-                    if(configDoc.exists) {
-                        const d = configDoc.data();
-                        if(d.docentes && d.docentes.length > 0) LISTA_DOCENTES = d.docentes;
-                        if(d.asistentes && d.asistentes.length > 0) LISTA_ASISTENTES = d.asistentes;
-                    }
-                    await cargarCacheGlobal(); 
-                    await cargarAdminData();
+                const configDoc = await db.collection("horarios_2026").doc("_config").get();
+                if(configDoc.exists) {
+                    const d = configDoc.data();
+                    if(d.docentes && d.docentes.length > 0) LISTA_DOCENTES = d.docentes;
+                    if(d.asistentes && d.asistentes.length > 0) LISTA_ASISTENTES = d.asistentes;
                 }
-            } catch (e) { console.log("Modo offline/local activado o error en carga inicial"); }
+                await cargarCacheGlobal(); 
+                await cargarAdminData();
+            } catch (e) { console.log("Modo offline/local activado"); }
             
             construirTablaEditor(); 
             cargarHorarioCurso(); 
@@ -781,16 +831,14 @@
             setTipoContrato('DOC');
             
             document.getElementById('txt_fecha_hoy').innerText = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-            
-            // Asegurar que el loader se va
             document.getElementById("loader").style.display = "none";
         }
 
         // --- FIREBASE ---
-        async function cargarCacheGlobal() { try { if(db){ const s = await db.collection("horarios_2026").get(); GLOBAL_CACHE = {}; s.forEach(d => { if(d.id!=="_config") GLOBAL_CACHE[d.id]=d.data(); }); } } catch(e){} }
-        async function cargarAdminData() { try { if(db){ const s = await db.collection("admin_horarios_2026").get(); ADMIN_DATA = {}; s.forEach(d => ADMIN_DATA[d.id]=d.data()); } } catch(e){} }
-        async function cargarCacheContratos() { try { if(db){ const s = await db.collection("contratos_data_2026").get(); CONTRATOS_CACHE_ALL = {}; s.forEach(d => { CONTRATOS_CACHE_ALL[d.id] = d.data(); }); } } catch(e){} }
-        async function guardarConfig() { try { if(db) await db.collection("horarios_2026").doc("_config").set({docentes:LISTA_DOCENTES, asistentes:LISTA_ASISTENTES}, {merge:true}); } catch(e){} }
+        async function cargarCacheGlobal() { try { const s = await db.collection("horarios_2026").get(); GLOBAL_CACHE = {}; s.forEach(d => { if(d.id!=="_config") GLOBAL_CACHE[d.id]=d.data(); }); } catch(e){} }
+        async function cargarAdminData() { try { const s = await db.collection("admin_horarios_2026").get(); ADMIN_DATA = {}; s.forEach(d => ADMIN_DATA[d.id]=d.data()); } catch(e){} }
+        async function cargarCacheContratos() { try { const s = await db.collection("contratos_data_2026").get(); CONTRATOS_CACHE_ALL = {}; s.forEach(d => { CONTRATOS_CACHE_ALL[d.id] = d.data(); }); } catch(e){} }
+        async function guardarConfig() { try { await db.collection("horarios_2026").doc("_config").set({docentes:LISTA_DOCENTES, asistentes:LISTA_ASISTENTES}, {merge:true}); } catch(e){} }
         
         function normalizarTexto(txt) { if(!txt) return ""; return txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim(); }
         function obtenerColorProfesor(n) { if(!n) return "#fff"; const s=normalizarTexto(n); let h=0; for(let i=0;i<s.length;i++) h=s.charCodeAt(i)+((h<<5)-h); return `hsl(${Math.abs(h)%360}, 85%, 88%)`; }
@@ -810,7 +858,7 @@
         async function cargarHorarioCurso() {
             const c = document.getElementById("selCurso").value; estadoAsignaturas = JSON.parse(JSON.stringify(DATA_CURSOS[c]));
             let data = {};
-            try { if(db){ const doc = await db.collection("horarios_2026").doc(c).get(); data = doc.exists ? doc.data() : {}; } } catch(e){}
+            try { const doc = await db.collection("horarios_2026").doc(c).get(); data = doc.exists ? doc.data() : {}; } catch(e){}
             document.querySelectorAll(".drop-zone").forEach(z => z.innerHTML="");
             Object.keys(data).forEach(k => {
                 const celda = document.getElementById(k);
@@ -842,7 +890,7 @@
                         const oldA = z.innerText.split("\n")[0]; const oldP = z.querySelector(".prof-badge")?.innerText||""; nuevo = [{asig:oldA, prof:oldP}, nuevo]; z.innerHTML = renderSplit(nuevo);
                     } else { z.innerHTML = renderCell(d.n, d.p); }
                     restarH(d.n); renderListaAsig();
-                    try { if(db) await db.collection("horarios_2026").doc(document.getElementById("selCurso").value).set({[z.id]:nuevo}, {merge:true}); } catch(e){}
+                    try { await db.collection("horarios_2026").doc(document.getElementById("selCurso").value).set({[z.id]:nuevo}, {merge:true}); } catch(e){}
                 }
             });
         }
@@ -968,132 +1016,275 @@
             const nombre = document.getElementById("sel_funcionario_contrato").value;
             if(!nombre) return;
             document.getElementById("in_nombre").value = nombre;
+
             try {
-                if(db) {
-                    const doc = await db.collection("contratos_data_2026").doc(nombre).get();
-                    if(doc.exists) {
-                        const d = doc.data();
-                        // Cargar TODO
-                        const setV = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ""; };
-                        const setC = (id, val) => { const el = document.getElementById(id); if(el) el.checked = val || false; };
+                const doc = await db.collection("contratos_data_2026").doc(nombre).get();
+                if(doc.exists) {
+                    const d = doc.data();
+                    
+                    // Mapeo completo de campos DB -> INPUTS
+                    // Se usa || "" para evitar 'undefined' en los campos
+                    document.getElementById('in_rut').value = d.rut || "";
+                    document.getElementById('in_genero').value = d.genero || "M";
+                    document.getElementById('in_nacion').value = d.nacion || "CHILENA";
+                    document.getElementById('in_domicilio').value = d.domicilio || "";
+                    document.getElementById('in_civil').value = d.civil || "SOLTERO";
+                    document.getElementById('in_nacim').value = d.nacim || "";
+                    document.getElementById('in_profesion').value = d.profesion || "";
+                    document.getElementById('in_cargo').value = d.cargo || "";
+                    document.getElementById('in_tipo_contrato').value = d.tipo_contrato || "PLAZO FIJO";
+                    document.getElementById('in_cc').value = d.cc || "SUBVENCIÓN GENERAL";
+                    document.getElementById('in_ht').value = d.ht || "";
+                    document.getElementById('in_valor_hora').value = d.valor_hora || "";
+                    document.getElementById('in_inicio').value = d.inicio || "";
+                    document.getElementById('in_fin').value = d.fin || "";
+                    document.getElementById('in_afp').value = d.afp || "";
+                    document.getElementById('in_salud').value = d.salud || "";
+                    document.getElementById('in_banco').value = d.banco || "";
+                    document.getElementById('in_cta').value = d.cta || "";
+                    
+                    // Desglose
+                    document.getElementById('in_h_aula').value = d.h_aula || ""; 
+                    document.getElementById('in_h_prep').value = d.h_prep || "";
+                    document.getElementById('in_h_pie').value = d.h_pie || "";
+                    document.getElementById('in_h_jefe').value = d.h_jefe || "";
+                    document.getElementById('in_h_esp').value = d.h_esp || "";
+                    document.getElementById('in_h_prac').value = d.h_prac || "";
+                    document.getElementById('in_h_taller').value = d.h_taller || "";
+                    document.getElementById('in_h_otra').value = d.h_otra || "";
+                    document.getElementById('in_h_otra_desc').value = d.h_otra_desc || "";
+                    document.getElementById('in_func_extra').value = d.func_extra || "";
+                    
+                    // CARGA DE HORAS ASISTENTE
+                    document.getElementById('in_h_simple').value = d.h_simple || ""; 
 
-                        setV('in_rut', d.rut); setV('in_nacion', d.nacion); setV('in_domicilio', d.domicilio);
-                        setV('in_civil', d.civil); setV('in_nacim', d.nacim); setV('in_profesion', d.profesion);
-                        setV('in_cargo', d.cargo); setV('in_tipo_contrato', d.tipo); setV('in_cc', d.cc);
-                        setV('in_ht', d.ht); setV('in_h_simple', d.h_simple); setV('in_valor_hora', d.valor);
-                        setV('in_inicio', d.inicio); setV('in_fin', d.fin);
-                        setV('in_afp', d.afp); setV('in_salud', d.salud); setV('in_banco', d.banco); setV('in_cta', d.cta);
-                        setV('in_genero', d.genero);
+                    // CARGA DE SUELDO (EVITANDO SOBREESCRIBIR)
+                    if(d.sueldo) document.getElementById('in_sueldo').value = d.sueldo;
 
-                        // Cargar Desglose
-                        setV('in_ha', d.ha); setV('in_hp', d.hp); setV('in_h_pie', d.h_pie);
-                        setV('in_h_jefe', d.h_jefe); setV('in_h_taller', d.h_taller); setV('in_h_jesp', d.h_jesp);
-                        setV('in_h_cpie', d.h_cpie); setV('in_h_prac', d.h_prac); setV('in_h_otro', d.h_otro);
-                        setV('in_h_otro_desc', d.h_otro_desc);
-
-                        setC('chk_jefe_esp', d.jefe_esp); setC('chk_coord_pie', d.coord_pie);
-
+                    // Solo recalculamos automáticamente si es DOCENTE
+                    if(CONTRATO_ACTUAL === 'DOC') {
                         calcSueldo();
                     }
+                    
+                    updateContrato(); 
+                    updateFunciones();
                 }
-            } catch(e) {}
-            updateContrato();
+            } catch(e) { console.log(e); }
         }
+
         function calcSueldo() {
-            let ht = parseFloat(document.getElementById(CONTRATO_ACTUAL==='DOC'?'in_ht':'in_h_simple').value)||0;
-            let val = parseFloat(document.getElementById('in_valor_hora').value)||0;
-            const total = Math.round(ht * val); 
-            document.getElementById('in_sueldo').value = "$" + total.toLocaleString('es-CL');
+            // SOLO CALCULAR SI ES DOCENTE
+            if(CONTRATO_ACTUAL === 'DOC') {
+                let ht = parseFloat(document.getElementById('in_ht').value)||0;
+                let val = parseFloat(document.getElementById('in_valor_hora').value)||0;
+                const total = Math.round(ht * val); 
+                document.getElementById('in_sueldo').value = "$" + total.toLocaleString('es-CL');
+            }
             updateContrato();
         }
+
         function updateContrato() {
-             // Mapeo simple
+             // 1. Actualización básica de campos directos
              ['nombre','rut','nacion','domicilio','profesion','cargo','sueldo','afp','salud','banco','cta'].forEach(k => {
                  const el = document.getElementById("in_"+k);
                  const txt = document.querySelectorAll(`#txt_${k}, #sig_${k}`);
                  if(el && txt) txt.forEach(t => t.innerText = el.value.toUpperCase() || "_________");
              });
-             
-             // Fechas y Genero
-             document.getElementById('txt_inicio').innerText = document.getElementById('in_inicio').value || "_________";
-             document.getElementById('txt_fin').innerText = document.getElementById('in_fin').value || "_________";
-             document.getElementById('txt_nacim').innerText = document.getElementById('in_nacim').value || "_________";
-             
-             const gen = document.getElementById('in_genero').value;
-             document.getElementById('txt_nacido_label').innerText = gen === 'F' ? 'nacida' : 'nacido';
-             document.getElementById('txt_domiciliado_label').innerText = gen === 'F' ? 'Domiciliada' : 'Domiciliado';
-             document.getElementById('txt_trato').innerText = gen === 'F' ? 'doña' : 'don';
 
-             // Desglose de Horas Docente (LOGICA NUEVA)
-             if(CONTRATO_ACTUAL === 'DOC') {
-                 document.getElementById('txt_ht').innerText = document.getElementById('in_ht').value || "44";
-                 
-                 const v = (id) => parseFloat(document.getElementById(id).value) || 0;
-                 let lista = [];
-                 if(v('in_ha') > 0) lista.push(v('in_ha') + " horas de Docencia de Aula");
-                 if(v('in_hp') > 0) lista.push(v('in_hp') + " horas de Preparación de la Enseñanza");
-                 if(v('in_h_pie') > 0) lista.push(v('in_h_pie') + " horas de Trabajo Colaborativo PIE");
-                 if(v('in_h_jefe') > 0) lista.push(v('in_h_jefe') + " horas de Profesor Jefe");
-                 if(v('in_h_taller') > 0) lista.push(v('in_h_taller') + " horas de Talleres");
-                 if(v('in_h_jesp') > 0) lista.push(v('in_h_jesp') + " horas de Jefatura de Especialidad");
-                 if(v('in_h_cpie') > 0) lista.push(v('in_h_cpie') + " horas de Coordinación PIE");
-                 if(v('in_h_prac') > 0) lista.push(v('in_h_prac') + " horas de Supervisión de Práctica");
-                 
-                 const otros = v('in_h_otro');
-                 if(otros > 0) {
-                     const desc = document.getElementById('in_h_otro_desc').value || "otras funciones";
-                     lista.push(otros + " horas de " + desc);
-                 }
-                 
-                 if(lista.length > 0) {
-                     document.getElementById('txt_desglose').innerText = ", distribuidas en " + lista.join(", ");
-                 } else {
-                     document.getElementById('txt_desglose').innerText = "";
-                 }
-             } else {
-                 document.getElementById('txt_ht').innerText = document.getElementById('in_h_simple').value || "__";
-                 document.getElementById('txt_desglose').innerText = "";
-             }
+            // 2. Lógica de GÉNERO
+            const genero = document.getElementById("in_genero").value; 
+            const isFem = (genero === 'F');
+            
+            document.getElementById("txt_trato").innerText = isFem ? 'doña' : 'don';
+            
+            const civilVal = document.getElementById("in_civil").value;
+            let civilTexto = civilVal;
+            if (isFem) {
+                if (civilVal === 'SOLTERO') civilTexto = 'SOLTERA';
+                else if (civilVal === 'CASADO') civilTexto = 'CASADA';
+                else if (civilVal === 'VIUDO') civilTexto = 'VIUDA';
+                else if (civilVal === 'DIVORCIADO') civilTexto = 'DIVORCIADA';
+            }
+            document.getElementById("txt_civil").innerText = civilTexto;
+
+            document.getElementById("txt_nacido_label").innerText = isFem ? "nacida" : "nacido";
+            document.getElementById("txt_domiciliado_label").innerText = isFem ? "Domiciliada" : "Domiciliado";
+
+            document.querySelectorAll(".ref_trabajador").forEach(el => {
+                el.innerText = isFem ? '"La Trabajadora"' : '"El Trabajador"';
+            });
+            document.querySelectorAll(".ref_trabajador_plain").forEach(el => {
+                el.innerText = isFem ? 'la trabajadora' : 'el trabajador';
+            });
+            document.querySelectorAll(".ref_trabajador_may").forEach(el => {
+                el.innerText = isFem ? 'La trabajadora' : 'El trabajador';
+            });
+
+            // 3. FECHA NACIMIENTO
+            const nacimVal = document.getElementById("in_nacim").value;
+            if (nacimVal) {
+                const [y, m, d] = nacimVal.split('-');
+                const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+                document.getElementById("txt_nacim").innerText = `${d} de ${meses[parseInt(m)-1]} de ${y}`;
+            } else {
+                document.getElementById("txt_nacim").innerText = "_________";
+            }
+
+            // 4. FECHAS CONTRATO
+            const inicioVal = document.getElementById("in_inicio").value;
+            if(inicioVal) {
+                 const [y, m, d] = inicioVal.split('-');
+                 const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+                 document.getElementById("txt_inicio").innerText = `${d} de ${meses[parseInt(m)-1]} de ${y}`;
+            } else {
+                 document.getElementById("txt_inicio").innerText = "_________";
+            }
+            
+            const tipoContrato = document.getElementById("in_tipo_contrato").value;
+            const spanTermino = document.getElementById("span_termino");
+            
+            document.getElementById("txt_modalidad_titulo").innerText = tipoContrato;
+            document.getElementById("txt_modalidad_cuerpo").innerText = tipoContrato;
+
+            if (tipoContrato === "INDEFINIDO") {
+                spanTermino.style.display = "none";
+            } else {
+                spanTermino.style.display = "inline";
+                const finVal = document.getElementById("in_fin").value;
+                if(finVal) {
+                     const [y, m, d] = finVal.split('-');
+                     const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+                     document.getElementById("txt_fin").innerText = `${d} de ${meses[parseInt(m)-1]} de ${y}`;
+                } else {
+                     document.getElementById("txt_fin").innerText = "_________";
+                }
+            }
+
+            // 5. DETALLES DOCENTES / ASISTENTES
+            const ccVal = document.getElementById("in_cc").value;
+            document.getElementById("txt_cc_display").innerText = ccVal;
+
+            // --- CORRECCIÓN HORAS ---
+            let horasReales = "0";
+            if (CONTRATO_ACTUAL === 'DOC') {
+                 horasReales = document.getElementById("in_ht").value || "0";
+            } else {
+                 horasReales = document.getElementById("in_h_simple").value || "0";
+            }
+            document.getElementById("txt_ht").innerText = horasReales; 
+            // ------------------------
+
+            // VALOR HORA EN PARENTESIS
+            const vh = document.getElementById("in_valor_hora").value;
+            document.getElementById("txt_valor_hora_display").innerText = vh ? "$" + parseInt(vh).toLocaleString('es-CL') : "";
+
+            // --- PROFESION OPCIONAL ---
+            const profVal = document.getElementById("in_profesion").value;
+            if(!profVal || profVal.trim() === "") {
+                document.getElementById("span_prof_wrapper").style.display = "none";
+            } else {
+                document.getElementById("span_prof_wrapper").style.display = "inline";
+                document.getElementById("txt_profesion").innerText = profVal.toUpperCase();
+            }
+
+            // --- LEYES Y DETALLES ASISTENTE ---
+            const txtMarcoLegal = document.getElementById("txt_marco_legal");
+            const spanSueldoDetalle = document.getElementById("span_sueldo_detalle");
+            const txtLeyesDoc = document.getElementById("txt_leyes_docente");
+            const txtLeyesAsis = document.getElementById("txt_leyes_asistente");
+
+            if (CONTRATO_ACTUAL === 'ASIS') {
+                if(txtMarcoLegal) txtMarcoLegal.innerText = "las Leyes N° 19.464; 20.244 y por el Código del Trabajo";
+                if(spanSueldoDetalle) spanSueldoDetalle.style.display = "none";
+                if(txtLeyesDoc) txtLeyesDoc.style.display = "none";
+                if(txtLeyesAsis) txtLeyesAsis.style.display = "inline";
+            } else {
+                if(txtMarcoLegal) txtMarcoLegal.innerText = "el Título IV del DFL N° 1 de 1996, Estatuto Docente y supletoriamente por el Código del Trabajo";
+                if(spanSueldoDetalle) spanSueldoDetalle.style.display = "inline";
+                if(txtLeyesDoc) txtLeyesDoc.style.display = "inline";
+                if(txtLeyesAsis) txtLeyesAsis.style.display = "none";
+            }
+
+            if (CONTRATO_ACTUAL === 'DOC') {
+                let desglose = [];
+                const h_aula = document.getElementById("in_h_aula").value;
+                const h_prep = document.getElementById("in_h_prep").value;
+                const h_pie = document.getElementById("in_h_pie").value;
+                const h_jefe = document.getElementById("in_h_jefe").value;
+                const h_esp = document.getElementById("in_h_esp").value;
+                const h_prac = document.getElementById("in_h_prac").value;
+                const h_taller = document.getElementById("in_h_taller").value;
+                const h_otra = document.getElementById("in_h_otra").value;
+                const h_otra_desc = document.getElementById("in_h_otra_desc").value;
+
+                if(h_aula > 0) desglose.push(`${h_aula} hrs. de Aula`);
+                if(h_prep > 0) desglose.push(`${h_prep} hrs. de Preparación de Enseñanza`);
+                if(h_pie > 0) desglose.push(`${h_pie} hrs. de PIE`);
+                if(h_jefe > 0) desglose.push(`${h_jefe} hrs. de Profesor Jefe`);
+                if(h_esp > 0) desglose.push(`${h_esp} hrs. de Jefe de Especialidad`);
+                if(h_prac > 0) desglose.push(`${h_prac} hrs. de Supervisión de Prácticas`);
+                if(h_taller > 0) desglose.push(`${h_taller} hrs. de Talleres`);
+                if(h_otra > 0) desglose.push(`${h_otra} hrs. de ${h_otra_desc || 'Otras funciones'}`);
+
+                if (desglose.length > 0) {
+                    document.getElementById("txt_desglose").innerText = ", distribuidas en: " + desglose.join(", ");
+                } else {
+                    document.getElementById("txt_desglose").innerText = "";
+                }
+            } else {
+                document.getElementById("txt_desglose").innerText = "";
+            }
         }
-        
+
         async function guardarContrato() {
             const n = document.getElementById("in_nombre").value;
-            if(!n) return alert("Ingrese un nombre");
-            
-            const v = (id) => document.getElementById(id).value;
-            const c = (id) => document.getElementById(id).checked;
+            if(!n) return alert("Falta el nombre");
 
+            // RECOLECTAR TODOS LOS DATOS PARA GUARDAR
             const data = {
-                rut: v('in_rut'), nacion: v('in_nacion'), domicilio: v('in_domicilio'),
-                civil: v('in_civil'), nacim: v('in_nacim'), profesion: v('in_profesion'),
-                cargo: v('in_cargo'), tipo: v('in_tipo_contrato'), cc: v('in_cc'),
-                ht: v('in_ht'), h_simple: v('in_h_simple'), valor: v('in_valor_hora'),
-                inicio: v('in_inicio'), fin: v('in_fin'),
-                afp: v('in_afp'), salud: v('in_salud'), banco: v('in_banco'), cta: v('in_cta'),
-                genero: v('in_genero'),
+                rut: document.getElementById('in_rut').value || "",
+                genero: document.getElementById('in_genero').value || "M",
+                nacion: document.getElementById('in_nacion').value || "",
+                domicilio: document.getElementById('in_domicilio').value || "",
+                civil: document.getElementById('in_civil').value || "SOLTERO",
+                nacim: document.getElementById('in_nacim').value || "",
+                profesion: document.getElementById('in_profesion').value || "",
+                cargo: document.getElementById('in_cargo').value || "",
+                tipo_contrato: document.getElementById('in_tipo_contrato').value || "",
+                cc: document.getElementById('in_cc').value || "",
+                ht: document.getElementById('in_ht').value || "",
+                valor_hora: document.getElementById('in_valor_hora').value || "",
+                inicio: document.getElementById('in_inicio').value || "",
+                fin: document.getElementById('in_fin').value || "",
+                afp: document.getElementById('in_afp').value || "",
+                salud: document.getElementById('in_salud').value || "",
+                banco: document.getElementById('in_banco').value || "",
+                cta: document.getElementById('in_cta').value || "",
                 // Desglose
-                ha: v('in_ha'), hp: v('in_hp'), h_pie: v('in_h_pie'),
-                h_jefe: v('in_h_jefe'), h_taller: v('in_h_taller'), h_jesp: v('in_h_jesp'),
-                h_cpie: v('in_h_cpie'), h_prac: v('in_h_prac'), h_otro: v('in_h_otro'),
-                h_otro_desc: v('in_h_otro_desc'),
-                jefe_esp: c('chk_jefe_esp'), coord_pie: c('chk_coord_pie')
+                h_aula: document.getElementById('in_h_aula').value || "",
+                h_prep: document.getElementById('in_h_prep').value || "",
+                h_pie: document.getElementById('in_h_pie').value || "",
+                h_jefe: document.getElementById('in_h_jefe').value || "",
+                h_esp: document.getElementById('in_h_esp').value || "",
+                h_prac: document.getElementById('in_h_prac').value || "",
+                h_taller: document.getElementById('in_h_taller').value || "",
+                h_otra: document.getElementById('in_h_otra').value || "",
+                h_otra_desc: document.getElementById('in_h_otra_desc').value || "",
+                func_extra: document.getElementById('in_func_extra').value || "",
+                // NUEVOS CAMPOS ASISTENTE
+                h_simple: document.getElementById('in_h_simple').value || "",
+                sueldo: document.getElementById('in_sueldo').value || ""
             };
 
             try { 
-                if(db) {
-                    await db.collection("contratos_data_2026").doc(n).set(data); 
-                    // Actualizar caché local
-                    CONTRATOS_CACHE_ALL[n] = data;
-                    alert("Guardado Correctamente"); 
-                } else {
-                    alert("Error: No hay conexión con Firebase. Guarde los datos manualmente.");
-                }
+                await db.collection("contratos_data_2026").doc(n).set(data); 
+                alert("Contrato guardado correctamente (Todos los campos)."); 
             } catch(e) { 
                 console.error(e);
-                alert("Error al guardar en Firebase"); 
+                alert("Error al guardar"); 
             }
         }
-        
+
         async function renderConsolidado() {
             try { await cargarCacheContratos(); } catch(e){}
             const tbody = document.getElementById("bodyConsolidado"); tbody.innerHTML = "";
@@ -1147,11 +1338,10 @@
             document.getElementById('btn_c_doc').className = t==='DOC'?'type-btn active':'type-btn'; 
             document.getElementById('btn_c_asis').className = t==='ASIS'?'type-btn active':'type-btn';
             document.getElementById("grp_horas_doc_c").style.display = t==='DOC'?'block':'none';
-            document.getElementById("grp_horas_asis_c").style.display = t==='ASIS'?'block':'none';
-            document.getElementById("modulos_asistentes_c").style.display = t==='ASIS'?'block':'none';
-            document.getElementById("modulos_docentes_c").style.display = t==='DOC'?'block':'none';
-            const legal = document.getElementById("txt_leyes_docente");
-            if(legal) legal.style.display = t==='DOC'?'inline':'none';
+            // Aseguramos que los IDs existen antes de llamar a style
+            if(document.getElementById("modulos_asistentes_c")) document.getElementById("modulos_asistentes_c").style.display=t==='ASIS'?'block':'none';
+            if(document.getElementById("div_vh")) document.getElementById("div_vh").style.visibility=t==='DOC'?'visible':'hidden';
+            updateContrato(); updateFunciones();
         }
 
         function renderHorarioProfesorVista() { 
