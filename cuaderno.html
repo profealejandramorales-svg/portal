@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuaderno Digital - ProfeAle</title>
+    <title>Cuaderno Digital - ProfeAle 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Indie+Flower&family=Inter:wght@300;400;600&family=Patrick+Hand&display=swap" rel="stylesheet">
     
@@ -144,7 +144,7 @@
         </div>
 
         <div id="grades" class="page-content">
-            <h1 class="handwritten-title">Libro de Clases</h1>
+            <h1 class="handwritten-title">Libro de Clases 2026</h1>
             <div class="flex items-center gap-4 mb-4 relative z-10">
                 <label class="font-bold text-pink-800 text-sm uppercase">Seleccionar Curso:</label>
                 <select id="course-select" class="select-hand w-64">
@@ -245,6 +245,63 @@
         const NOTEBOOK_REF = doc(db, "cuaderno_digital", "profe_ale");
         const COLL_ROSTERS = "config_cursos"; 
 
+        // --- NÓMINA OFICIAL 2026 ---
+        const ROSTERS_2026 = {
+            "1A": [
+                'ÁLVAREZ FAÚNDEZ MATEO VICENTE', 'AYALA VÁSQUEZ LISANDRA MILLARAY', 'CASTILLO ARAVENA MAITE PASCAL', 'COLLADO PUENTES SANTINO ALEXANDER',
+                'CONCHA TORREALBA JOAQUÍN IGNACIO', 'DÍAZ MALUENDA ESTEFANÍA ANTONIA', 'DONAIRE ROJAS MAITE EMILIA ESTER', 'ESPINOZA CACHAÑA LISBET ALEXANDRA',
+                'FERRADA ALBORNOZ AGUSTÍN ALEXIS', 'FUENTEMAVIDA BARROS OSCAR ANTONIO', 'JAQUE PACHECO DAMIÁN IGNACIO', 'JARAMILLO VILLAR MATT HOST',
+                'LÓPEZ ACUÑA MARCO EMILIO', 'LÓPEZ VILLAR FRANCO IGNACIO', 'MESA DÍAZ GONZALO IGNACIO', 'MEZA CARRASCO CRISTIAN ALFONSO',
+                'MORALES GARRIDO NICOLÁS ANTONIO', 'MOREIRA RIVAS VICENTE IGNACIO', 'MOYA COFRE KEVIN ALONSO', 'ORTEGA DA SILVA EMILIA CATALINA SOPHIA',
+                'ORTEGA DA SILVA NICOLÁS IGNACIO', 'OYARZÚN ROJAS MARÍA FERNANDA', 'PEREIRA TAPIA KEVIN RUBÉN', 'RAMÍREZ SEPÚLVEDA LUIS JUSTIN JESÚS',
+                'RAMÍREZ VALDÉS MARTINA POLETTE', 'RECABAL YÁÑEZ TOMÁS IGNACIO', 'RODRÍGUEZ SEPÚLVEDA SIMONEY ISAMAR', 'ROJAS ÓRDENES TRACY MAIDEN',
+                'SÁNCHEZ MUNIZAGA ALONDRA ANAÍS', 'SANDOVAL ARAVENA BENJAMÍN IGNACIO', 'SOLIZ OLGUIN BRAYAN', 'VALENZUELA MUÑOZ MAGDALENA BELÉN',
+                'VÁSQUEZ RODRÍGUEZ ISMAEL ANDRÉS'
+            ],
+            "2A": [
+                'ALARCÓN FUENTES RICARDO FRANCISCO', 'ALBURQUENQUE DEL GRECCO EMILYA ANTONIA', 'ANABALÓN BELTRÁN BENJAMÍN NICOLÁS', 'ARAYA DOMÍNGUEZ ALEX FABIÁN',
+                'ASTUDILLO CAMPOS CRISTÓBAL ANTONIO', 'BAEZ DONOSO LUKAS ALFONSO', 'CARO BUSTOS KRISCHNA ESTEFANIA', 'CONTRERAS SALGADO HADEEY ALEJANDRA',
+                'CUMINAO VIDAL CATALINA ANDREA', 'DÍAZ MALUENDA MIGUEL ALBERTO', 'DONOSO OLMOS EMILIA', 'IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA',
+                'LAGOS LASTRA ALEXANDRA DANAE', 'LÓPEZ LÓPEZ LUCIANO ANTONIO', 'LÓPEZ NOVOA EYDAN DAMIÁN', 'MALDONADO FLORES ANTONELLA BELÉN',
+                'MONTECINO DÍAZ VALESKA BELÉN', 'MUÑOZ CONTRERAS LUIS GABRIEL', 'MUÑOZ LUNA ROGER JOEL', 'NAVARRO VILLANUEVA KARLA PAZ',
+                'ORELLANA ARRIAGADA SEBASTIÁN ANDRÉS', 'OSES CAMPOS VALENTINA ABIGAIL', 'PALMA ORELLANA ANTONELLA FRANCISCA', 'PEREIRA ORELLANA MONSERRAT ALAMIRA',
+                'PÉREZ ORMAZÁBAL ZADKA ALEJANDRA', 'PÉREZ QUEVEDO CONSTANZA TRINIDAD', 'QUEZADA NARANJO FELIPE ALONSO', 'RAMÍREZ VILLALOBOS DUVAN EMILIO',
+                'RIQUELME SANTOS BENJAMÍN ALONSO', 'ROJAS GONZÁLEZ FLORENCIA TRINIDAD', 'ROJAS LEIVA EDUARDO JAVIER', 'SALAZAR SALAS PEDRO JOSÉ',
+                'SANTANDER LÓPEZ MARÍA JOSÉ', 'URBINA CÁCERES FRANCHESCA POULETTE', 'VARGAS MORAGA MARTINA SAYEN', 'VÁSQUEZ AGUILERA SCARLET NICOLE',
+                'YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN'
+            ],
+            "3A": [
+                'AHUMADA ROJAS TRINIDAD BELÉN', 'CORNEJO CASTILLO OSCAR GABRIEL', 'ESPINOZA PEÑALILLO BRAYAN JESÚS', 'FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO',
+                'JARAMILLO VILLAR EMILIO SCOTT', 'LÓPEZ VILLAR MARTÍN ALONSO', 'MEZA COLIMÁN ANGEL BLAS', 'MIRANDA MUÑOZ ALEXANDRA JAVIERA',
+                'MORAGA PACHECO RENATO IGNACIO', 'MORALES REIMÁN ALFONSO TOMÁS', 'ORELLANA GARRIDO MATÍAS LEANDRO', 'PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO',
+                'PINTO TOBAR JORDÁN AMARO', 'QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO', 'RECABAL YÁÑEZ KEVIN ANDRÉS', 'SANDOVAL CERPA VICENTE ESTEBAN',
+                'SOTO NARANJO CHRISTOPHER', 'TOLEDO ALBORNOZ ANTONELLA INES', 'VEKARIC VERDEJO MARTÍN', 'VIELMA ZABALAGA JOAN MANUEL'
+            ],
+            "3C": [
+                'BRAVO MENARES ALEX JOHAN', 'CARRASCO LEIVA BENJAMÍN IGNACIO', 'ENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER', 'ESPINOSA TORRES FERNANDA ELENA',
+                'GONZÁLEZ SALAZAR EMILIA CATALINA', 'MEDEL OJEDA LEÓN IGNACIO', 'OLIVARES VALENZUELA ALONSO IGNACIO', 'OLIVARES VALENZUELA ANTONELLA DANAE IGNACIA',
+                'PUNOY MEDEL MILLARAY ANGÉLICA', 'RIQUELME CASTILLO MATÍAS EDUARDO ANTONIO', 'RIQUELME COLOMA DALIA CONSTANZA', 'RIVERA ABARZA CONSTANZA VICTORIA',
+                'SAAVEDRA BRAVO FLORENCIA ALEJANDRA', 'SALGADO ROJAS VICENTE MOISÉS', 'SANTIS CASSEUS TEIVA SCARLETT', 'SOBARZO YÉVENES KATHERINNE ALEXIA BELÉN',
+                'VENEGAS ARRIAGADA ANTONIA EDITH'
+            ],
+            "4A": [
+                'ALCÁNTAR GARCÍA MARTINA ALEJANDRA', 'BAHAMONDE MUÑOZ ARIEL LEON', 'CAMPOS MUÑOZ CRISTOPHER JESÚS', 'CANCINO ORÓSTICA VICENTE GASPAR',
+                'CARO URRUTIA CONSUELO ANTONIA', 'CARRASCO GONZÁLEZ CAMILA ANDREA', 'COFRÉ CASTILLO ANTONIO ANDRÉS', 'GALDAMES VERGARA FELIPE ESTEBAN',
+                'GARCÍA GONZÁLEZ SANTIAGO HUMBERTO', 'GONZÁLEZ AMIGO FRANCISCA IGNACIA', 'GONZÁLEZ SALAZAR JOAQUÍN ALONSO', 'GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN',
+                'HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO', 'LOBOS CÁCERES ANTONIA PAZ', 'MEZA CARRASCO BENJAMÍN INTI', 'MIÑO GONZALEZ CATALINA ANDREA',
+                'PÉREZ CORÓN MANUEL IGNACIO', 'SAMANIEGO CORTEZ JAKSON FERGIE', 'SEPÚLVEDA SALAZAR SOFÍA ANTONIA', 'TAPIA ACUÑA GABRIEL ANTONIO',
+                'TORREALBA MOYA FLORVELIS DE LOS ANGELES', 'VEGA VIVANCO CRISTÓBAL ANTONIO', 'VERA NAVARRETE DANIELA ELIZABETH', 'VILLALOBOS ARAVENA KARINA ANGELINA',
+                'VILLALOBOS VILLALOBOS SAMIR LUCIAN JESÚS'
+            ],
+            "4C": [
+                'ARELLANO ACUÑA MARTÍN ANTONIO', 'AROS ÁVILA DAYANA IGNACIA', 'CABRERA COLOMBINO MARÍA GRACIA', 'COLLAO MEDINA ANAÍS VALENTINA',
+                'DE LA HOZ VALENZUELA FRANCO SEBASTIÁN', 'FUENTES CARRASCO YARIXA ALEJANDRA', 'GÓMEZ CANCINO DANIELA ALEJANDRA', 'GUTIÉRREZ CARRIÓN MILLARAY CAROLINA',
+                'HONORATO TAPIA GLORIA JAVIERA', 'LARA RIVERA BENJAMÍN ESTEBAN', 'PAIVA OROZCO DUVAN MAURICIO ALBERTO', 'PALACIOS SOTO JOSÉ TOMÁS',
+                'PEZO SANTANDER JOSÉ CRISTÓBAL', 'ROCHA ROJAS JOSÉ PABLO WILLIAMS', 'ROJAS YÉVENES FABIANA ISIDORA', 'SÁNCHEZ PAREJA ANDY ANTONIO',
+                'SANTANDER LÓPEZ SIMÓN ESTEBAN', 'TRONCOSO LIZAMA SIOMARA IGNACIA', 'WARNKEN ROJAS LUCIANA BERNABELA'
+            ]
+        };
+
         let isTyping = false;
         let saveTimeout;
         let localData = {};
@@ -303,20 +360,23 @@
             window.saveObservation = saveObservation;
         });
 
+        // FUNCIÓN MODIFICADA PARA CARGAR NÓMINA LOCAL
         async function loadRosters() {
-            try {
-                const snap = await getDocs(collection(db, COLL_ROSTERS));
-                const selectGrades = document.getElementById('course-select');
-                const selectConduct = document.getElementById('conduct-course-select');
-                
-                snap.forEach(d => {
-                    schoolData[d.id] = d.data().students || [];
-                    const opt1 = document.createElement('option'); opt1.value = d.id; opt1.textContent = d.id;
-                    selectGrades.appendChild(opt1);
-                    const opt2 = document.createElement('option'); opt2.value = d.id; opt2.textContent = d.id;
-                    selectConduct.appendChild(opt2);
-                });
-            } catch(e) { console.error("Error cargando cursos", e); }
+            // Cargar directamente la nómina oficial 2026
+            schoolData = ROSTERS_2026;
+            
+            const selectGrades = document.getElementById('course-select');
+            const selectConduct = document.getElementById('conduct-course-select');
+            
+            selectGrades.innerHTML = '<option value="">-- Cargar Curso --</option>';
+            selectConduct.innerHTML = '<option value="">-- Seleccionar --</option>';
+
+            Object.keys(schoolData).sort().forEach(id => {
+                const opt1 = document.createElement('option'); opt1.value = id; opt1.textContent = id;
+                selectGrades.appendChild(opt1);
+                const opt2 = document.createElement('option'); opt2.value = id; opt2.textContent = id;
+                selectConduct.appendChild(opt2);
+            });
         }
 
         async function saveObservation() {
@@ -330,7 +390,7 @@
 
             const newObs = {
                 id: Date.now().toString(),
-                course, student, detail, type, // Guardamos el tipo
+                course, student, detail, type, 
                 date: new Date().toLocaleString()
             };
 

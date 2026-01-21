@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Atrasos - Inspectoría</title>
+    <title>Control de Atrasos - Inspectoría v2.1 (2026)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
@@ -34,139 +34,105 @@
                 position: absolute;
                 top: 0;
                 left: 0;
-                width: 100%;      
-                height: 6.5cm;    
-                border: 2px dashed #000;
-                padding: 10px 20px;
+                width: 100%;
                 display: flex;
-                flex-direction: row; 
-                justify-content: space-between;
-                align-items: center;
-                background-color: white;
-                box-sizing: border-box;
+                flex-direction: column;
+                gap: 10px;
             }
 
+            .ticket-container {
+                width: 100%;
+                border: 2px dashed #000;
+                padding: 10px;
+                display: flex;
+                flex-direction: row; /* Horizontal */
+                align-items: center;
+                justify-content: space-between;
+                font-family: Arial, sans-serif;
+                font-size: 11px;
+                page-break-inside: avoid;
+            }
+            
+            .ticket-logo img { height: 40px; }
+            .ticket-info { flex: 1; margin-left: 15px; }
+            .ticket-meta { text-align: right; font-size: 10px; }
+            
             .no-print { display: none !important; }
         }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-    <div id="message-box" class="fixed top-5 right-5 bg-teal-600 text-white px-6 py-3 rounded shadow-lg hidden transition-opacity z-50 font-bold"></div>
+    <div id="message-box" class="fixed top-5 right-5 bg-teal-600 text-white px-6 py-3 rounded shadow-lg hidden transition-opacity z-50"></div>
 
-    <div id="login-screen" class="fixed inset-0 bg-gray-900/95 flex items-center justify-center z-50">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
-            <img src="logo.jpg" class="h-16 mx-auto mb-4" onerror="this.style.display='none'"> 
-            <h2 class="text-xl font-bold text-gray-800 mb-2">Acceso Inspectoría</h2>
-            <input type="password" id="password-input" class="w-full p-3 border rounded mb-4 text-center text-lg outline-none focus:ring-2 focus:ring-teal-500" placeholder="Contraseña">
-            <button id="login-btn" class="w-full bg-teal-600 text-white font-bold py-2 rounded hover:bg-teal-700 transition">Entrar</button>
-            <p id="login-error" class="text-red-500 text-xs mt-2 hidden">Contraseña incorrecta</p>
-        </div>
-    </div>
-
-    <div id="app-screen" class="main-wrapper hidden">
-        
-        <div class="flex items-center justify-between mb-6 border-b pb-4 bg-white p-4 rounded-xl shadow-sm">
+    <div class="main-wrapper">
+        <div class="flex items-center justify-between mb-8 border-b pb-4 bg-white p-4 rounded-xl shadow-sm">
             <div class="flex items-center gap-4">
                 <img src="logo.jpg" class="h-16 w-auto object-contain bg-gray-50 rounded-full p-1 border" onerror="this.style.display='none'">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-800">Control de Atrasos</h1>
-                    <p class="text-xs text-gray-500 font-medium">Escuela Agrícola Sagrados Corazones</p>
+                    <p class="text-xs text-gray-500 font-medium">Escuela Agrícola Sagrados Corazones (2026)</p>
                 </div>
             </div>
             <div class="text-right">
-                <p class="text-5xl font-mono font-bold text-teal-700 tracking-wider" id="clock">00:00</p>
-                <button id="logout-btn" class="text-xs text-red-400 underline hover:text-red-600 mt-2">Cerrar Sesión</button>
+                <button class="bg-indigo-600 text-white px-4 py-2 rounded font-bold hover:bg-indigo-700 text-sm transition shadow" id="print-daily-btn">🖨️ Imprimir Reporte Diario</button>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <div class="lg:col-span-5 card border-t-4 border-teal-500 h-fit">
-                <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4 flex justify-between items-center">
-                    Nuevo Registro
-                    <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">2026</span>
-                </h2>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="card border-t-4 border-indigo-500 lg:col-span-1">
+                <h2 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Registrar Atraso</h2>
                 
                 <div class="space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Curso</label>
-                        <select id="course-select" class="w-full p-2 border rounded focus:ring-2 focus:ring-teal-200 outline-none bg-gray-50 text-sm">
-                            <option value="">Selecciona un curso</option>
+                        <select id="course-select" class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-200 outline-none bg-gray-50">
+                            <option value="">Selecciona curso</option>
                         </select>
                     </div>
                     
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Estudiante</label>
-                        <select id="student-select" class="w-full p-2 border rounded focus:ring-2 focus:ring-teal-200 outline-none bg-gray-50 text-sm" disabled>
+                        <select id="student-select" class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-200 outline-none bg-gray-50" disabled>
                             <option value="">Primero selecciona curso</option>
                         </select>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Bloque / Horario</label>
-                            <select id="bloque-select" class="w-full p-2 border rounded focus:ring-2 focus:ring-teal-200 outline-none bg-white text-sm">
-                                <option value="Mañana">Mañana (08:25)</option>
-                                <option value="Primer Recreo">Primer Recreo (10:10)</option>
-                                <option value="Segundo Recreo">Segundo Recreo (11:50)</option>
-                                <option value="Almuerzo">Almuerzo (14:05)</option>
-                                <option value="Recreo Tarde">Recreo Tarde (15:45)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Hora Real</label>
-                            <input type="time" id="arrival-time" class="w-full p-2 border rounded focus:ring-2 focus:ring-teal-200 outline-none text-sm text-center font-mono bg-gray-50">
-                        </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Hora de Llegada</label>
+                        <input type="time" id="arrival-time" class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-200 outline-none bg-indigo-50 font-bold text-indigo-900">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Motivo / Derivación</label>
-                        <select id="motivo-select" class="w-full p-2 border rounded focus:ring-2 focus:ring-teal-200 outline-none bg-white text-sm">
-                            <option value="Atraso">Atraso General / Bus</option>
-                            <option value="Médico">Médico / Dentista</option>
-                            <option value="Psicóloga">Psicóloga</option>
-                            <option value="Inspectoría">Citación Inspectoría</option>
-                            <option value="Otro motivo">Otro motivo</option>
-                        </select>
-                        <input type="text" id="otro-motivo" class="w-full mt-2 p-2 border rounded text-sm hidden" placeholder="Especifique el motivo...">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Motivo (Opcional)</label>
+                        <input type="text" id="reason-input" class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-200 outline-none" placeholder="Ej: Bus atrasado, médico...">
                     </div>
 
-                    <button id="register-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded shadow transition transform active:scale-95 mt-2 flex justify-center items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"></path></svg>
-                        Guardar e Imprimir
+                    <button id="register-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded shadow transition transform active:scale-95 mt-2">
+                        Registrar Atraso
                     </button>
-                    
-                    <div class="text-center mt-4 p-2 bg-yellow-50 border border-yellow-100 rounded">
-                        <p class="text-xs text-yellow-700 font-bold">💡 Ticket ajustado: Ancho completo, 1/4 altura.</p>
-                    </div>
                 </div>
             </div>
 
-            <div class="lg:col-span-7 card border-t-4 border-gray-500 flex flex-col h-full">
+            <div class="card border-t-4 border-gray-500 lg:col-span-2 flex flex-col h-full">
                 <div class="flex justify-between items-center border-b pb-2 mb-2">
-                    <h2 class="text-lg font-bold text-gray-800">Historial Diario</h2>
-                    
-                    <div class="flex items-center gap-2">
-                        <input type="date" id="filter-date" class="p-1 border rounded text-xs bg-gray-50">
-                        <button id="generate-report-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-bold transition flex items-center gap-1">
-                            <span>📄</span> Reporte del Día
-                        </button>
-                    </div>
+                    <h2 class="text-lg font-bold text-gray-800">Atrasos de Hoy <span id="today-date" class="text-sm font-normal text-gray-500 ml-2"></span></h2>
+                    <span id="counter-badge" class="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded-full">0</span>
                 </div>
-
+                
                 <div class="flex-1 overflow-y-auto max-h-[500px]">
                     <table class="w-full text-left text-sm" id="report-table">
-                        <thead class="bg-gray-50 sticky top-0 text-xs uppercase text-gray-500 z-10">
+                        <thead class="bg-gray-50 sticky top-0 z-10 text-xs uppercase text-gray-500">
                             <tr>
-                                <th class="p-2 border-b">Hora</th>
-                                <th class="p-2 border-b">Estudiante</th>
-                                <th class="p-2 border-b">Detalle</th>
-                                <th class="p-2 border-b text-right">Acciones</th>
+                                <th class="p-2">Hora</th>
+                                <th class="p-2">Estudiante</th>
+                                <th class="p-2">Curso</th>
+                                <th class="p-2">Motivo</th>
+                                <th class="p-2 text-right">Acción</th>
                             </tr>
                         </thead>
                         <tbody id="report-body" class="divide-y divide-gray-100">
-                            <tr><td colspan="4" class="p-4 text-center text-gray-400 italic">Cargando registros...</td></tr>
+                            <tr><td colspan="5" class="p-4 text-center text-gray-400 italic">No hay atrasos registrados hoy.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -178,7 +144,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, where, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const firebaseConfig = { apiKey: "AIzaSyBnSMVCH0yyYUWk5z54kTIPTrWkyoeWs-I", authDomain: "suspenciones-40d0c.firebaseapp.com", projectId: "suspenciones-40d0c", storageBucket: "suspenciones-40d0c.firebasestorage.app", messagingSenderId: "853418739042", appId: "1:853418739042:web:d051befb99cd2acdd4583b" };
@@ -188,265 +154,211 @@
         const auth = getAuth(app);
         const COLLECTION_NAME = "atrasos";
 
-        // --- NÓMINA 2026 ---
+        // NÓMINA OFICIAL 2026
         const schoolData = {
-            'Primero Medio A': ['ÁLVAREZ FAÚNDEZ MATEO VICENTE', 'CASTILLO ARAVENA MAITE PASCAL', 'COLLADO PUENTES SANTINO ALEXANDER', 'CONCHA TORREALBA JOAQUÍN IGNACIO', 'DÍAZ MALUENDA ESTEFANÍA ANTONIA', 'DONAIRE ROJAS MAITE EMILIA ESTER', 'ESPINOZA CACHAÑA LISBET ALEXANDRA', 'FERRADA ALBORNOZ AGUSTÍN ALEXIS', 'FUENTEMAVIDA BARROS OSCAR ANTONIO', 'JAQUE PACHECO DAMIÁN IGNACIO', 'JARAMILLO VILLAR MATT HOST', 'LÓPEZ ACUÑA MARCO EMILIO', 'LÓPEZ VILLAR FRANCO IGNACIO', 'MESA DÍAZ GONZALO IGNACIO', 'MEZA CARRASCO CRISTIAN ALFONSO', 'MORALES GARRIDO NICOLÁS ANTONIO', 'ORTEGA DA SILVA EMILIA CATALINA SOPHIA', 'PEREIRA TAPIA KEVIN RUBÉN', 'RAMÍREZ SEPÚLVEDA LUIS JUSTIN JESÚS', 'RAMÍREZ VALDÉS MARTINA POLETTE', 'RECABAL YÁÑEZ TOMÁS IGNACIO', 'RODRÍGUEZ SEPÚLVEDA SIMONEY ISAMAR', 'ROJAS ÓRDENES TRACY MAIDEN', 'SÁNCHEZ MUNIZAGA ALONDRA ANAÍS', 'SOLIZ OLGUIN BRAYAN', 'VALENZUELA MUÑOZ MAGDALENA BELÉN'],
-            'Segundo Medio A': ['ALBURQUENQUE DEL GRECCO EMILYA ANTONIA', 'ANABALÓN BELTRÁN BENJAMÍN NICOLÁS', 'ARAVENA ZÚÑIGA NOEMÍ JESÚS DE LAS ESTRELLAS', 'ARAYA DOMÍNGUEZ ALEX FABIÁN', 'ASTUDILLO CAMPOS CRISTÓBAL ANTONIO', 'ASTUDILLO VÁSQUEZ BRUNO FERNANDO LEÓN', 'BAEZ DONOSO LUKAS ALFONSO', 'CARO BUSTOS KRISCHNA ESTEFANIA', 'CONTRERAS SALGADO HADEEY ALEJANDRA', 'CUMINAO VIDAL CATALINA ANDREA', 'DÍAZ MALUENDA MIGUEL ALBERTO', 'IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA', 'KILTAN GONZÁLEZ DIDIER EZEQUIEL', 'LAGOS LASTRA ALEXANDRA DANAE', 'LÓPEZ LÓPEZ LUCIANO ANTONIO', 'LÓPEZ NOVOA EYDAN DAMIÁN', 'MALDONADO FLORES ANTONELLA BELÉN', 'MONTECINO DÍAZ VALESKA BELÉN', 'MOYA REYES MATEO ANTONIO BENJAMÍN', 'MUÑOZ CONTRERAS LUIS GABRIEL', 'MUÑOZ LUNA ROGER JOEL', 'NAVARRO VILLANUEVA KARLA PAZ', 'ORELLANA ARRIAGADA SEBASTIÁN ANDRÉS', 'OSES CAMPOS VALENTINA ABIGAIL', 'PALMA ORELLANA ANTONELLA FRANCISCA', 'PEREIRA ORELLANA MONSERRAT ALAMIRA', 'PÉREZ ORMAZÁBAL ZADKA ALEJANDRA', 'PÉREZ QUEVEDO CONSTANZA TRINIDAD', 'QUEZADA NARANJO FELIPE ALONSO', 'RAMÍREZ VILLALOBOS DUVAN EMILIO', 'RIQUELME SANTOS BENJAMÍN ALONSO', 'ROJAS GONZÁLEZ FLORENCIA TRINIDAD', 'ROJAS LEIVA EDUARDO JAVIER', 'SALAZAR SALAS PEDRO JOSÉ', 'SANTANDER LÓPEZ MARÍA JOSÉ', 'TAPIA CASTILLA JEANFRANCO PATRICK', 'URBINA CÁCERES FRANCHESCA POULETTE', 'VARGAS MORAGA MARTINA SAYEN', 'VÁSQUEZ AGUILERA SCARLET NICOLE', 'VÁSQUEZ ZALDUENDO AMANDA ISABEL', 'VERA BRAVO FLORENCIA ANTONIA', 'YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN', 'ZABALAGA COFRÉ DAMIÁN ANDRÉS'],
-            'Tercero Medio A': ['AHUMADA ROJAS TRINIDAD BELÉN', 'CORNEJO CASTILLO OSCAR GABRIEL', 'ESPINOZA PEÑALILLO BRAYAN JESÚS', 'FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO', 'JARAMILLO VILLAR EMILIO SCOTT', 'LÓPEZ VILLAR MARTÍN ALONSO', 'MEZA COLIMÁN ANGEL BLAS', 'MIRANDA MUÑOZ ALEXANDRA JAVIERA', 'MORAGA PACHECO RENATO IGNACIO', 'MORALES REIMÁN ALFONSO TOMÁS', 'ORELLANA GARRIDO MATÍAS LEANDRO', 'PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO', 'PINTO TOBAR JORDÁN AMARO', 'RECABAL YÁÑEZ KEVIN ANDRÉS', 'SANDOVAL CERPA VICENTE ESTEBAN', 'SOTO NARANJO CHRISTOPHER', 'VEKARIC VERDEJO MARTÍN', 'VIELMA ZABALAGA JOAN MANUEL'],
-            'Tercero Medio C': ['BRAVO MENARES ALEX JOHAN', 'CARRASCO LEIVA BENJAMÍN IGNACIO', 'ENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER', 'ESPINOSA TORRES FERNANDA ELENA', 'GONZÁLEZ SALAZAR EMILIA CATALINA', 'MEDEL OJEDA LEÓN IGNACIO', 'OLIVARES VALENZUELA ALONSO IGNACIO', 'OLIVARES VALENZUELA ANTONELLA DANAE IGNACIA', 'PUNOY MEDEL MILLARAY ANGÉLICA', 'QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO', 'RIQUELME CASTILLO MATÍAS EDUARDO ANTONIO', 'RIQUELME COLOMA DALIA CONSTANZA', 'RIVERA ABARZA CONSTANZA VICTORIA', 'SAAVEDRA BRAVO FLORENCIA ALEJANDRA', 'SALGADO ROJAS VICENTE MOISÉS', 'SANTIS CASSEUS TEIVA SCARLETT', 'SOBARZO YÉVENES KATHERINNE ALEXIA BELÉN', 'TOLEDO ALBORNOZ ANTONELLA INES', 'VENEGAS ARRIAGADA ANTONIA EDITH'],
-            'Cuarto Medio A': ['ALCÁNTAR GARCÍA MARTINA ALEJANDRA', 'BAHAMONDE MUÑOZ ARIEL LEON', 'CAMPOS MUÑOZ CRISTOPHER JESÚS', 'CANCINO ORÓSTICA VICENTE GASPAR', 'CARO URRUTIA CONSUELO ANTONIA', 'CARRASCO GONZÁLEZ CAMILA ANDREA', 'COFRÉ CASTILLO ANTONIO ANDRÉS', 'GALDAMES VERGARA FELIPE ESTEBAN', 'GARCÍA GONZÁLEZ SANTIAGO HUMBERTO', 'GONZÁLEZ AMIGO FRANCISCA IGNACIA', 'GONZÁLEZ SALAZAR JOAQUÍN ALONSO', 'GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN', 'HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO', 'LOBOS CÁCERES ANTONIA PAZ', 'MARTÍNEZ LIZANA AARON ALEJANDRO', 'MEZA CARRASCO BENJAMÍN INTI', 'MIÑO GONZALEZ CATALINA ANDREA', 'PÉREZ CORÓN MANUEL IGNACIO', 'SAMANIEGO CORTEZ JAKSON FERGIE', 'SEPÚLVEDA SALAZAR SOFÍA ANTONIA', 'TAPIA ACUÑA GABRIEL ANTONIO', 'TORREALBA MOYA FLORVELIS DE LOS ANGELES', 'VEGA VIVANCO CRISTÓBAL ANTONIO', 'VERA NAVARRETE DANIELA ELIZABETH', 'VILLALOBOS ARAVENA KARINA ANGELINA', 'VILLALOBOS VILLALOBOS SAMIR LUCIAN JESÚS'],
-            'Cuarto Medio C': ['ARELLANO ACUÑA MARTÍN ANTONIO', 'AROS ÁVILA DAYANA IGNACIA', 'CABRERA COLOMBINO MARÍA GRACIA', 'COLLAO MEDINA ANAÍS VALENTINA', 'DE LA HOZ VALENZUELA FRANCO SEBASTIÁN', 'FUENTES CARRASCO YARIXA ALEJANDRA', 'GÓMEZ CANCINO DANIELA ALEJANDRA', 'GUTIÉRREZ CARRIÓN MILLARAY CAROLINA', 'HONORATO TAPIA GLORIA JAVIERA', 'LARA RIVERA BENJAMÍN ESTEBAN', 'PALACIOS SOTO JOSÉ TOMÁS', 'PEZO SANTANDER JOSÉ CRISTÓBAL', 'ROCHA ROJAS JOSÉ PABLO WILLIAMS', 'ROJAS YÉVENES FABIANA ISIDORA', 'SÁNCHEZ PAREJA ANDY ANTONIO', 'SANTANDER LÓPEZ SIMÓN ESTEBAN', 'TRONCOSO LIZAMA SIOMARA IGNACIA', 'WARNKEN ROJAS LUCIANA BERNABELA']
+            "1A": [
+                'ÁLVAREZ FAÚNDEZ MATEO VICENTE', 'AYALA VÁSQUEZ LISANDRA MILLARAY', 'CASTILLO ARAVENA MAITE PASCAL', 'COLLADO PUENTES SANTINO ALEXANDER',
+                'CONCHA TORREALBA JOAQUÍN IGNACIO', 'DÍAZ MALUENDA ESTEFANÍA ANTONIA', 'DONAIRE ROJAS MAITE EMILIA ESTER', 'ESPINOZA CACHAÑA LISBET ALEXANDRA',
+                'FERRADA ALBORNOZ AGUSTÍN ALEXIS', 'FUENTEMAVIDA BARROS OSCAR ANTONIO', 'JAQUE PACHECO DAMIÁN IGNACIO', 'JARAMILLO VILLAR MATT HOST',
+                'LÓPEZ ACUÑA MARCO EMILIO', 'LÓPEZ VILLAR FRANCO IGNACIO', 'MESA DÍAZ GONZALO IGNACIO', 'MEZA CARRASCO CRISTIAN ALFONSO',
+                'MORALES GARRIDO NICOLÁS ANTONIO', 'MOREIRA RIVAS VICENTE IGNACIO', 'MOYA COFRE KEVIN ALONSO', 'ORTEGA DA SILVA EMILIA CATALINA SOPHIA',
+                'ORTEGA DA SILVA NICOLÁS IGNACIO', 'OYARZÚN ROJAS MARÍA FERNANDA', 'PEREIRA TAPIA KEVIN RUBÉN', 'RAMÍREZ SEPÚLVEDA LUIS JUSTIN JESÚS',
+                'RAMÍREZ VALDÉS MARTINA POLETTE', 'RECABAL YÁÑEZ TOMÁS IGNACIO', 'RODRÍGUEZ SEPÚLVEDA SIMONEY ISAMAR', 'ROJAS ÓRDENES TRACY MAIDEN',
+                'SÁNCHEZ MUNIZAGA ALONDRA ANAÍS', 'SANDOVAL ARAVENA BENJAMÍN IGNACIO', 'SOLIZ OLGUIN BRAYAN', 'VALENZUELA MUÑOZ MAGDALENA BELÉN',
+                'VÁSQUEZ RODRÍGUEZ ISMAEL ANDRÉS'
+            ],
+            "2A": [
+                'ALARCÓN FUENTES RICARDO FRANCISCO', 'ALBURQUENQUE DEL GRECCO EMILYA ANTONIA', 'ANABALÓN BELTRÁN BENJAMÍN NICOLÁS', 'ARAYA DOMÍNGUEZ ALEX FABIÁN',
+                'ASTUDILLO CAMPOS CRISTÓBAL ANTONIO', 'BAEZ DONOSO LUKAS ALFONSO', 'CARO BUSTOS KRISCHNA ESTEFANIA', 'CONTRERAS SALGADO HADEEY ALEJANDRA',
+                'CUMINAO VIDAL CATALINA ANDREA', 'DÍAZ MALUENDA MIGUEL ALBERTO', 'DONOSO OLMOS EMILIA', 'IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA',
+                'LAGOS LASTRA ALEXANDRA DANAE', 'LÓPEZ LÓPEZ LUCIANO ANTONIO', 'LÓPEZ NOVOA EYDAN DAMIÁN', 'MALDONADO FLORES ANTONELLA BELÉN',
+                'MONTECINO DÍAZ VALESKA BELÉN', 'MUÑOZ CONTRERAS LUIS GABRIEL', 'MUÑOZ LUNA ROGER JOEL', 'NAVARRO VILLANUEVA KARLA PAZ',
+                'ORELLANA ARRIAGADA SEBASTIÁN ANDRÉS', 'OSES CAMPOS VALENTINA ABIGAIL', 'PALMA ORELLANA ANTONELLA FRANCISCA', 'PEREIRA ORELLANA MONSERRAT ALAMIRA',
+                'PÉREZ ORMAZÁBAL ZADKA ALEJANDRA', 'PÉREZ QUEVEDO CONSTANZA TRINIDAD', 'QUEZADA NARANJO FELIPE ALONSO', 'RAMÍREZ VILLALOBOS DUVAN EMILIO',
+                'RIQUELME SANTOS BENJAMÍN ALONSO', 'ROJAS GONZÁLEZ FLORENCIA TRINIDAD', 'ROJAS LEIVA EDUARDO JAVIER', 'SALAZAR SALAS PEDRO JOSÉ',
+                'SANTANDER LÓPEZ MARÍA JOSÉ', 'URBINA CÁCERES FRANCHESCA POULETTE', 'VARGAS MORAGA MARTINA SAYEN', 'VÁSQUEZ AGUILERA SCARLET NICOLE',
+                'YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN'
+            ],
+            "3A": [
+                'AHUMADA ROJAS TRINIDAD BELÉN', 'CORNEJO CASTILLO OSCAR GABRIEL', 'ESPINOZA PEÑALILLO BRAYAN JESÚS', 'FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO',
+                'JARAMILLO VILLAR EMILIO SCOTT', 'LÓPEZ VILLAR MARTÍN ALONSO', 'MEZA COLIMÁN ANGEL BLAS', 'MIRANDA MUÑOZ ALEXANDRA JAVIERA',
+                'MORAGA PACHECO RENATO IGNACIO', 'MORALES REIMÁN ALFONSO TOMÁS', 'ORELLANA GARRIDO MATÍAS LEANDRO', 'PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO',
+                'PINTO TOBAR JORDÁN AMARO', 'QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO', 'RECABAL YÁÑEZ KEVIN ANDRÉS', 'SANDOVAL CERPA VICENTE ESTEBAN',
+                'SOTO NARANJO CHRISTOPHER', 'TOLEDO ALBORNOZ ANTONELLA INES', 'VEKARIC VERDEJO MARTÍN', 'VIELMA ZABALAGA JOAN MANUEL'
+            ],
+            "3C": [
+                'BRAVO MENARES ALEX JOHAN', 'CARRASCO LEIVA BENJAMÍN IGNACIO', 'ENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER', 'ESPINOSA TORRES FERNANDA ELENA',
+                'GONZÁLEZ SALAZAR EMILIA CATALINA', 'MEDEL OJEDA LEÓN IGNACIO', 'OLIVARES VALENZUELA ALONSO IGNACIO', 'OLIVARES VALENZUELA ANTONELLA DANAE IGNACIA',
+                'PUNOY MEDEL MILLARAY ANGÉLICA', 'RIQUELME CASTILLO MATÍAS EDUARDO ANTONIO', 'RIQUELME COLOMA DALIA CONSTANZA', 'RIVERA ABARZA CONSTANZA VICTORIA',
+                'SAAVEDRA BRAVO FLORENCIA ALEJANDRA', 'SALGADO ROJAS VICENTE MOISÉS', 'SANTIS CASSEUS TEIVA SCARLETT', 'SOBARZO YÉVENES KATHERINNE ALEXIA BELÉN',
+                'VENEGAS ARRIAGADA ANTONIA EDITH'
+            ],
+            "4A": [
+                'ALCÁNTAR GARCÍA MARTINA ALEJANDRA', 'BAHAMONDE MUÑOZ ARIEL LEON', 'CAMPOS MUÑOZ CRISTOPHER JESÚS', 'CANCINO ORÓSTICA VICENTE GASPAR',
+                'CARO URRUTIA CONSUELO ANTONIA', 'CARRASCO GONZÁLEZ CAMILA ANDREA', 'COFRÉ CASTILLO ANTONIO ANDRÉS', 'GALDAMES VERGARA FELIPE ESTEBAN',
+                'GARCÍA GONZÁLEZ SANTIAGO HUMBERTO', 'GONZÁLEZ AMIGO FRANCISCA IGNACIA', 'GONZÁLEZ SALAZAR JOAQUÍN ALONSO', 'GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN',
+                'HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO', 'LOBOS CÁCERES ANTONIA PAZ', 'MEZA CARRASCO BENJAMÍN INTI', 'MIÑO GONZALEZ CATALINA ANDREA',
+                'PÉREZ CORÓN MANUEL IGNACIO', 'SAMANIEGO CORTEZ JAKSON FERGIE', 'SEPÚLVEDA SALAZAR SOFÍA ANTONIA', 'TAPIA ACUÑA GABRIEL ANTONIO',
+                'TORREALBA MOYA FLORVELIS DE LOS ANGELES', 'VEGA VIVANCO CRISTÓBAL ANTONIO', 'VERA NAVARRETE DANIELA ELIZABETH', 'VILLALOBOS ARAVENA KARINA ANGELINA',
+                'VILLALOBOS VILLALOBOS SAMIR LUCIAN JESÚS'
+            ],
+            "4C": [
+                'ARELLANO ACUÑA MARTÍN ANTONIO', 'AROS ÁVILA DAYANA IGNACIA', 'CABRERA COLOMBINO MARÍA GRACIA', 'COLLAO MEDINA ANAÍS VALENTINA',
+                'DE LA HOZ VALENZUELA FRANCO SEBASTIÁN', 'FUENTES CARRASCO YARIXA ALEJANDRA', 'GÓMEZ CANCINO DANIELA ALEJANDRA', 'GUTIÉRREZ CARRIÓN MILLARAY CAROLINA',
+                'HONORATO TAPIA GLORIA JAVIERA', 'LARA RIVERA BENJAMÍN ESTEBAN', 'PAIVA OROZCO DUVAN MAURICIO ALBERTO', 'PALACIOS SOTO JOSÉ TOMÁS',
+                'PEZO SANTANDER JOSÉ CRISTÓBAL', 'ROCHA ROJAS JOSÉ PABLO WILLIAMS', 'ROJAS YÉVENES FABIANA ISIDORA', 'SÁNCHEZ PAREJA ANDY ANTONIO',
+                'SANTANDER LÓPEZ SIMÓN ESTEBAN', 'TRONCOSO LIZAMA SIOMARA IGNACIA', 'WARNKEN ROJAS LUCIANA BERNABELA'
+            ]
         };
 
         const courseSelect = document.getElementById('course-select');
         const studentSelect = document.getElementById('student-select');
-        const bloqueSelect = document.getElementById('bloque-select');
-        const motivoSelect = document.getElementById('motivo-select');
-        const otroMotivoInput = document.getElementById('otro-motivo');
-        const filterDateInput = document.getElementById('filter-date');
-        
         let loadedRecords = [];
 
-        // LOGIN
-        document.getElementById('login-btn').addEventListener('click', () => {
-            const pass = document.getElementById('password-input').value;
-            if(pass === '1234') {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app-screen').classList.remove('hidden');
-                initApp();
-            } else {
-                document.getElementById('login-error').classList.remove('hidden');
-            }
-        });
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('today-date').innerText = new Date().toLocaleDateString();
+            document.getElementById('arrival-time').value = new Date().toLocaleTimeString('es-CL', {hour: '2-digit', minute:'2-digit'});
 
-        document.getElementById('logout-btn').addEventListener('click', () => location.reload());
-
-        function initApp() {
-            signInAnonymously(auth).then(() => {
-                console.log("Conectado a Firebase");
-                listenRecords();
-            });
-
-            // Llenar cursos
-            for(const course in schoolData) {
-                const opt = document.createElement('option'); opt.value = course; opt.textContent = course;
+            for (const course in schoolData) {
+                const opt = document.createElement('option');
+                opt.value = course;
+                opt.textContent = course;
                 courseSelect.appendChild(opt);
             }
 
-            // Fecha hoy
-            const today = new Date().toISOString().split('T')[0];
-            filterDateInput.value = today;
-            
-            // Reloj
-            setInterval(() => {
-                const now = new Date();
-                document.getElementById('clock').innerText = now.toLocaleTimeString('es-CL').substring(0,5);
-                if(!document.getElementById('arrival-time').value) {
-                    document.getElementById('arrival-time').value = now.toLocaleTimeString('es-CL', {hour12: false}).substring(0,5);
-                }
-            }, 1000);
-        }
+            signInAnonymously(auth).then(() => {
+                listenTodayData();
+            }).catch(e => console.error("Error Auth:", e));
+        });
 
         courseSelect.addEventListener('change', () => {
-            const course = courseSelect.value;
-            studentSelect.innerHTML = '<option value="">Selecciona estudiante...</option>';
-            studentSelect.disabled = !course;
-            if(course && schoolData[course]) {
-                schoolData[course].forEach(s => {
-                    const opt = document.createElement('option'); opt.value = s; opt.textContent = s;
-                    studentSelect.appendChild(opt);
+            const sel = courseSelect.value;
+            studentSelect.innerHTML = '<option value="">Selecciona alumno</option>';
+            studentSelect.disabled = !sel;
+            if (sel && schoolData[sel]) {
+                schoolData[sel].forEach(st => {
+                    const opt = document.createElement('option'); opt.value = st; opt.textContent = st; studentSelect.appendChild(opt);
                 });
             }
         });
 
-        motivoSelect.addEventListener('change', () => {
-            if(motivoSelect.value === 'Otro motivo') {
-                otroMotivoInput.classList.remove('hidden');
-                otroMotivoInput.focus();
-            } else {
-                otroMotivoInput.classList.add('hidden');
-            }
-        });
-
-        filterDateInput.addEventListener('change', listenRecords);
-
-        // REGISTRAR E IMPRIMIR DIRECTO
-        document.getElementById('register-btn').addEventListener('click', async () => {
-            const course = courseSelect.value;
-            const student = studentSelect.value;
-            const bloque = bloqueSelect.value;
-            const time = document.getElementById('arrival-time').value;
-            let motivo = motivoSelect.value;
-            if(motivo === 'Otro motivo') motivo = otroMotivoInput.value.trim() || 'Sin especificar';
-
-            if(!course || !student || !time) return showToast("⚠️ Faltan datos obligatorios");
-
-            const now = new Date();
-            const record = {
-                course, student, bloque, time, motivo,
-                dateStr: now.toISOString().split('T')[0],
-                createdAt: Timestamp.now()
-            };
-
-            try {
-                // Guardar
-                await addDoc(collection(db, COLLECTION_NAME), record);
-                
-                // Imprimir inmediato
-                printTicket(record);
-                
-                // Reset UI
-                studentSelect.value = '';
-                otroMotivoInput.value = '';
-                otroMotivoInput.classList.add('hidden');
-                motivoSelect.value = 'Atraso';
-                showToast("✅ Registrado. Imprimiendo...");
-            } catch(e) {
-                console.error(e);
-                showToast("❌ Error al guardar");
-            }
-        });
-
-        // FUNCIÓN IMPRIMIR (DISEÑO HORIZONTAL CON NOTA)
-        function printTicket(data) {
-            const area = document.getElementById('printable-area');
-            const now = new Date();
+        // --- FUNCIONES ---
+        function listenTodayData() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const q = query(collection(db, COLLECTION_NAME), where('dateISO', '==', todayStr)); 
             
-            // Layout horizontal usando Flexbox
-            area.innerHTML = `
-                <div style="width: 20%; text-align: center; border-right: 1px dashed #ccc; padding-right: 10px;">
-                    <img src="logo.jpg" style="height: 40px; margin-bottom: 5px;" onerror="this.style.display='none'">
-                    <h3 style="margin: 0; font-size: 14px; font-weight: bold; line-height: 1.2;">PASE DE INGRESO</h3>
-                </div>
-                
-                <div style="flex-grow: 1; padding: 0 15px;">
-                    <div style="font-size: 14px; margin-bottom: 5px;">
-                        <span style="font-weight:bold;">ALUMNO:</span> ${data.student}
-                    </div>
-                    <div style="font-size: 12px; margin-bottom: 5px;">
-                        <span style="font-weight:bold;">CURSO:</span> ${data.course}
-                    </div>
-                    <div style="display: flex; gap: 20px; font-size: 12px; border-top: 1px solid #eee; padding-top: 5px;">
-                        <span><strong>HORA:</strong> ${data.time}</span>
-                        <span><strong>BLOQUE:</strong> ${data.bloque}</span>
-                        <span><strong>MOTIVO:</strong> ${data.motivo}</span>
-                    </div>
-                    <p style="text-align: center; margin-top: 8px; font-size: 10px; font-weight: bold; font-style: italic;">
-                        "Debes presentar este pase al profesor al ingresar a clases"
-                    </p>
-                </div>
-                
-                <div style="width: 20%; text-align: center; border-left: 1px dashed #ccc; padding-left: 10px; display: flex; flex-direction: column; justify-content: flex-end;">
-                    <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto 2px auto;"></div>
-                    <p style="font-size: 8px; font-weight: bold;">FIRMA INSPECTORÍA</p>
-                    <p style="font-size: 8px; color: #666; margin-top: 4px;">${now.toLocaleDateString('es-CL')}</p>
-                </div>
-            `;
-            
-            window.print();
-        }
-
-        // LISTA Y REPORTES
-        function listenRecords() {
-            const dateFilter = filterDateInput.value;
-            const q = query(collection(db, COLLECTION_NAME), where("dateStr", "==", dateFilter));
-            document.getElementById('report-body').innerHTML = '<tr><td colspan="4" class="p-4 text-center">Cargando...</td></tr>';
-
             onSnapshot(q, (snapshot) => {
                 loadedRecords = [];
-                snapshot.forEach(doc => loadedRecords.push({id: doc.id, ...doc.data()}));
-                loadedRecords.sort((a,b) => b.createdAt.seconds - a.createdAt.seconds);
+                snapshot.forEach(doc => loadedRecords.push({ id: doc.id, ...doc.data() }));
+                loadedRecords.sort((a,b) => b.timestamp.localeCompare(a.timestamp));
                 renderTable();
             });
         }
 
         function renderTable() {
             const tbody = document.getElementById('report-body');
+            const counter = document.getElementById('counter-badge');
             tbody.innerHTML = '';
-            
+            counter.innerText = loadedRecords.length;
+
             if(loadedRecords.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">No hay registros hoy.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400 italic">No hay atrasos registrados hoy.</td></tr>';
                 return;
             }
 
             loadedRecords.forEach(r => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 border-b">
-                        <td class="p-2 font-mono text-teal-700 font-bold">${r.time}</td>
-                        <td class="p-2">
-                            <div class="font-bold text-gray-800 text-xs">${r.student}</div>
-                            <div class="text-[10px] text-gray-500">${r.course}</div>
-                        </td>
-                        <td class="p-2 text-xs">
-                            <span class="bg-gray-100 px-2 py-1 rounded border">${r.bloque}</span><br>
-                            <span class="text-gray-500 italic">${r.motivo}</span>
-                        </td>
-                        <td class="p-2 text-right">
-                             <div class="flex gap-2 justify-end">
-                                <button onclick="window.reprintItem('${r.id}')" class="text-blue-600 hover:bg-blue-50 p-1 rounded font-bold" title="Reimprimir">🖨️</button>
-                                <button onclick="window.deleteItem('${r.id}')" class="text-red-500 hover:bg-red-50 p-1 rounded font-bold" title="Eliminar">🗑️</button>
-                            </div>
-                        </td>
-                    </tr>
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 border-b";
+                tr.innerHTML = `
+                    <td class="p-2 font-mono font-bold text-indigo-700">${r.time}</td>
+                    <td class="p-2 font-bold text-gray-700">${r.student}</td>
+                    <td class="p-2 text-xs text-gray-500">${r.course}</td>
+                    <td class="p-2 text-xs italic text-gray-400">${r.reason || '-'}</td>
+                    <td class="p-2 text-right">
+                        <button onclick="window.reprintItem('${r.id}')" class="text-blue-500 hover:text-blue-700 mr-2" title="Reimprimir">🖨️</button>
+                        <button onclick="window.deleteItem('${r.id}')" class="text-red-500 hover:text-red-700" title="Borrar">🗑️</button>
+                    </td>
                 `;
+                tbody.appendChild(tr);
             });
         }
 
-        // --- CÁLCULO DE MINUTOS DE ATRASO PARA EL REPORTE ---
-        function getDelayMinutes(timeStr, block) {
-            // Mapa de horarios de inicio por bloque
-            const blockTimes = {
-                'Mañana': '08:25',
-                'Primer Recreo': '10:10',
-                'Segundo Recreo': '11:50',
-                'Almuerzo': '14:05',
-                'Recreo Tarde': '15:45'
+        document.getElementById('register-btn').addEventListener('click', async () => {
+            const course = courseSelect.value;
+            const student = studentSelect.value;
+            const time = document.getElementById('arrival-time').value;
+            const reason = document.getElementById('reason-input').value.trim();
+
+            if(!course || !student || !time) return showToast("Faltan datos");
+
+            const now = new Date();
+            const record = {
+                course, student, time, reason,
+                dateISO: now.toISOString().split('T')[0],
+                timestamp: now.toISOString()
             };
-            
-            const targetTime = blockTimes[block];
-            if (!targetTime || !timeStr) return '-';
-            
-            const [h1, m1] = timeStr.split(':').map(Number); // Hora llegada
-            const [h2, m2] = targetTime.split(':').map(Number); // Hora objetivo
-            
-            const arrivalMinutes = h1 * 60 + m1;
-            const targetMinutes = h2 * 60 + m2;
-            
-            const diff = arrivalMinutes - targetMinutes;
-            return diff > 0 ? `${diff} min` : 'A tiempo';
+
+            try {
+                const docRef = await addDoc(collection(db, COLLECTION_NAME), record);
+                record.id = docRef.id;
+                printTicket(record);
+                
+                // Reset
+                studentSelect.value = '';
+                document.getElementById('reason-input').value = '';
+                showToast("Atraso registrado");
+            } catch(e) {
+                console.error(e);
+                showToast("Error al guardar");
+            }
+        });
+
+        function printTicket(data) {
+            const printable = document.getElementById('printable-area');
+            printable.innerHTML = `
+                <div class="ticket-container">
+                    <div class="ticket-logo">
+                        <img src="logo.jpg" onerror="this.style.display='none'">
+                    </div>
+                    <div class="ticket-info">
+                        <h2 style="margin:0; font-size:14px; font-weight:bold;">PASE DE INGRESO A CLASES</h2>
+                        <p style="margin:2px 0 5px 0;"><strong>Alumno:</strong> ${data.student} (${data.course})</p>
+                        <p style="margin:0;"><strong>Hora Llegada:</strong> ${data.time} | <strong>Motivo:</strong> ${data.reason || 'Sin especificar'}</p>
+                    </div>
+                    <div class="ticket-meta">
+                        <strong>${new Date().toLocaleDateString()}</strong><br>
+                        Inspectoría General
+                    </div>
+                </div>
+            `;
+            window.print();
         }
 
-        document.getElementById('generate-report-btn').addEventListener('click', () => {
-            if(loadedRecords.length === 0) return showToast("No hay datos para imprimir.");
-            const reportData = [...loadedRecords].sort((a,b) => a.course.localeCompare(b.course) || a.student.localeCompare(b.student));
-            const area = document.getElementById('printable-area');
-            const dateTitle = filterDateInput.value.split('-').reverse().join('/');
+        document.getElementById('print-daily-btn').addEventListener('click', () => {
+            if(loadedRecords.length === 0) return showToast("No hay datos para imprimir");
             
-            area.innerHTML = `
-                <div style="width: 100%;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <h2 style="margin: 5px 0; text-transform: uppercase;">Reporte Diario de Atrasos</h2>
-                        <p style="margin: 0; font-size: 14px;">Fecha: ${dateTitle} | Total: ${reportData.length}</p>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            const printable = document.getElementById('printable-area');
+            printable.innerHTML = `
+                <div style="padding:20px;">
+                    <h2 style="text-align:center; font-size:18px; margin-bottom:10px;">REPORTE DIARIO DE ATRASOS</h2>
+                    <p style="text-align:center; margin-bottom:20px;">Fecha: ${new Date().toLocaleDateString()}</p>
+                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
                         <thead>
-                            <tr style="background: #eee;">
-                                <th style="border: 1px solid #999; padding: 5px;">Hora</th>
-                                <th style="border: 1px solid #999; padding: 5px;">Min. Atraso</th> <th style="border: 1px solid #999; padding: 5px;">Bloque</th>
-                                <th style="border: 1px solid #999; padding: 5px; text-align: left;">Estudiante / Curso</th>
-                                <th style="border: 1px solid #999; padding: 5px; text-align: left;">Motivo</th>
+                            <tr style="background:#eee;">
+                                <th style="border:1px solid #000; padding:5px;">Hora</th>
+                                <th style="border:1px solid #000; padding:5px;">Curso</th>
+                                <th style="border:1px solid #000; padding:5px;">Estudiante</th>
+                                <th style="border:1px solid #000; padding:5px;">Motivo</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${reportData.map(r => `
+                            ${loadedRecords.map(r => `
                                 <tr>
-                                    <td style="border: 1px solid #999; padding: 4px; text-align: center;">${r.time}</td>
-                                    <td style="border: 1px solid #999; padding: 4px; text-align: center; font-weight:bold; color:#d97706;">
-                                        ${getDelayMinutes(r.time, r.bloque)}
-                                    </td>
-                                    <td style="border: 1px solid #999; padding: 4px; text-align: center;">${r.bloque}</td>
-                                    <td style="border: 1px solid #999; padding: 4px;"><b>${r.student}</b><br>${r.course}</td>
-                                    <td style="border: 1px solid #999; padding: 4px;">${r.motivo}</td>
+                                    <td style="border:1px solid #000; padding:5px; text-align:center;">${r.time}</td>
+                                    <td style="border:1px solid #000; padding:5px; text-align:center;">${r.course}</td>
+                                    <td style="border:1px solid #000; padding:5px;">${r.student}</td>
+                                    <td style="border:1px solid #000; padding:5px;">${r.reason || '-'}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
