@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SGE 2026 - Sistema Integral</title>
+    <title>SGE 2026 - Sistema Integral (Versión Final Robusta)</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* --- ESTILOS GENERALES (PANTALLA) --- */
+        /* --- ESTILOS GENERALES --- */
         :root { --primary: #1a237e; --bg: #f4f6f8; --text: #333; }
         html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
         body { display: flex; }
@@ -68,8 +68,6 @@
         .nomina-actions { display: flex; gap: 5px; }
         .btn-icon { border: none; background: transparent; cursor: pointer; font-size: 14px; opacity: 0.6; padding: 4px; border-radius: 4px; transition:0.2s; }
         .btn-icon:hover { background: #eee; opacity: 1; transform: scale(1.1); }
-        .btn-icon.del:hover { color: #d32f2f; background: #ffebee; }
-        .btn-icon.edit:hover { color: #1976d2; background: #e3f2fd; }
         
         .admin-panel { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .inp-time { border: 1px solid #ccc; padding: 4px; width: 80px; text-align: center; border-radius: 3px; }
@@ -83,15 +81,18 @@
         
         /* CONTRATOS */
         .contract-workspace { display: flex; height: 100%; gap: 20px; }
-        .contract-controls { width: 420px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-y: auto; display:flex; flex-direction:column; gap:10px;}
+        .contract-controls { width: 450px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-y: auto; display:flex; flex-direction:column; gap:10px;}
         .contract-preview { flex: 1; background: #525659; padding: 20px; border-radius: 8px; overflow-y: auto; display: flex; justify-content: center; }
         .c-form-group label { display: block; font-size: 11px; font-weight: bold; color: #555; margin-bottom: 2px; }
         .c-section-title { background: #eee; padding: 5px; font-size: 11px; font-weight: bold; margin-top: 10px; border-left: 3px solid var(--primary); }
         .type-selector { display: flex; gap: 5px; background: #e3f2fd; padding: 5px; border-radius: 6px; }
         .type-btn { flex: 1; padding: 8px; border: 1px solid #90caf9; background: white; cursor: pointer; font-weight: bold; color: #1565c0; font-size: 11px; }
         .type-btn.active { background: #1565c0; color: white; }
-        .h-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-        .h-item label { font-size: 9px; margin-bottom: 1px; color:#777; }
+        
+        /* GRID DE HORAS DETALLADO */
+        .h-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px; background: white; border-radius: 4px; border: 1px solid #fbc02d; }
+        .h-item label { font-size: 10px; margin-bottom: 2px; color:#555; display: block; font-weight: 600; }
+        .h-item input { width: 100%; border: 1px solid #ccc; font-size: 11px; padding: 4px; }
 
         .paper { width: 21.59cm; min-height: 27.94cm; background: white; padding: 2.5cm 3cm; box-shadow: 0 0 15px rgba(0,0,0,0.5); font-family: 'Arial', sans-serif; font-size: 11pt; line-height: 1.35 !important; color: black; box-sizing: border-box; }
         .c-header-corp { text-align: center; font-weight: bold; margin-bottom: 20px; font-size: 8pt; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 10px; }
@@ -109,18 +110,15 @@
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- IMPRESIÓN ROBUSTA CORREGIDA (VERSIÓN FINAL) --- */
+        /* IMPRESIÓN ROBUSTA */
         @media print {
-            /* 1. FORZAR COLORES */
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            
             body, html { height: auto !important; overflow: visible !important; background: white !important; color: black !important; margin: 0 !important; }
             .sidebar, .top-tabs, .header-actions, .contract-controls, .nomina-container, .btn, .stats-panel, .btn-remove-cell { display: none !important; }
             .main-area { position: static !important; overflow: visible !important; display: block !important; padding: 0 !important; margin: 0 !important; }
             .tab-content { display: none !important; }
             #print-report-container { display: block !important; position: absolute; top: 0; left: 0; width: 100%; z-index: 9999; background: white; }
             
-            /* CONTRATOS */
             #print-report-container .paper {
                 box-shadow: none !important; margin: 0 !important; width: 100% !important;
                 padding: 2.5cm 2.5cm 2.5cm 3cm !important;
@@ -131,7 +129,6 @@
             #print-report-container .signatures-contract { margin-top: 60px !important; page-break-inside: avoid !important; }
             #print-report-container .sign-box { font-size: 11pt !important; padding-top: 10px !important; width: 48% !important; }
 
-            /* HORARIOS (1 PLANA FIJA) */
             .fit-one-page { 
                 width: 100%; height: 98vh; 
                 display: flex; flex-direction: column; justify-content: flex-start;
@@ -142,11 +139,9 @@
             .fit-one-page.admin { zoom: 0.85; }
 
             .rh-logo img { max-height: 45px; width: auto; }
-            
             .table-print { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 10px; }
             .table-print th { background-color: var(--primary) !important; color: white !important; padding: 3px; }
             .table-print td { border: 1px solid #333; padding: 2px; text-align: center; }
-            
             .report-header { display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); margin-bottom: 10px; padding-bottom: 5px; }
             .sabana-container { zoom: 60%; page-break-after: always; padding: 1cm; }
         }
@@ -159,7 +154,7 @@
 
     <div class="sidebar">
         <div class="logo-container">
-            <img src="logo.jpg" alt="Logo Escuela" class="logo-img">
+            <img src="logo.jpg" alt="Logo Escuela" class="logo-img" onerror="this.src='https://via.placeholder.com/100?text=LOGO'">
             <h2>SGE 2026</h2>
         </div>
         <div class="control-group">
@@ -182,7 +177,7 @@
         <div style="font-size:10px; color:#666; margin-bottom:5px; font-weight:bold;">3. ASIGNATURAS:</div>
         <div id="listaAsignaturas" class="asignaturas-list"></div>
         <div class="credits">
-            <img src="profeale.jpg" alt="ProfeAle">
+            <img src="profeale.jpg" alt="ProfeAle" onerror="this.style.display='none'">
             <p>Desarrollado con ❤️ por ProfeAle</p>
         </div>
     </div>
@@ -303,9 +298,27 @@
                     
                     <div style="background:#e3f2fd; padding:10px; border-radius:4px; margin-bottom:10px;">
                         <div id="grp_horas_doc_c">
-                            <div style="margin-bottom:5px; border-bottom:1px solid #bbdefb; padding-bottom:5px;">
-                                <label style="font-size:11px; font-weight:bold;">Horas Totales Contrato:</label>
-                                <input type="number" id="in_ht" style="font-weight:bold; color:#0d47a1;" oninput="calcSueldo()">
+                            <div style="margin-bottom:10px; border-bottom:2px solid #1a237e; padding-bottom:5px;">
+                                <label style="font-size:12px; font-weight:bold; color:#1a237e;">TOTAL HORAS CONTRATO:</label>
+                                <input type="number" id="in_ht" style="font-size:14px; background:#e8eaf6; font-weight:bold;" oninput="calcSueldo()">
+                            </div>
+                            
+                            <div style="background:#fffde7; padding:8px; border:1px solid #fbc02d; border-radius:4px;">
+                                <label style="font-size:10px; font-weight:bold; color:#ef6c00; margin-bottom:5px; display:block;">👇 DESGLOSE HORARIO DETALLADO:</label>
+                                <div class="h-grid">
+                                    <div class="h-item"><label>Aula</label><input type="number" id="in_ha" oninput="updateContrato()"></div>
+                                    <div class="h-item"><label>Prep. Enseñanza</label><input type="number" id="in_hp" oninput="updateContrato()"></div>
+                                    <div class="h-item"><label>Trab. Colab. PIE</label><input type="number" id="in_h_pie" oninput="updateContrato()"></div>
+                                    <div class="h-item"><label>Profesor Jefe</label><input type="number" id="in_h_jefe" oninput="updateContrato()"></div>
+                                    <div class="h-item"><label>Talleres</label><input type="number" id="in_h_taller" oninput="updateContrato()"></div>
+                                    <div class="h-item"><label>Jefe Especialidad</label><input type="number" id="in_h_jesp" oninput="updateContrato()"></div>
+                                    <div class="h-item"><label>Supervisión Práctica</label><input type="number" id="in_h_prac" oninput="updateContrato()"></div>
+                                    <div class="h-item"><label>Otros</label><input type="number" id="in_h_otro" oninput="updateContrato()"></div>
+                                </div>
+                                <div style="margin-top:5px;">
+                                    <label style="font-size:9px; color:#555;">Detalle "Otros" (Indicar cuál):</label>
+                                    <input type="text" id="in_h_otro_desc" placeholder="Ej: Coordinador UTP / Enlace" oninput="updateContrato()" style="width:100%; border:1px solid #ccc; font-size:10px;">
+                                </div>
                             </div>
                         </div>
                         <div id="grp_horas_asis_c" style="display:none;"><label style="font-size:10px">Total Horas Semanales</label><input type="number" id="in_h_simple" oninput="calcSueldo()"></div>
@@ -401,8 +414,16 @@
 
     <script>
         const firebaseConfig = { apiKey: "AIzaSyCbZNKv2Dnk4pmrxcyUAdrYxiAW2Yo9rTE", authDomain: "libroclases-sscc.firebaseapp.com", projectId: "libroclases-sscc", storageBucket: "libroclases-sscc.firebasestorage.app", appId: "1:556632878686:web:528ae162b5be19f21a0ecf" };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        
+        // WRAPPER DE SEGURIDAD PARA FIREBASE
+        let db;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+        } catch(e) {
+            console.error("Error inicializando Firebase:", e);
+            alert("AVISO: No se pudo conectar a la base de datos. El sistema funcionará en modo local pero los cambios no se guardarán en la nube.");
+        }
 
         // --- DEFINICIONES INICIALES ---
         let GLOBAL_CACHE = {}; 
@@ -672,10 +693,10 @@
             
             ADMIN_DATA[n] = {contrato, horario};
             try {
-                await db.collection("admin_horarios_2026").doc(n).set(ADMIN_DATA[n]);
+                if(db) await db.collection("admin_horarios_2026").doc(n).set(ADMIN_DATA[n]);
                 alert("Horario Administrativo Guardado");
             } catch(e) {
-                alert("Error al guardar");
+                alert("Error al guardar (revise conexión)");
             }
         }
 
@@ -734,16 +755,23 @@
         }
 
         async function init() {
+            // FORZAR QUITAR LOADER DESPUÉS DE 3 SEGUNDOS POR SI ACASO
+            setTimeout(() => {
+                document.getElementById("loader").style.display = "none";
+            }, 3000);
+
             try {
-                const configDoc = await db.collection("horarios_2026").doc("_config").get();
-                if(configDoc.exists) {
-                    const d = configDoc.data();
-                    if(d.docentes && d.docentes.length > 0) LISTA_DOCENTES = d.docentes;
-                    if(d.asistentes && d.asistentes.length > 0) LISTA_ASISTENTES = d.asistentes;
+                if(db) {
+                    const configDoc = await db.collection("horarios_2026").doc("_config").get();
+                    if(configDoc.exists) {
+                        const d = configDoc.data();
+                        if(d.docentes && d.docentes.length > 0) LISTA_DOCENTES = d.docentes;
+                        if(d.asistentes && d.asistentes.length > 0) LISTA_ASISTENTES = d.asistentes;
+                    }
+                    await cargarCacheGlobal(); 
+                    await cargarAdminData();
                 }
-                await cargarCacheGlobal(); 
-                await cargarAdminData();
-            } catch (e) { console.log("Modo offline/local activado"); }
+            } catch (e) { console.log("Modo offline/local activado o error en carga inicial"); }
             
             construirTablaEditor(); 
             cargarHorarioCurso(); 
@@ -753,14 +781,16 @@
             setTipoContrato('DOC');
             
             document.getElementById('txt_fecha_hoy').innerText = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+            
+            // Asegurar que el loader se va
             document.getElementById("loader").style.display = "none";
         }
 
         // --- FIREBASE ---
-        async function cargarCacheGlobal() { try { const s = await db.collection("horarios_2026").get(); GLOBAL_CACHE = {}; s.forEach(d => { if(d.id!=="_config") GLOBAL_CACHE[d.id]=d.data(); }); } catch(e){} }
-        async function cargarAdminData() { try { const s = await db.collection("admin_horarios_2026").get(); ADMIN_DATA = {}; s.forEach(d => ADMIN_DATA[d.id]=d.data()); } catch(e){} }
-        async function cargarCacheContratos() { try { const s = await db.collection("contratos_data_2026").get(); CONTRATOS_CACHE_ALL = {}; s.forEach(d => { CONTRATOS_CACHE_ALL[d.id] = d.data(); }); } catch(e){} }
-        async function guardarConfig() { try { await db.collection("horarios_2026").doc("_config").set({docentes:LISTA_DOCENTES, asistentes:LISTA_ASISTENTES}, {merge:true}); } catch(e){} }
+        async function cargarCacheGlobal() { try { if(db){ const s = await db.collection("horarios_2026").get(); GLOBAL_CACHE = {}; s.forEach(d => { if(d.id!=="_config") GLOBAL_CACHE[d.id]=d.data(); }); } } catch(e){} }
+        async function cargarAdminData() { try { if(db){ const s = await db.collection("admin_horarios_2026").get(); ADMIN_DATA = {}; s.forEach(d => ADMIN_DATA[d.id]=d.data()); } } catch(e){} }
+        async function cargarCacheContratos() { try { if(db){ const s = await db.collection("contratos_data_2026").get(); CONTRATOS_CACHE_ALL = {}; s.forEach(d => { CONTRATOS_CACHE_ALL[d.id] = d.data(); }); } } catch(e){} }
+        async function guardarConfig() { try { if(db) await db.collection("horarios_2026").doc("_config").set({docentes:LISTA_DOCENTES, asistentes:LISTA_ASISTENTES}, {merge:true}); } catch(e){} }
         
         function normalizarTexto(txt) { if(!txt) return ""; return txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim(); }
         function obtenerColorProfesor(n) { if(!n) return "#fff"; const s=normalizarTexto(n); let h=0; for(let i=0;i<s.length;i++) h=s.charCodeAt(i)+((h<<5)-h); return `hsl(${Math.abs(h)%360}, 85%, 88%)`; }
@@ -780,7 +810,7 @@
         async function cargarHorarioCurso() {
             const c = document.getElementById("selCurso").value; estadoAsignaturas = JSON.parse(JSON.stringify(DATA_CURSOS[c]));
             let data = {};
-            try { const doc = await db.collection("horarios_2026").doc(c).get(); data = doc.exists ? doc.data() : {}; } catch(e){}
+            try { if(db){ const doc = await db.collection("horarios_2026").doc(c).get(); data = doc.exists ? doc.data() : {}; } } catch(e){}
             document.querySelectorAll(".drop-zone").forEach(z => z.innerHTML="");
             Object.keys(data).forEach(k => {
                 const celda = document.getElementById(k);
@@ -812,7 +842,7 @@
                         const oldA = z.innerText.split("\n")[0]; const oldP = z.querySelector(".prof-badge")?.innerText||""; nuevo = [{asig:oldA, prof:oldP}, nuevo]; z.innerHTML = renderSplit(nuevo);
                     } else { z.innerHTML = renderCell(d.n, d.p); }
                     restarH(d.n); renderListaAsig();
-                    try { await db.collection("horarios_2026").doc(document.getElementById("selCurso").value).set({[z.id]:nuevo}, {merge:true}); } catch(e){}
+                    try { if(db) await db.collection("horarios_2026").doc(document.getElementById("selCurso").value).set({[z.id]:nuevo}, {merge:true}); } catch(e){}
                 }
             });
         }
@@ -939,12 +969,32 @@
             if(!nombre) return;
             document.getElementById("in_nombre").value = nombre;
             try {
-                const doc = await db.collection("contratos_data_2026").doc(nombre).get();
-                if(doc.exists) {
-                    const d = doc.data();
-                    document.getElementById('in_rut').value = d.rut;
-                    document.getElementById('in_cargo').value = d.cargo;
-                    calcSueldo();
+                if(db) {
+                    const doc = await db.collection("contratos_data_2026").doc(nombre).get();
+                    if(doc.exists) {
+                        const d = doc.data();
+                        // Cargar TODO
+                        const setV = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ""; };
+                        const setC = (id, val) => { const el = document.getElementById(id); if(el) el.checked = val || false; };
+
+                        setV('in_rut', d.rut); setV('in_nacion', d.nacion); setV('in_domicilio', d.domicilio);
+                        setV('in_civil', d.civil); setV('in_nacim', d.nacim); setV('in_profesion', d.profesion);
+                        setV('in_cargo', d.cargo); setV('in_tipo_contrato', d.tipo); setV('in_cc', d.cc);
+                        setV('in_ht', d.ht); setV('in_h_simple', d.h_simple); setV('in_valor_hora', d.valor);
+                        setV('in_inicio', d.inicio); setV('in_fin', d.fin);
+                        setV('in_afp', d.afp); setV('in_salud', d.salud); setV('in_banco', d.banco); setV('in_cta', d.cta);
+                        setV('in_genero', d.genero);
+
+                        // Cargar Desglose
+                        setV('in_ha', d.ha); setV('in_hp', d.hp); setV('in_h_pie', d.h_pie);
+                        setV('in_h_jefe', d.h_jefe); setV('in_h_taller', d.h_taller); setV('in_h_jesp', d.h_jesp);
+                        setV('in_h_cpie', d.h_cpie); setV('in_h_prac', d.h_prac); setV('in_h_otro', d.h_otro);
+                        setV('in_h_otro_desc', d.h_otro_desc);
+
+                        setC('chk_jefe_esp', d.jefe_esp); setC('chk_coord_pie', d.coord_pie);
+
+                        calcSueldo();
+                    }
                 }
             } catch(e) {}
             updateContrato();
@@ -957,16 +1007,93 @@
             updateContrato();
         }
         function updateContrato() {
+             // Mapeo simple
              ['nombre','rut','nacion','domicilio','profesion','cargo','sueldo','afp','salud','banco','cta'].forEach(k => {
                  const el = document.getElementById("in_"+k);
                  const txt = document.querySelectorAll(`#txt_${k}, #sig_${k}`);
                  if(el && txt) txt.forEach(t => t.innerText = el.value.toUpperCase() || "_________");
              });
+             
+             // Fechas y Genero
+             document.getElementById('txt_inicio').innerText = document.getElementById('in_inicio').value || "_________";
+             document.getElementById('txt_fin').innerText = document.getElementById('in_fin').value || "_________";
+             document.getElementById('txt_nacim').innerText = document.getElementById('in_nacim').value || "_________";
+             
+             const gen = document.getElementById('in_genero').value;
+             document.getElementById('txt_nacido_label').innerText = gen === 'F' ? 'nacida' : 'nacido';
+             document.getElementById('txt_domiciliado_label').innerText = gen === 'F' ? 'Domiciliada' : 'Domiciliado';
+             document.getElementById('txt_trato').innerText = gen === 'F' ? 'doña' : 'don';
+
+             // Desglose de Horas Docente (LOGICA NUEVA)
+             if(CONTRATO_ACTUAL === 'DOC') {
+                 document.getElementById('txt_ht').innerText = document.getElementById('in_ht').value || "44";
+                 
+                 const v = (id) => parseFloat(document.getElementById(id).value) || 0;
+                 let lista = [];
+                 if(v('in_ha') > 0) lista.push(v('in_ha') + " horas de Docencia de Aula");
+                 if(v('in_hp') > 0) lista.push(v('in_hp') + " horas de Preparación de la Enseñanza");
+                 if(v('in_h_pie') > 0) lista.push(v('in_h_pie') + " horas de Trabajo Colaborativo PIE");
+                 if(v('in_h_jefe') > 0) lista.push(v('in_h_jefe') + " horas de Profesor Jefe");
+                 if(v('in_h_taller') > 0) lista.push(v('in_h_taller') + " horas de Talleres");
+                 if(v('in_h_jesp') > 0) lista.push(v('in_h_jesp') + " horas de Jefatura de Especialidad");
+                 if(v('in_h_cpie') > 0) lista.push(v('in_h_cpie') + " horas de Coordinación PIE");
+                 if(v('in_h_prac') > 0) lista.push(v('in_h_prac') + " horas de Supervisión de Práctica");
+                 
+                 const otros = v('in_h_otro');
+                 if(otros > 0) {
+                     const desc = document.getElementById('in_h_otro_desc').value || "otras funciones";
+                     lista.push(otros + " horas de " + desc);
+                 }
+                 
+                 if(lista.length > 0) {
+                     document.getElementById('txt_desglose').innerText = ", distribuidas en " + lista.join(", ");
+                 } else {
+                     document.getElementById('txt_desglose').innerText = "";
+                 }
+             } else {
+                 document.getElementById('txt_ht').innerText = document.getElementById('in_h_simple').value || "__";
+                 document.getElementById('txt_desglose').innerText = "";
+             }
         }
+        
         async function guardarContrato() {
             const n = document.getElementById("in_nombre").value;
-            try { await db.collection("contratos_data_2026").doc(n).set({ rut: document.getElementById('in_rut').value, cargo: document.getElementById('in_cargo').value }); alert("Guardado"); } catch(e) { alert("Error"); }
+            if(!n) return alert("Ingrese un nombre");
+            
+            const v = (id) => document.getElementById(id).value;
+            const c = (id) => document.getElementById(id).checked;
+
+            const data = {
+                rut: v('in_rut'), nacion: v('in_nacion'), domicilio: v('in_domicilio'),
+                civil: v('in_civil'), nacim: v('in_nacim'), profesion: v('in_profesion'),
+                cargo: v('in_cargo'), tipo: v('in_tipo_contrato'), cc: v('in_cc'),
+                ht: v('in_ht'), h_simple: v('in_h_simple'), valor: v('in_valor_hora'),
+                inicio: v('in_inicio'), fin: v('in_fin'),
+                afp: v('in_afp'), salud: v('in_salud'), banco: v('in_banco'), cta: v('in_cta'),
+                genero: v('in_genero'),
+                // Desglose
+                ha: v('in_ha'), hp: v('in_hp'), h_pie: v('in_h_pie'),
+                h_jefe: v('in_h_jefe'), h_taller: v('in_h_taller'), h_jesp: v('in_h_jesp'),
+                h_cpie: v('in_h_cpie'), h_prac: v('in_h_prac'), h_otro: v('in_h_otro'),
+                h_otro_desc: v('in_h_otro_desc'),
+                jefe_esp: c('chk_jefe_esp'), coord_pie: c('chk_coord_pie')
+            };
+
+            try { 
+                if(db) {
+                    await db.collection("contratos_data_2026").doc(n).set(data); 
+                    // Actualizar caché local
+                    CONTRATOS_CACHE_ALL[n] = data;
+                    alert("Guardado Correctamente"); 
+                } else {
+                    alert("Error: No hay conexión con Firebase. Guarde los datos manualmente.");
+                }
+            } catch(e) { 
+                console.error(e);
+                alert("Error al guardar en Firebase"); 
+            }
         }
+        
         async function renderConsolidado() {
             try { await cargarCacheContratos(); } catch(e){}
             const tbody = document.getElementById("bodyConsolidado"); tbody.innerHTML = "";
